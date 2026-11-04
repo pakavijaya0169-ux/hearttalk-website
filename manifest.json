@@ -8,5 +8,13 @@
   "display": "standalone",
   "background_color": "#0d0a14",
   "theme_color": "#0d0a14",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/hearttalk-website/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
