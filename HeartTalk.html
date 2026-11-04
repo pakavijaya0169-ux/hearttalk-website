@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HeartTalk — Meet. Connect. Belong.</title>
+<style>
+:root{--bg:#0d0a14;--panel:#181321;--panel2:#21182e;--line:#34283f;--text:#f7f1ff;--muted:#aaa0b7;--purple:#a477f5;--pink:#e28bd1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}
+header{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 7%;position:sticky;top:0;background:#100d18f5;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}.heart{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--pink));display:grid;place-items:center}
+nav{display:flex;gap:24px}nav button,.login{border:0;background:none;color:#d2c9dc;font-size:13px}nav button:hover{color:#c39bff}
+.login{border:1px solid #59446f;border-radius:9px;padding:10px 15px}
+main{max-width:1120px;margin:auto;padding:38px 24px 70px}.hero{border:1px solid #49345d;border-radius:24px;padding:55px 6%;background:radial-gradient(circle at 82% 45%,#573776 0,#30203f 30%,#1c1528 70%);display:grid;grid-template-columns:1.3fr .7fr;align-items:center;gap:25px;min-height:340px}
+.tag{color:#d2b5ff;font-size:11px;font-weight:bold;letter-spacing:2px}.hero h1{font-size:clamp(34px,5vw,58px);line-height:1.08;margin:16px 0}.hero h1 span{color:#d99bdf}.hero p{color:#d0c3dc;line-height:1.7;max-width:500px}.primary{border:0;border-radius:10px;padding:14px 20px;background:linear-gradient(110deg,#9c6cf1,#d77bc8);color:white;font-weight:bold;margin-top:12px}.hero-art{font-size:105px;text-align:center;filter:drop-shadow(0 0 28px #d78bff)}
+.section-head{display:flex;justify-content:space-between;align-items:end;margin:38px 0 18px}.section-head h2{margin:0 0 6px;font-size:21px}.section-head p{margin:0;color:var(--muted);font-size:13px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card,.feature,.plan{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}.person-art{height:130px;display:grid;place-items:center;font-size:50px;background:linear-gradient(135deg,#684c83,#b77f9f)}.person-art.two{background:linear-gradient(135deg,#3c6881,#8872a9)}.person-art.three{background:linear-gradient(135deg,#9a6b52,#604879)}.card-body{padding:16px}.card-body small{color:var(--muted)}.card-body p{color:#c3b8ce;font-size:13px}.outline{width:100%;border:1px solid #644c7d;background:#271c35;color:#e4d3ff;border-radius:9px;padding:10px}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.feature{padding:20px}.feature .ico{font-size:24px}.feature h3{font-size:15px;margin:12px 0 7px}.feature p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
+.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.plan{padding:23px}.plan.highlight{border-color:#a477f5;background:linear-gradient(160deg,#2a1d3c,#181321)}.plan h3{color:#c8aaff;font-size:12px;letter-spacing:1px}.price{font-size:30px;font-weight:bold;margin:12px 0}.plan p,.plan li{color:#c3b8ce;font-size:13px;line-height:1.8}.plan ul{padding-left:18px;min-height:120px}
+footer{border-top:1px solid var(--line);padding:25px 7%;color:#91879d;font-size:12px;display:flex;justify-content:space-between;gap:15px}
+.modal{display:none;position:fixed;inset:0;background:#000b;z-index:10;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.dialog{background:#1b1525;border:1px solid #59436f;border-radius:17px;padding:25px;width:min(100%,390px)}.dialog h2{margin-top:0}.dialog input{width:100%;padding:12px;margin:8px 0 12px;background:#100d17;border:1px solid var(--line);border-radius:8px;color:white}.close{float:right;background:none;border:0;color:white;font-size:22px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#3a2850;border:1px solid #8060a3;padding:12px 18px;border-radius:10px;display:none;z-index:20;font-size:13px}
+@media(max-width:700px){header{padding:0 16px}nav{gap:10px}nav button{font-size:11px}.hero{grid-template-columns:1fr;padding:35px 24px}.hero-art{display:none}.cards,.features,.pricing{grid-template-columns:1fr}.section-head{align-items:start;gap:12px;flex-direction:column}footer{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="heart">♥</span> HeartTalk</div>
+  <nav><button onclick="scrollToId('discover')">Discover</button><button onclick="scrollToId('features')">Features</button><button onclick="scrollToId('plans')">Plans</button></nav>
+  <button class="login" onclick="openLogin()">Log in</button>
+</header>
+<main>
+  <section class="hero">
+    <div><div class="tag">YOUR WORLD OF CONNECTIONS</div><h1>Meet people.<br><span>Share moments.</span></h1><p>Find new friends, share stories and build meaningful connections with people around the world.</p><button class="primary" onclick="scrollToId('discover')">Explore HeartTalk →</button></div>
+    <div class="hero-art">💜</div>
+  </section>
+  <section id="discover">
+    <div class="section-head"><div><h2>People you may like</h2><p>A few friendly faces from our demo community.</p></div></div>
+    <div class="cards">
+      <article class="card"><div class="person-art">🌸</div><div class="card-body"><b>Sofia, 24</b><br><small>Spain · Travel & art</small><p>Loves exploring new places and cultures.</p><button class="outline" onclick="hello('Sofia')">Say hello</button></div></article>
+      <article class="card"><div class="person-art two">🎧</div><div class="card-body"><b>Aarav, 25</b><br><small>India · Music lover</small><p>Always looking for new music and friends.</p><button class="outline" onclick="hello('Aarav')">Say hello</button></div></article>
+      <article class="card"><div class="person-art three">📚</div><div class="card-body"><b>Mia, 23</b><br><small>Australia · Books & coffee</small><p>Enjoys good stories and thoughtful chats.</p><button class="outline" onclick="hello('Mia')">Say hello</button></div></article>
+    </div>
+  </section>
+  <section id="features">
+    <div class="section-head"><div><h2>Everything in one place</h2><p>Designed to help people connect safely and comfortably.</p></div></div>
+    <div class="features">
+      <div class="feature"><div class="ico">💬</div><h3>Private messaging</h3><p>Have friendly conversations and get to know people.</p></div>
+      <div class="feature"><div class="ico">📹</div><h3>Voice & video calls</h3><p>Talk face to face when calling features are connected.</p></div>
+      <div class="feature"><div class="ico">🌍</div><h3>Worldwide community</h3><p>Discover people and cultures from different countries.</p></div>
+      <div class="feature"><div class="ico">🎙️</div><h3>Live rooms</h3><p>Join group conversations and community events.</p></div>
+      <div class="feature"><div class="ico">✨</div><h3>Creator spaces</h3><p>Share talents, stories and positive experiences.</p></div>
+      <div class="feature"><div class="ico">🛡️</div><h3>Safety tools</h3><p>Reporting, blocking and moderation are essential before launch.</p></div>
+    </div>
+  </section>
+  <section id="plans">
+    <div class="section-head"><div><h2>Membership plans</h2><p>Sample prices only — payments are not active.</p></div></div>
+    <div class="pricing">
+      <div class="plan"><h3>FREE</h3><div class="price">₹0</div><p>Start meeting the community.</p><ul><li>Create a profile</li><li>Discover people</li><li>Basic features preview</li></ul><button class="outline" onclick="notify('You are viewing the free demo plan.')">Selected</button></div>
+      <div class="plan highlight"><h3>PLUS</h3><div class="price">₹199 <small>/ month</small></div><p>More ways to connect.</p><ul><li>More discovery options</li><li>Calling feature access</li><li>Profile highlights</li></ul><button class="primary" onclick="notify('Payments are not connected in this demo.')">Explore Plus</button></div>
+      <div class="plan"><h3>VIP</h3><div class="price">₹399 <small>/ month</small></div><p>Your premium connection space.</p><ul><li>VIP profile badge</li><li>Premium live rooms</li><li>Priority support</li></ul><button class="outline" onclick="notify('Payments are not connected in this demo.')">Explore VIP</button></div>
+    </div>
+  </section>
+</main>
+<footer><span>© 2026 HeartTalk. Made for meaningful connections.</span><span>Safety first · Privacy · Help</span></footer>
+<div class="modal" id="loginModal"><div class="dialog"><button class="close" onclick="closeLogin()">×</button><h2>Welcome to HeartTalk</h2><p style="color:#aaa0b7;font-size:13px">Login design preview only. No account is created.</p><label>Email address</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="Enter password"><button class="primary" style="width:100%" onclick="notify('Real login will be added in the next development stage.');closeLogin()">Continue</button></div></div>
+<div id="toast"></div>
+<script>
+function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+function notify(message){const t=document.getElementById('toast');t.textContent=message;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
+function hello(name){notify('Demo only: Say hello to '+name+'. Messaging is not connected yet.')}
+function openLogin(){document.getElementById('loginModal').classList.add('show')}
+function closeLogin(){document.getElementById('loginModal').classList.remove('show')}
+</script>
+</body>
+</html>
