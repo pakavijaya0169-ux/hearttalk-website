@@ -62,8 +62,35 @@ footer{border-top:1px solid var(--line);padding:25px 7%;color:#91879d;font-size:
   </section>
 </main>
 <footer><span>© 2026 HeartTalk. Made for meaningful connections.</span><span>Safety first · Privacy · Help</span></footer>
-<div class="modal" id="loginModal"><div class="dialog"><button class="close" onclick="closeLogin()">×</button><h2>Welcome to HeartTalk</h2><p style="color:#aaa0b7;font-size:13px">Login design preview only. No account is created.</p><label>Email address</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="Enter password"><button class="primary" style="width:100%" onclick="notify('Real login will be added in the next development stage.');closeLogin()">Continue</button></div></div>
-<div id="toast"></div>
+<div class="modal" id="loginModal">
+  <div class="dialog">
+    <button class="close" onclick="closeLogin()">×</button>
+
+    <h2 id="authTitle">Welcome to HeartTalk</h2>
+
+    <p id="authMessage" style="color:#aaa0b7;font-size:13px">
+      Create your account or login.
+    </p>
+
+    <label>Email address</label>
+    <input id="authEmail" type="email" placeholder="you@example.com" required>
+
+    <label>Password</label>
+    <input id="authPassword" type="password" placeholder="Minimum 6 characters" minlength="6" required>
+
+    <button class="primary" id="authButton" style="width:100%" onclick="handleAuth()">
+      Sign Up
+    </button>
+
+    <p style="text-align:center;font-size:13px">
+      <span id="authSwitchText">Already have an account?</span>
+      <button onclick="toggleAuthMode()" style="background:none;border:0;color:#c39bff">
+        Login
+      </button>
+    </p>
+  </div>
+</div>
+  <div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>    
 const SUPABASE_URL = "https://dognojmymhlaewrjqswz.supabase.co";
