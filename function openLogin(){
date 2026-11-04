@@ -99,8 +99,82 @@ const SUPABASE_KEY = "sb_publishable_e9ugpv_1hT1kSOCHpLWk2w_lB-ccMJk";
 function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
 function notify(message){const t=document.getElementById('toast');t.textContent=message;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
 function hello(name){notify('Demo only: Say hello to '+name+'. Messaging is not connected yet.')}
-function openLogin(){document.getElementById('loginModal').classList.add('show')}
-function closeLogin(){document.getElementById('loginModal').classList.remove('show')}
+let authMode = "signup";
+
+function openLogin(){
+  document.getElementById("loginModal").classList.add("show");
+}
+
+function closeLogin(){
+  document.getElementById("loginModal").classList.remove("show");
+}
+
+function toggleAuthMode(){
+  authMode = authMode === "signup" ? "login" : "signup";
+
+  document.getElementById("authTitle").textContent =
+    authMode === "signup" ? "Create Account" : "Welcome Back";
+
+  document.getElementById("authButton").textContent =
+    authMode === "signup" ? "Sign Up" : "Login";
+
+  document.getElementById("authSwitchText").textContent =
+    authMode === "signup" ? "Already have an account?" : "New to HeartTalk?";
+
+  document.querySelector("#authSwitchText + button").textContent =
+    authMode === "signup" ? "Login" : "Sign Up";
+
+  document.getElementById("authMessage").textContent =
+    authMode === "signup" ? "Join the HeartTalk community." : "Login to your account.";
+}
+
+async function handleAuth(){
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  if(!email || password.length < 6){
+    notify("Enter a valid email and password (minimum 6 characters).");
+    return;
+  }
+
+  const button = document.getElementById("authButton");
+  button.disabled = true;
+  button.textContent = "Please wait...";
+
+  try {
+    let result;
+
+    if(authMode === "signup"){
+      result = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          emailRedirectTo: "https://pakavijaya0169-ux.github.io/hearttalk-website/"
+        }
+      });
+    } else {
+      result = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+    }
+
+    if(result.error) throw result.error;
+
+    if(authMode === "signup"){
+      notify("Account created! Check your email to confirm your account.");
+    } else {
+      notify("Login successful! Welcome to HeartTalk.");
+      closeLogin();
+    }
+
+  } catch(error) {
+    notify(error.message || "Something went wrong. Please try again.");
+  } finally {
+    button.disabled = false;
+    button.textContent = authMode === "signup" ? "Sign Up" : "Login";
+  }
+}
 </script>
 
 </body>
