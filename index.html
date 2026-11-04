@@ -181,6 +181,14 @@ async function handleAuth(){
   }
 }
 </script>
-
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/hearttalk-website/sw.js")
+      .then(() => console.log("HeartTalk App Ready"))
+      .catch(error => console.log("Service Worker Error:", error));
+  });
+}
+</script>
 </body>
 </html>
