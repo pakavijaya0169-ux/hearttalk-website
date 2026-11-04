@@ -68,7 +68,7 @@ footer{border-top:1px solid var(--line);padding:25px 7%;color:#91879d;font-size:
   <script>    
 const SUPABASE_URL = "https://dognojmymhlaewrjqswz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_e9ugpv_1hT1kSOCHpLWk2w_lB-ccMJk";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient  = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
 function notify(message){const t=document.getElementById('toast');t.textContent=message;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
 function hello(name){notify('Demo only: Say hello to '+name+'. Messaging is not connected yet.')}
