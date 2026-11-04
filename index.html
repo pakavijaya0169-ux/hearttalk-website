@@ -191,5 +191,14 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/hearttalk-website/sw.js")
+      .then(() => console.log("HeartTalk app ready"))
+      .catch(error => console.error("Service Worker error:", error));
+  });
+}
+</script>
 </body>
 </html>
