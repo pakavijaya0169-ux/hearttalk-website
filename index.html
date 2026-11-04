@@ -65,11 +65,14 @@ footer{border-top:1px solid var(--line);padding:25px 7%;color:#91879d;font-size:
 <div class="modal" id="loginModal"><div class="dialog"><button class="close" onclick="closeLogin()">×</button><h2>Welcome to HeartTalk</h2><p style="color:#aaa0b7;font-size:13px">Login design preview only. No account is created.</p><label>Email address</label><input type="email" placeholder="you@example.com"><label>Password</label><input type="password" placeholder="Enter password"><button class="primary" style="width:100%" onclick="notify('Real login will be added in the next development stage.');closeLogin()">Continue</button></div></div>
 <div id="toast"></div>
 <script>
+const SUPABASE_URL = "https://dognojmymhlaewrjqswz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_e9ugpv_1hT1kSOCHpLWk2w_lB-ccMJk";
 function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
 function notify(message){const t=document.getElementById('toast');t.textContent=message;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
 function hello(name){notify('Demo only: Say hello to '+name+'. Messaging is not connected yet.')}
 function openLogin(){document.getElementById('loginModal').classList.add('show')}
 function closeLogin(){document.getElementById('loginModal').classList.remove('show')}
 </script>
+
 </body>
 </html>
