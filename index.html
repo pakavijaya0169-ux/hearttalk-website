@@ -643,7 +643,24 @@ async function handleAuth(){
     button.textContent = authMode === "signup" ? "Sign Up" : "Login";
   }
 }
-</script>
+function saveProfile(){
+  const name = document.getElementById("profileName").value.trim();
+  const age = document.getElementById("profileAge").value;
+  const country = document.getElementById("profileCountry").value.trim();
+  const bio = document.getElementById("profileBio").value.trim();
+
+  if(!name || !age || !country){
+    notify("Please fill all required fields.");
+    return;
+  }
+
+  const profile = {name, age, country, bio};
+  localStorage.setItem("heartTalkProfile", JSON.stringify(profile));
+
+  document.getElementById("profileMessage").textContent =
+    "Profile saved successfully! 💗";
+}
+  </script>
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
