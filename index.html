@@ -83,6 +83,40 @@ body{padding-bottom:75px}
 .bottom-nav small{
   font-weight:600;
 }
+.hero{
+  min-height:75vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:45px 20px;
+  background:
+    radial-gradient(circle at top left,#65245f 0%,transparent 45%),
+    linear-gradient(145deg,#180d27,#35143f);
+  border-radius:0 0 30px 30px;
+}
+.hero h1{
+  font-size:clamp(32px,8vw,52px);
+  font-weight:800;
+  background:linear-gradient(90deg,#ff75bd,#bd8aff);
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero p{
+  color:#ead5f0;
+  line-height:1.7;
+  max-width:500px;
+}
+.hero button{
+  background:linear-gradient(90deg,#ff4fa3,#a855f7);
+  color:white;
+  border:0;
+  border-radius:25px;
+  padding:13px 25px;
+  font-weight:700;
+}
 </style>
 </head>
 <body>
