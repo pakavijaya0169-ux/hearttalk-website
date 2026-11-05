@@ -281,6 +281,37 @@ body{padding-bottom:75px}
   border-radius:20px;
   padding:10px 18px;
 }
+#profile-preview{
+  padding:35px 18px;
+  text-align:center;
+}
+#profile-preview h2{
+  color:#ff75bd;
+}
+.profile-card{
+  max-width:420px;
+  margin:auto;
+  padding:25px;
+  background:linear-gradient(145deg,#48164c,#24102f);
+  border:1px solid #a64b9b;
+  border-radius:22px;
+}
+.profile-avatar{
+  font-size:65px;
+}
+.profile-card h3{
+  color:#ff85c8;
+}
+.profile-card p{
+  color:#e4cce9;
+}
+.profile-card button{
+  background:linear-gradient(90deg,#ff4fa3,#a855f7);
+  color:white;
+  border:0;
+  border-radius:22px;
+  padding:12px 22px;
+}
 </style>
 </head>
 <body>
@@ -369,6 +400,15 @@ body{padding-bottom:75px}
       <p>Discover live conversations around the world.</p>
     </div>
     <button onclick="openLogin()">Join Live</button>
+  </div>
+</section>
+<section id="profile-preview">
+  <h2>My Profile 👤</h2>
+  <div class="profile-card">
+    <div class="profile-avatar">💗</div>
+    <h3>Welcome to HeartTalk</h3>
+    <p>Create your profile and connect with people worldwide.</p>
+    <button onclick="openLogin()">Login / Sign Up</button>
   </div>
 </section>
   </main>
