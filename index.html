@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-  <link rel="manifest" href="/hearttalk-website/manifest.json">   
 <head>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0d0a14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -664,9 +663,9 @@ function saveProfile(){
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/hearttalk-website/sw.js")
-      .then(() => console.log("HeartTalk App Ready"))
-      .catch(error => console.log("Service Worker Error:", error));
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("HeartTalk service worker ready"))
+      .catch(error => console.error("Service worker error:", error));
   });
 }
 </script>
@@ -686,15 +685,7 @@ section[id$="-preview"] {
   transform: translateY(-3px);
 }
 </style>
-  <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/hearttalk-website/sw.js")
-      .then(() => console.log("HeartTalk app ready"))
-      .catch(error => console.error("Service Worker error:", error));
-  });
-}
-</script>
+  
 <nav class="bottom-nav">
   <button onclick="scrollToId('home')">🏠<small>Home</small></button>
   <button onclick="scrollToId('discover')">💜<small>Discover</small></button>
