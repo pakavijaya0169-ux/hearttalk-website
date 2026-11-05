@@ -243,6 +243,44 @@ body{padding-bottom:75px}
   padding:10px;
   cursor:pointer;
 }
+#live-preview{
+  padding:35px 18px;
+}
+#live-preview h2{
+  color:#ff75bd;
+  text-align:center;
+}
+#live-preview>p{
+  color:#d7b9e5;
+  text-align:center;
+}
+.live-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  padding:18px;
+  background:linear-gradient(135deg,#48164c,#24102f);
+  border:1px solid #a64b9b;
+  border-radius:18px;
+}
+.live-icon{
+  font-size:38px;
+}
+.live-card h3{
+  color:#ff85c8;
+}
+.live-card p{
+  color:#e4cce9;
+  font-size:13px;
+}
+.live-card button{
+  background:linear-gradient(90deg,#ff4fa3,#a855f7);
+  color:white;
+  border:0;
+  border-radius:20px;
+  padding:10px 18px;
+}
 </style>
 </head>
 <body>
@@ -318,6 +356,19 @@ body{padding-bottom:75px}
       <p>See and connect with friends.</p>
       <button onclick="openLogin()">Start Video Call</button>
     </div>
+  </div>
+</section>
+<section id="live-preview">
+  <h2>Live Rooms 🎙️</h2>
+  <p>Join conversations, share your interests and meet new people.</p>
+
+  <div class="live-card">
+    <div class="live-icon">🎤</div>
+    <div>
+      <h3>HeartTalk Live</h3>
+      <p>Discover live conversations around the world.</p>
+    </div>
+    <button onclick="openLogin()">Join Live</button>
   </div>
 </section>
   </main>
