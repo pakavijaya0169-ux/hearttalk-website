@@ -508,8 +508,9 @@ body{padding-bottom:75px}
     <div class="profile-avatar">📸</div>
     <h3>Create Your Profile</h3>
 
-    <label>Profile Photo</label>
-    <input type="file" id="profilePhoto" accept="image/*">
+    <label>Profile Photo (upload setup pending)</label>
+    <input type="file" id="profilePhoto" accept="image/*" disabled>
+    <small style="color:#d7b9e5">Photo upload will be enabled after Storage setup.</small>
 
     <label>Your Name</label>
     <input type="text" id="profileName" placeholder="Enter your name">
@@ -633,6 +634,7 @@ async function handleAuth(){
     } else {
       notify("Login successful! Welcome to HeartTalk.");
       closeLogin();
+      await loadProfile();
     }
 
   } catch(error) {
@@ -642,23 +644,56 @@ async function handleAuth(){
     button.textContent = authMode === "signup" ? "Sign Up" : "Login";
   }
 }
-function saveProfile(){
+async function loadProfile(){
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  if(authError || !user) return;
+  const { data, error } = await supabaseClient.from("profiles")
+    .select("display_name, age, country, bio")
+    .eq("id", user.id).maybeSingle();
+  if(error){ console.error("Profile load error:", error); return; }
+  if(data){
+    document.getElementById("profileName").value = data.display_name || "";
+    document.getElementById("profileAge").value = data.age || "";
+    document.getElementById("profileCountry").value = data.country || "";
+    document.getElementById("profileBio").value = data.bio || "";
+  }
+}
+
+async function saveProfile(){
   const name = document.getElementById("profileName").value.trim();
-  const age = document.getElementById("profileAge").value;
+  const ageValue = Number(document.getElementById("profileAge").value);
   const country = document.getElementById("profileCountry").value.trim();
   const bio = document.getElementById("profileBio").value.trim();
-
-  if(!name || !age || !country){
-    notify("Please fill all required fields.");
-    return;
+  const message = document.getElementById("profileMessage");
+  if(!name || !ageValue || !country){ notify("Please fill your name, age and country."); return; }
+  if(!Number.isInteger(ageValue) || ageValue < 18 || ageValue > 100){
+    notify("HeartTalk is currently for adults aged 18 and above."); return;
   }
-
-  const profile = {name, age, country, bio};
-  localStorage.setItem("heartTalkProfile", JSON.stringify(profile));
-
-  document.getElementById("profileMessage").textContent =
-    "Profile saved successfully! 💗";
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  if(authError || !user){ notify("Please login before saving your profile."); openLogin(); return; }
+  const saveButton = document.querySelector(".profile-card button");
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving...";
+  try {
+    const { error } = await supabaseClient.from("profiles").upsert({
+      id: user.id, display_name: name, age: ageValue, country, bio
+    }, { onConflict: "id" });
+    if(error) throw error;
+    message.textContent = "Profile saved to your HeartTalk account. 💗";
+    notify("Profile saved successfully.");
+  } catch(error) {
+    console.error("Profile save error:", error);
+    message.textContent = "Profile could not be saved. Check Supabase setup.";
+    notify(error.message || "Profile save failed.");
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Profile 💗";
+  }
 }
+
+supabaseClient.auth.getSession().then(({data}) => {
+  if(data.session) loadProfile();
+});
   </script>
 <script>
 if ("serviceWorker" in navigator) {
