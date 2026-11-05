@@ -617,6 +617,22 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+<style>
+section[id$="-preview"] {
+  scroll-margin-top: 80px;
+  min-height: 75vh;
+  padding-top: 45px;
+  padding-bottom: 90px;
+}
+.bottom-nav button:focus {
+  color: #ff4fa3;
+  outline: none;
+}
+.bottom-nav button:hover {
+  color: #ff4fa3;
+  transform: translateY(-3px);
+}
+</style>
   <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
