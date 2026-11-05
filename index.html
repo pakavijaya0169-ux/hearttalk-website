@@ -204,6 +204,45 @@ body{padding-bottom:75px}
   color:#ff85c8;
   font-size:12px;
 }
+#calls-preview{
+  padding:35px 18px;
+  text-align:center;
+}
+#calls-preview h2{
+  color:#ff75bd;
+}
+#calls-preview>p{
+  color:#d7b9e5;
+}
+.call-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.call-card{
+  padding:18px 10px;
+  background:linear-gradient(145deg,#30183f,#1c1028);
+  border:1px solid #71356e;
+  border-radius:18px;
+}
+.call-card>div{
+  font-size:38px;
+}
+.call-card h3{
+  color:#ff85c8;
+}
+.call-card p{
+  color:#d7b9e5;
+  font-size:13px;
+}
+.call-card button{
+  background:linear-gradient(90deg,#ff4fa3,#a855f7);
+  color:white;
+  border:0;
+  border-radius:20px;
+  padding:10px;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -261,6 +300,24 @@ body{padding-bottom:75px}
       <p>Your conversations will appear here.</p>
     </div>
     <span class="chat-label">New</span>
+  </div>
+</section>
+ <section id="calls-preview">
+  <h2>Voice & Video Calls 📹</h2>
+  <p>Connect face-to-face with people around the world.</p>
+  <div class="call-options">
+    <div class="call-card">
+      <div>📞</div>
+      <h3>Voice Call</h3>
+      <p>Talk and make new friends.</p>
+      <button onclick="openLogin()">Start Voice Call</button>
+    </div>
+    <div class="call-card">
+      <div>🎥</div>
+      <h3>Video Call</h3>
+      <p>See and connect with friends.</p>
+      <button onclick="openLogin()">Start Video Call</button>
+    </div>
   </div>
 </section>
   </main>
