@@ -470,11 +470,26 @@ body{padding-bottom:75px}
 <section id="profile-preview">
   <h2>My Profile 👤</h2>
   <div class="profile-card">
-    <div class="profile-avatar">💗</div>
-    <h3>Your HeartTalk Profile</h3>
-    <p>Show your personality and meet people worldwide.</p>
-    <button onclick="openLogin()">Create My Profile</button>
-    <p>✨ Your profile journey starts here!</p>
+    <div class="profile-avatar">📸</div>
+    <h3>Create Your Profile</h3>
+
+    <label>Profile Photo</label>
+    <input type="file" id="profilePhoto" accept="image/*">
+
+    <label>Your Name</label>
+    <input type="text" id="profileName" placeholder="Enter your name">
+
+    <label>Your Age</label>
+    <input type="number" id="profileAge" placeholder="Enter your age">
+
+    <label>Country</label>
+    <input type="text" id="profileCountry" placeholder="Enter your country">
+
+    <label>About You</label>
+    <textarea id="profileBio" placeholder="Write something about yourself"></textarea>
+
+    <button onclick="saveProfile()">Save Profile 💗</button>
+    <p id="profileMessage"></p>
   </div>
 </section>
   </main>
