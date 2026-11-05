@@ -26,10 +26,33 @@ footer{border-top:1px solid var(--line);padding:25px 7%;color:#91879d;font-size:
 .modal{display:none;position:fixed;inset:0;background:#000b;z-index:10;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.dialog{background:#1b1525;border:1px solid #59436f;border-radius:17px;padding:25px;width:min(100%,390px)}.dialog h2{margin-top:0}.dialog input{width:100%;padding:12px;margin:8px 0 12px;background:#100d17;border:1px solid var(--line);border-radius:8px;color:white}.close{float:right;background:none;border:0;color:white;font-size:22px}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#3a2850;border:1px solid #8060a3;padding:12px 18px;border-radius:10px;display:none;z-index:20;font-size:13px}
 @media(max-width:700px){header{padding:0 16px}nav{gap:10px}nav button{font-size:11px}.hero{grid-template-columns:1fr;padding:35px 24px}.hero-art{display:none}.cards,.features,.pricing{grid-template-columns:1fr}.section-head{align-items:start;gap:12px;flex-direction:column}footer{flex-direction:column}}
+.app-header{
+  height:65px;
+  padding:0 20px;
+  background:linear-gradient(90deg,#251033,#421344);
+  border-bottom:1px solid #71356e;
+}
+.app-header .brand{
+  background:linear-gradient(90deg,#ff70bd,#b57aff);
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.app-header .heart{
+  background:linear-gradient(135deg,#ff4fa3,#a855f7);
+  color:white;
+  -webkit-text-fill-color:white;
+}
 </style>
 </head>
 <body>
-<header>
+<header class="app-header">
+  <div class="brand">
+    <span class="heart">♥</span>
+    <span>HeartTalk</span>
+  </div>
+  <button class="login" onclick="openLogin()">Login / Sign Up</button>
+</header>
   <div class="brand"><span class="heart">♥</span> HeartTalk</div>
   <nav><button onclick="scrollToId('discover')">Discover</button><button onclick="scrollToId('features')">Features</button><button onclick="scrollToId('plans')">Plans</button></nav>
   <button class="login" onclick="openLogin()">Log in</button>
