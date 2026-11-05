@@ -172,6 +172,38 @@ body{padding-bottom:75px}
   font-weight:600;
   margin-left:6px;
 }
+#chat-preview{
+  padding:35px 18px;
+}
+#chat-preview h2{
+  color:#ff75bd;
+  text-align:center;
+}
+#chat-preview>p{
+  text-align:center;
+  color:#d7b9e5;
+}
+.chat-preview-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:18px;
+  background:linear-gradient(135deg,#30183f,#1c1028);
+  border:1px solid #71356e;
+  border-radius:18px;
+}
+.chat-avatar{
+  font-size:35px;
+}
+.chat-preview-card p{
+  color:#d7b9e5;
+  margin-bottom:0;
+}
+.chat-label{
+  margin-left:auto;
+  color:#ff85c8;
+  font-size:12px;
+}
 </style>
 </head>
 <body>
@@ -186,7 +218,7 @@ body{padding-bottom:75px}
   <nav><button onclick="scrollToId('discover')">Discover</button><button onclick="scrollToId('features')">Features</button><button onclick="scrollToId('plans')">Plans</button></nav>
   <button class="login" onclick="openLogin()">Log in</button>
 </header>
-<main>
+  <main>
   <section class="hero" id="home">
     <div><div class="tag">YOUR WORLD OF CONNECTIONS</div><h1>Meet people.<br><span>Share moments.</span></h1><p>Find new friends, share stories and build meaningful connections with people around the world.</p><button class="primary" onclick="openLogin()">Join HeartTalk 💗</button></div>
     <div class="hero-art">💜</div>
@@ -218,7 +250,20 @@ body{padding-bottom:75px}
       <div class="plan"><h3>VIP</h3><div class="price">₹399 <small>/ month</small></div><p>Your premium connection space.</p><ul><li>VIP profile badge</li><li>Premium live rooms</li><li>Priority support</li></ul><button class="outline" onclick="notify('Payments are not connected in this demo.')">Explore VIP</button></div>
     </div>
   </section>
-</main>
+<section id="chat-preview">
+  <h2>Your Conversations 💬</h2>
+  <p>Meet people and start meaningful conversations.</p>
+
+  <div class="chat-preview-card">
+    <div class="chat-avatar">💜</div>
+    <div>
+      <b>Welcome to HeartTalk</b>
+      <p>Your conversations will appear here.</p>
+    </div>
+    <span class="chat-label">New</span>
+  </div>
+</section>
+  </main>
 <footer><span>© 2026 HeartTalk. Made for meaningful connections.</span><span>Safety first · Privacy · Help</span></footer>
 <div class="modal" id="loginModal">
   <div class="dialog">
