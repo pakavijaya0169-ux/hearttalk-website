@@ -205,8 +205,8 @@ function showView(name){
  if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();}
  if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
 }
-function openAuth(){document.getElementById("authModal").classList.add("show")}
-let authMethod="email",pendingPhone="";
+function openAuth(){setAuthMethod("phone");document.getElementById("authModal").classList.add("show")}
+let authMethod="phone",pendingPhone="";
 function setAuthMethod(method){
  authMethod=method;
  document.getElementById("emailAuthFields").style.display=method==="email"?"block":"none";
