@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  if(saved&&document.getElementById("meteredApiKey"))document.getElementById("meteredApiKey").value=saved;
 });
 
-let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
+let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
 let cachedIceServers=null, callMuted=false, cameraDisabled=false;
 function callStatus(s){const el=document.getElementById("callStatus");if(el)el.textContent=s}
 function selectedCallUser(){return activeChatUser||null}
@@ -301,7 +301,7 @@ function toggleCallMute(){if(!localCallStream)return;callMuted=!callMuted;localC
 function toggleCallCamera(){if(!localCallStream)return;cameraDisabled=!cameraDisabled;localCallStream.getVideoTracks().forEach(t=>t.enabled=!cameraDisabled);document.getElementById("cameraCallBtn").textContent=cameraDisabled?"Camera on":"Camera off"}
 
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){if(callPollTimer)clearInterval(callPollTimer);callPollTimer=setInterval(pollIncomingCalls,2500)}else{if(callPollTimer)clearInterval(callPollTimer);cleanupCall(true)}});
+supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=setInterval(pollIncomingCalls,2500)}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;cleanupCall(true)}});
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Service worker",e)))}</script>
