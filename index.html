@@ -35,7 +35,11 @@ h1,h2,h3{margin-top:0}h1{font-size:clamp(30px,5vw,48px)}h2{color:#ff85c8}p{color
 <section class="view active" id="homeView"><div class="hero"><div class="muted">YOUR WORLD OF CONNECTIONS</div><h1>Meet people.<br><span style="color:#e7a0e4">Share moments.</span></h1><p>Find new friends, share stories and build meaningful connections with adults around the world.</p><button class="primary" onclick="openAuth()">Join HeartTalk 💗</button></div><div class="grid"><div class="panel"><h3>💜 Discover</h3><p>Explore real community profiles from HeartTalk members.</p><button class="secondary" onclick="showView('discover')">Explore people</button></div><div class="panel"><h3>💬 Private chat</h3><p>Send direct messages to people you connect with.</p><button class="secondary" onclick="showView('chat')">Open messages</button></div><div class="panel"><h3>🛡️ Adults-only community</h3><p>HeartTalk is designed for adults aged 18 and above. Block and report tools are planned before public launch.</p></div></div></section>
 <section class="view" id="discoverView"><h2>Discover people 💜</h2><p>Real HeartTalk member profiles. Sign in to explore and message.</p><div class="toolbar"><input id="discoverSearch" placeholder="Search name or country..." oninput="renderDiscover()"><button class="secondary" onclick="loadDiscover()">Refresh</button></div><div id="discoverGrid" class="grid"><div class="notice">Login to discover community members.</div></div></section>
 <section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
-<section class="view" id="callsView"><h2>Voice & video calls 📹</h2><div class="panel" style="max-width:650px"><h3>Connect calling service</h3><p>Paste your Metered credential API Key here. It is saved only in this browser, not in your HeartTalk profile or database.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p><p class="muted">Use only the API Key for the HeartTalk_WebRTC TURN credential. Never paste your Metered account Secret Key or TURN password here.</p></div><div class="panel" style="margin-top:16px"><h3>Start a call</h3><p>Sign in and choose a member from Discover first. Voice/video calling will be enabled after the connection test and secure call signaling are completed.</p><button class="secondary" onclick="showView('discover')">Find a member</button></div></section>
+<section class="view" id="callsView"><h2>Voice & video calls 📹</h2>
+<div class="panel" style="max-width:760px"><h3>Calling setup</h3><p>Metered TURN server helps connect users. Your credential API key stays in this browser.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p></div>
+<div class="panel" style="margin-top:16px"><h3>Call a member</h3><p id="callTargetLabel">First choose a member from Discover, then return here.</p><div class="toolbar"><button class="primary" onclick="startOutgoingCall('voice')">📞 Voice call</button><button class="primary" onclick="startOutgoingCall('video')">🎥 Video call</button><button class="secondary" onclick="showView('discover')">Find a member</button></div><p id="callStatus" class="muted">No active call.</p><div class="grid"><div><label class="muted">You</label><video id="localCallVideo" autoplay playsinline muted style="width:100%;background:#09050e;border-radius:14px;min-height:150px"></video></div><div><label class="muted">Other member</label><video id="remoteCallVideo" autoplay playsinline style="width:100%;background:#09050e;border-radius:14px;min-height:150px"></video></div></div><div class="toolbar"><button class="secondary" id="muteCallBtn" onclick="toggleCallMute()" disabled>Mute mic</button><button class="secondary" id="cameraCallBtn" onclick="toggleCallCamera()" disabled>Camera off</button><button class="secondary" id="endCallBtn" onclick="endCurrentCall()" disabled>End call</button></div></div>
+<div class="panel" id="incomingCallPanel" style="display:none;margin-top:16px"><h3>Incoming call 💗</h3><p id="incomingCallText">Someone is calling you.</p><div class="toolbar"><button class="primary" onclick="acceptIncomingCall()">Accept</button><button class="secondary" onclick="rejectIncomingCall()">Reject</button></div></div>
+</section>
 <section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
 <section class="view" id="profileView"><h2>My profile 👤</h2><div class="profile-box"><div class="field"><label>Your name</label><input id="profileName" placeholder="Enter your name"></div><div class="field"><label>Your age (18+)</label><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></div><div class="field"><label>Country</label><input id="profileCountry" placeholder="Country"></div><div class="field"><label>About you</label><textarea id="profileBio" rows="4" maxlength="500" placeholder="Tell people about yourself"></textarea></div><button class="primary" onclick="saveProfile()">Save Profile 💗</button><p id="profileMessage" class="muted"></p></div></section>
 </main>
@@ -168,7 +172,136 @@ document.addEventListener("DOMContentLoaded",()=>{
  const saved=localStorage.getItem("hearttalk_metered_turn_api_key");
  if(saved&&document.getElementById("meteredApiKey"))document.getElementById("meteredApiKey").value=saved;
 });
+
+let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
+let cachedIceServers=null, callMuted=false, cameraDisabled=false;
+function callStatus(s){const el=document.getElementById("callStatus");if(el)el.textContent=s}
+function selectedCallUser(){return activeChatUser||null}
+async function getMeteredIceServers(){
+ const key=localStorage.getItem("hearttalk_metered_turn_api_key")||"";
+ if(!key)throw new Error("Save your Metered API Key in Calls setup first.");
+ if(cachedIceServers)return cachedIceServers;
+ const r=await fetch("https://hearttalkcalls.metered.live/api/v1/turn/credentials?apiKey="+encodeURIComponent(key));
+ if(!r.ok)throw new Error("Could not load TURN servers. Check your Metered API Key.");
+ const data=await r.json();if(!Array.isArray(data)||!data.length)throw new Error("Metered returned no ICE servers.");
+ cachedIceServers=data;return data;
+}
+function updateCallButtons(on){
+ ["muteCallBtn","cameraCallBtn","endCallBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=!on});
+}
+async function createPeer(){
+ const iceServers=await getMeteredIceServers();
+ peerConnection=new RTCPeerConnection({iceServers});
+ peerConnection.onicecandidate=async e=>{if(e.candidate&&activeCallId)await sendCallSignal("ice",e.candidate.toJSON())};
+ peerConnection.ontrack=e=>{const v=document.getElementById("remoteCallVideo");if(v)v.srcObject=e.streams[0]};
+ peerConnection.onconnectionstatechange=()=>{if(peerConnection)callStatus("Call connection: "+peerConnection.connectionState)};
+ peerConnection.oniceconnectionstatechange=()=>{if(peerConnection&&["failed","disconnected"].includes(peerConnection.iceConnectionState))callStatus("Connection interrupted. Check internet and permissions.")};
+}
+async function getLocalMedia(type){
+ localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==="video"});
+ const v=document.getElementById("localCallVideo");if(v)v.srcObject=localCallStream;
+ localCallStream.getTracks().forEach(t=>peerConnection.addTrack(t,localCallStream));
+ updateCallButtons(true);
+}
+async function sendCallSignal(type,payload){
+ const {error}=await supabaseClient.from("call_signals").insert({call_id:activeCallId,sender_id:currentUser.id,signal_type:type,payload:payload||{}});
+ if(error)throw error;
+}
+async function handleCallSignal(s){
+ if(!s||s.sender_id===currentUser.id)return;
+ if(s.signal_type==="offer"&&activeCallRole==="callee"){
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(s.payload));
+  for(const x of pendingIce)await peerConnection.addIceCandidate(new RTCIceCandidate(x));pendingIce=[];
+  const answer=await peerConnection.createAnswer();await peerConnection.setLocalDescription(answer);
+  await sendCallSignal("answer",peerConnection.localDescription.toJSON());
+ }else if(s.signal_type==="answer"&&activeCallRole==="caller"){
+  if(peerConnection.signalingState==="have-local-offer")await peerConnection.setRemoteDescription(new RTCSessionDescription(s.payload));
+ }else if(s.signal_type==="ice"){
+  if(peerConnection.remoteDescription)await peerConnection.addIceCandidate(new RTCIceCandidate(s.payload));else pendingIce.push(s.payload);
+ }else if(s.signal_type==="hangup"||s.signal_type==="reject"){
+  callStatus(s.signal_type==="reject"?"Call was declined.":"The other member ended the call.");
+  await cleanupCall(false);
+ }
+}
+async function pollCallSignals(){
+ if(!activeCallId||!currentUser)return;
+ const {data,error}=await supabaseClient.from("call_signals").select("id,sender_id,signal_type,payload").eq("call_id",activeCallId).gt("id",lastSignalId).order("id",{ascending:true}).limit(100);
+ if(error){console.warn("Call signal polling",error);return}
+ for(const s of data||[]){lastSignalId=Math.max(lastSignalId,s.id);try{await handleCallSignal(s)}catch(e){console.error(e);callStatus("Call setup error: "+e.message)}}
+}
+async function startOutgoingCall(type){
+ if(!currentUser){notify("Please log in first.");openAuth();return}
+ const target=selectedCallUser();if(!target||target.id===currentUser.id){notify("First open Discover and select a member.");showView("discover");return}
+ if(!navigator.mediaDevices?.getUserMedia){notify("Use HTTPS and a browser that supports microphone/camera.");return}
+ if(activeCallId){notify("A call is already active.");return}
+ try{
+  callStatus("Preparing "+type+" call...");
+  const {data,error}=await supabaseClient.from("call_sessions").insert({caller_id:currentUser.id,callee_id:target.id,call_type:type,status:"ringing"}).select("id").single();
+  if(error)throw error;
+  activeCallId=data.id;activeCallRole="caller";lastSignalId=0;pendingIce=[];
+  await createPeer();await getLocalMedia(type);
+  const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
+  await sendCallSignal("offer",peerConnection.localDescription.toJSON());
+  document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";
+  callStatus("Calling "+target.display_name+"… waiting for them to answer.");
+  signalPollTimer=setInterval(pollCallSignals,1200);
+  callPollTimer=setInterval(checkCallStatus,1800);
+ }catch(e){console.error(e);callStatus("Could not start call: "+(e.message||e));notify("Call could not start. Check microphone/camera permission and database access.");await cleanupCall(false)}
+}
+async function checkCallStatus(){
+ if(!activeCallId)return;
+ const {data,error}=await supabaseClient.from("call_sessions").select("status").eq("id",activeCallId).maybeSingle();
+ if(error||!data)return;
+ if(data.status==="accepted")callStatus("Connected. You can talk now.");
+ if(["rejected","ended","missed","cancelled"].includes(data.status)){callStatus(data.status==="rejected"?"Call declined.":"Call ended.");await cleanupCall(false)}
+}
+async function pollIncomingCalls(){
+ if(!currentUser||activeCallId)return;
+ const {data,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,created_at").eq("callee_id",currentUser.id).eq("status","ringing").order("created_at",{ascending:false}).limit(1);
+ if(error||!data?.length)return;
+ const call=data[0];if(window.pendingIncomingCallId===call.id)return;
+ window.pendingIncomingCallId=call.id;
+ const p=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();
+ document.getElementById("incomingCallText").textContent=(p.data?.display_name||"A HeartTalk member")+" is making a "+call.call_type+" call.";
+ document.getElementById("incomingCallPanel").style.display="block";
+}
+async function acceptIncomingCall(){
+ const id=window.pendingIncomingCallId;if(!id||!currentUser)return;
+ try{
+  const {data:call,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,status").eq("id",id).maybeSingle();if(error||!call||call.status!=="ringing")throw new Error("This call is no longer available.");
+  activeCallId=id;activeCallRole="callee";lastSignalId=0;pendingIce=[];
+  await createPeer();await getLocalMedia(call.call_type);
+  const {error:uerr}=await supabaseClient.from("call_sessions").update({status:"accepted",started_at:new Date().toISOString()}).eq("id",id);if(uerr)throw uerr;
+  document.getElementById("incomingCallPanel").style.display="none";
+  const {data:sigs,error:serr}=await supabaseClient.from("call_signals").select("id,sender_id,signal_type,payload").eq("call_id",id).eq("signal_type","offer").order("id",{ascending:true}).limit(1);if(serr)throw serr;
+  if(sigs?.[0]){lastSignalId=sigs[0].id;await handleCallSignal(sigs[0])}
+  callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,1800);
+  window.pendingIncomingCallId=null;
+ }catch(e){notify("Could not accept call: "+e.message);await cleanupCall(false)}
+}
+async function rejectIncomingCall(){
+ const id=window.pendingIncomingCallId;if(!id)return;
+ await supabaseClient.from("call_sessions").update({status:"rejected",ended_at:new Date().toISOString()}).eq("id",id);
+ await supabaseClient.from("call_signals").insert({call_id:id,sender_id:currentUser.id,signal_type:"reject",payload:{}});
+ window.pendingIncomingCallId=null;document.getElementById("incomingCallPanel").style.display="none";notify("Call rejected.")
+}
+async function endCurrentCall(){
+ if(activeCallId){try{await sendCallSignal("hangup",{});await supabaseClient.from("call_sessions").update({status:"ended",ended_at:new Date().toISOString()}).eq("id",activeCallId)}catch(e){console.warn(e)}}
+ callStatus("You ended the call.");await cleanupCall(false);
+}
+async function cleanupCall(updateStatus){
+ if(signalPollTimer)clearInterval(signalPollTimer);if(callPollTimer)clearInterval(callPollTimer);signalPollTimer=null;callPollTimer=null;
+ if(peerConnection){peerConnection.ontrack=null;peerConnection.close();peerConnection=null}
+ if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
+ const a=document.getElementById("localCallVideo"),b=document.getElementById("remoteCallVideo");if(a)a.srcObject=null;if(b)b.srcObject=null;
+ activeCallId=null;activeCallRole=null;pendingIce=[];updateCallButtons(false);
+ if(updateStatus)callStatus("No active call.");
+}
+function toggleCallMute(){if(!localCallStream)return;callMuted=!callMuted;localCallStream.getAudioTracks().forEach(t=>t.enabled=!callMuted);document.getElementById("muteCallBtn").textContent=callMuted?"Unmute mic":"Mute mic"}
+function toggleCallCamera(){if(!localCallStream)return;cameraDisabled=!cameraDisabled;localCallStream.getVideoTracks().forEach(t=>t.enabled=!cameraDisabled);document.getElementById("cameraCallBtn").textContent=cameraDisabled?"Camera on":"Camera off"}
+
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){if(callPollTimer)clearInterval(callPollTimer);callPollTimer=setInterval(pollIncomingCalls,2500)}else{if(callPollTimer)clearInterval(callPollTimer);cleanupCall(true)}});
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Service worker",e)))}</script>
