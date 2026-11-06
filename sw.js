@@ -1,4 +1,4 @@
-const CACHE_NAME = "hearttalk-v1";
+const CACHE_NAME = "hearttalk-v2";
 const FILES_TO_CACHE = [
   "/hearttalk-website/",
   "/hearttalk-website/manifest.json"
