@@ -38,8 +38,9 @@ h1,h2,h3{margin-top:0}h1{font-size:clamp(30px,5vw,48px)}h2{color:#ff85c8}p{color
 <section class="view" id="callsView"><h2>Voice & video calls 📹</h2>
 <div class="panel" style="max-width:760px"><h3>Calling setup</h3><p>Metered TURN server helps connect users. Your credential API key stays in this browser.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button><button class="secondary" onclick="enableCallAlerts()">🔔 Enable ringtone & notifications</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p></div>
 <div class="panel" style="margin-top:16px"><h3>Call a member</h3><p id="callTargetLabel">First choose a member from Discover, then return here.</p><div class="toolbar"><button class="primary" onclick="startOutgoingCall('voice')">📞 Voice call</button><button class="primary" onclick="startOutgoingCall('video')">🎥 Video call</button><button class="secondary" onclick="showView('discover')">Find a member</button></div><p id="callStatus" class="muted">No active call.</p><div class="grid"><div><label class="muted">You</label><video id="localCallVideo" autoplay playsinline muted style="width:100%;background:#09050e;border-radius:14px;min-height:150px"></video></div><div><label class="muted">Other member</label><video id="remoteCallVideo" autoplay playsinline style="width:100%;background:#09050e;border-radius:14px;min-height:150px"></video></div></div><div class="toolbar"><button class="secondary" id="muteCallBtn" onclick="toggleCallMute()" disabled>Mute mic</button><button class="secondary" id="cameraCallBtn" onclick="toggleCallCamera()" disabled>Camera off</button><button class="secondary" id="endCallBtn" onclick="endCurrentCall()" disabled>End call</button></div></div>
-<div class="incoming-overlay" id="incomingCallPanel"><div class="incoming-card"><div class="call-ring">● Incoming HeartTalk call</div><div class="incoming-avatar">💗</div><h2 id="incomingCallerName">Someone is calling</h2><p id="incomingCallText">Voice call · HeartTalk</p><div class="incoming-actions"><button class="primary" onclick="acceptIncomingCall()">📞 Accept</button><button class="secondary reject-call" onclick="rejectIncomingCall()">✕ Decline</button></div></div></div>
+
 </section>
+<div class="incoming-overlay" id="incomingCallPanel"><div class="incoming-card"><div class="call-ring">● Incoming HeartTalk call</div><div class="incoming-avatar">💗</div><h2 id="incomingCallerName">Someone is calling</h2><p id="incomingCallText">Voice call · HeartTalk</p><div class="incoming-actions"><button class="primary" onclick="acceptIncomingCall()">📞 Accept</button><button class="secondary reject-call" onclick="rejectIncomingCall()">✕ Decline</button></div></div></div>
 <section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
 <section class="view" id="profileView"><h2>My profile 👤</h2><div class="profile-box"><div class="field"><label>Your name</label><input id="profileName" placeholder="Enter your name"></div><div class="field"><label>Your age (18+)</label><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></div><div class="field"><label>Country</label><input id="profileCountry" placeholder="Country"></div><div class="field"><label>About you</label><textarea id="profileBio" rows="4" maxlength="500" placeholder="Tell people about yourself"></textarea></div><button class="primary" onclick="saveProfile()">Save Profile 💗</button><p id="profileMessage" class="muted"></p></div></section>
 </main>
@@ -273,13 +274,14 @@ async function pollIncomingCalls(){
  notify("Incoming call from "+callerName);
 }
 async function acceptIncomingCall(){
+ stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");document.title="HeartTalk — Meet. Connect. Belong.";
  const id=window.pendingIncomingCallId;if(!id||!currentUser)return;
  try{
   const {data:call,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,status").eq("id",id).maybeSingle();if(error||!call||call.status!=="ringing")throw new Error("This call is no longer available.");
   activeCallId=id;activeCallRole="callee";lastSignalId=0;pendingIce=[];
   await createPeer();await getLocalMedia(call.call_type);
   const {error:uerr}=await supabaseClient.from("call_sessions").update({status:"accepted",started_at:new Date().toISOString()}).eq("id",id);if(uerr)throw uerr;
-  document.getElementById("incomingCallPanel").style.display="none";
+  document.getElementById("incomingCallPanel").classList.remove("show");
   const {data:sigs,error:serr}=await supabaseClient.from("call_signals").select("id,sender_id,signal_type,payload").eq("call_id",id).eq("signal_type","offer").order("id",{ascending:true}).limit(1);if(serr)throw serr;
   if(sigs?.[0]){lastSignalId=sigs[0].id;await handleCallSignal(sigs[0])}
   callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,1800);
@@ -287,6 +289,7 @@ async function acceptIncomingCall(){
  }catch(e){notify("Could not accept call: "+e.message);await cleanupCall(false)}
 }
 async function rejectIncomingCall(){
+ stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");document.title="HeartTalk — Meet. Connect. Belong.";
  const id=window.pendingIncomingCallId;if(!id)return;
  await supabaseClient.from("call_sessions").update({status:"rejected",ended_at:new Date().toISOString()}).eq("id",id);
  await supabaseClient.from("call_signals").insert({call_id:id,sender_id:currentUser.id,signal_type:"reject",payload:{}});
