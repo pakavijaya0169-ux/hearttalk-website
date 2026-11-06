@@ -135,7 +135,7 @@ async function loadMessages(){
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
- const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message});
+ const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:content});
  if(error){notify(error.message);return}input.value="";await loadMessages();await loadConversations()
 }
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
