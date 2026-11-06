@@ -160,7 +160,7 @@ p{color:#77747e}
   <div class="call-controls"><button id="muteCallBtn" onclick="toggleCallMute()" disabled>🎙️ Mute</button><button id="cameraCallBtn" onclick="toggleCallCamera()" disabled>📷 Camera off</button><button id="endCallBtn" class="end-call-btn" onclick="endCurrentCall()" disabled>End call</button></div>
  </div>
 </div>
-<details class="advanced-call-setup"><summary>Advanced connection setup</summary><p>Device-specific TURN configuration for testing. This is not required for normal members once server-side configuration is deployed.</p><div class="field"><label for="meteredApiKey">Metered credential API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste credential API Key"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p></details>
+<p id="callSetupStatus" class="muted" style="display:none">Secure calling connection is configured automatically.</p>
 </section>
 <div class="incoming-overlay" id="incomingCallPanel"><div class="incoming-card"><div class="call-ring">● Incoming HeartTalk call</div><div class="incoming-avatar">💗</div><h2 id="incomingCallerName">Someone is calling</h2><p id="incomingCallText">Voice call · HeartTalk</p><div class="incoming-actions"><button class="primary" onclick="acceptIncomingCall()">📞 Accept</button><button class="secondary reject-call" onclick="rejectIncomingCall()">✕ Decline</button></div></div></div>
 <section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
@@ -358,49 +358,19 @@ async function sendMessage(e){
  if(error){notify(error.message);return}input.value="";await loadMessages();await loadConversations()
 }
 
-function saveMeteredKey(){
- const key=document.getElementById("meteredApiKey").value.trim();
- if(!key){notify("Paste your Metered API Key first.");return}
- localStorage.setItem("hearttalk_metered_turn_api_key",key);
- document.getElementById("callSetupStatus").textContent="API Key saved on this browser. Test the connection next.";
- notify("Metered key saved on this device.");
+async function getMeteredIceServers(){
+ if(cachedIceServers)return cachedIceServers;
+ const {data,error}=await supabaseClient.functions.invoke("get-turn-credentials");
+ if(error)throw new Error("Secure call setup is unavailable. Please try again later.");
+ const servers=data?.iceServers;
+ if(!Array.isArray(servers)||!servers.length)throw new Error("Secure call setup returned no connection servers.");
+ cachedIceServers=servers;return servers;
 }
-async function testMeteredConnection(){
- const key=document.getElementById("meteredApiKey").value.trim()||localStorage.getItem("hearttalk_metered_turn_api_key")||"";
- const status=document.getElementById("callSetupStatus");
- if(!key){notify("Paste and save your Metered API Key first.");return}
- status.textContent="Testing Metered connection...";
- try{
-  const response=await fetch("https://hearttalkcalls.metered.live/api/v1/turn/credentials?apiKey="+encodeURIComponent(key));
-  if(!response.ok)throw new Error("Metered returned HTTP "+response.status+". Check the credential API Key.");
-  const servers=await response.json();
-  if(!Array.isArray(servers)||!servers.length)throw new Error("Metered did not return ICE servers.");
-  localStorage.setItem("hearttalk_metered_turn_api_key",key);
-  status.textContent="Metered connection successful. ICE server settings received. Voice/video call signaling still needs to be connected and tested.";
-  notify("Metered connection successful!");
- }catch(e){
-  status.textContent="Connection test failed: "+(e.message||"Unknown error");
-  notify("Connection test failed. Check the API Key and try again.");
- }
-}
-document.addEventListener("DOMContentLoaded",()=>{
- const saved=localStorage.getItem("hearttalk_metered_turn_api_key");
- if(saved&&document.getElementById("meteredApiKey"))document.getElementById("meteredApiKey").value=saved;
-});
 
 let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
 let cachedIceServers=null, callMuted=false, cameraDisabled=false, ringTimer=null, ringAudioContext=null, callAlertsEnabled=false;
 function callStatus(s){const el=document.getElementById("callStatus");if(el)el.textContent=s}
 function selectedCallUser(){return activeChatUser||null}
-async function getMeteredIceServers(){
- const key=localStorage.getItem("hearttalk_metered_turn_api_key")||"";
- if(!key)throw new Error("Save your Metered API Key in Calls setup first.");
- if(cachedIceServers)return cachedIceServers;
- const r=await fetch("https://hearttalkcalls.metered.live/api/v1/turn/credentials?apiKey="+encodeURIComponent(key));
- if(!r.ok)throw new Error("Could not load TURN servers. Check your Metered API Key.");
- const data=await r.json();if(!Array.isArray(data)||!data.length)throw new Error("Metered returned no ICE servers.");
- cachedIceServers=data;return data;
-}
 function updateCallButtons(on){
  ["muteCallBtn","cameraCallBtn","endCallBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=!on});
 }
