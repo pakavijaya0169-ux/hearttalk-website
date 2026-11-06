@@ -675,8 +675,9 @@ async function saveProfile(){
   saveButton.disabled = true;
   saveButton.textContent = "Saving...";
   try {
+    const username = (name.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 18) || "member") + "_" + user.id.slice(0, 6);
     const { error } = await supabaseClient.from("profiles").upsert({
-      id: user.id, display_name: name, age: ageValue, country, bio
+      id: user.id, display_name: name, username, age: ageValue, country, bio
     }, { onConflict: "id" });
     if(error) throw error;
     message.textContent = "Profile saved to your HeartTalk account. 💗";
