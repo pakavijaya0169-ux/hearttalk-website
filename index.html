@@ -156,7 +156,7 @@ p{color:#77747e}
   <div class="call-alert-row"><span>🔔 Get notified when someone calls</span><button class="secondary" onclick="enableCallAlerts()">Enable notifications</button></div>
   <p id="callStatus" class="call-status">No active call</p>
  </div>
- <div class="call-video-card"><div class="call-video-grid"><div class="video-tile"><video id="localCallVideo" autoplay playsinline muted></video><span>You</span></div><div class="video-tile"><video id="remoteCallVideo" autoplay playsinline></video><span>Other member</span></div></div>
+ <div class="call-video-card"><div class="call-video-grid"><div class="video-tile"><video id="localCallVideo" autoplay playsinline muted></video><span>You</span></div><div class="video-tile"><video id="remoteCallVideo" autoplay playsinline></video><span id="remoteCallName">Other member</span></div></div>
   <div class="call-controls"><button id="muteCallBtn" onclick="toggleCallMute()" disabled>🎙️ Mute</button><button id="cameraCallBtn" onclick="toggleCallCamera()" disabled>📷 Camera off</button><button id="endCallBtn" class="end-call-btn" onclick="endCurrentCall()" disabled>End call</button></div>
  </div>
 </div>
@@ -427,7 +427,7 @@ async function startOutgoingCall(type){
   await createPeer();await getLocalMedia(type);
   const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
   await sendCallSignal("offer",peerConnection.localDescription.toJSON());
-  document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";
+  document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
   callStatus("Calling "+target.display_name+"… waiting for them to answer.");
   signalPollTimer=setInterval(pollCallSignals,1200);
   callPollTimer=setInterval(checkCallStatus,1800);
@@ -462,7 +462,7 @@ async function acceptIncomingCall(){
  const id=window.pendingIncomingCallId;if(!id||!currentUser)return;
  try{
   const {data:call,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,status").eq("id",id).maybeSingle();if(error||!call||call.status!=="ringing")throw new Error("This call is no longer available.");
-  activeCallId=id;activeCallRole="callee";lastSignalId=0;pendingIce=[];
+  activeCallId=id;activeCallRole="callee";lastSignalId=0;pendingIce=[];const {data:callerProfile}=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent=callerProfile?.display_name||"HeartTalk member";
   await createPeer();await getLocalMedia(call.call_type);
   const {error:uerr}=await supabaseClient.from("call_sessions").update({status:"accepted",started_at:new Date().toISOString()}).eq("id",id);if(uerr)throw uerr;
   document.getElementById("incomingCallPanel").classList.remove("show");
