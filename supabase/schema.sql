@@ -323,3 +323,27 @@ begin
     end if;
   end loop;
 end $$;
+
+
+-- HeartTalk profile social graph: follower/following counts.
+create table if not exists public.follows (
+  follower_id uuid not null references auth.users(id) on delete cascade,
+  followed_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (follower_id, followed_id),
+  check (follower_id <> followed_id)
+);
+create index if not exists follows_followed_idx on public.follows(followed_id, created_at desc);
+create index if not exists follows_follower_idx on public.follows(follower_id, created_at desc);
+alter table public.follows enable row level security;
+drop policy if exists "Authenticated users can view follows" on public.follows;
+create policy "Authenticated users can view follows"
+on public.follows for select to authenticated using (true);
+drop policy if exists "Users can follow as themselves" on public.follows;
+create policy "Users can follow as themselves"
+on public.follows for insert to authenticated
+with check (follower_id = auth.uid() and follower_id <> followed_id);
+drop policy if exists "Users can unfollow themselves" on public.follows;
+create policy "Users can unfollow themselves"
+on public.follows for delete to authenticated using (follower_id = auth.uid());
+
