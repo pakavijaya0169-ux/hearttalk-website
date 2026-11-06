@@ -420,6 +420,8 @@ async function startOutgoingCall(type){
  if(!navigator.mediaDevices?.getUserMedia){notify("Use HTTPS and a browser that supports microphone/camera.");return}
  if(activeCallId){notify("A call is already active.");return}
  try{
+  const remoteName=document.getElementById("remoteCallName");
+  if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
   callStatus("Preparing "+type+" call...");
   const {data,error}=await supabaseClient.from("call_sessions").insert({caller_id:currentUser.id,callee_id:target.id,call_type:type,status:"ringing"}).select("id").single();
   if(error)throw error;
@@ -427,7 +429,7 @@ async function startOutgoingCall(type){
   await createPeer();await getLocalMedia(type);
   const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
   await sendCallSignal("offer",peerConnection.localDescription.toJSON());
-  document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
+  document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
   callStatus("Calling "+target.display_name+"… waiting for them to answer.");
   signalPollTimer=setInterval(pollCallSignals,1200);
   callPollTimer=setInterval(checkCallStatus,1800);
@@ -489,6 +491,7 @@ async function cleanupCall(updateStatus){
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
  const a=document.getElementById("localCallVideo"),b=document.getElementById("remoteCallVideo");if(a)a.srcObject=null;if(b)b.srcObject=null;
  activeCallId=null;activeCallRole=null;pendingIce=[];updateCallButtons(false);
+ const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent="Other member";
  if(updateStatus)callStatus("No active call.");
 }
 async function enableCallAlerts(){
