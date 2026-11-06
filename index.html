@@ -35,7 +35,7 @@ h1,h2,h3{margin-top:0}h1{font-size:clamp(30px,5vw,48px)}h2{color:#ff85c8}p{color
 <section class="view active" id="homeView"><div class="hero"><div class="muted">YOUR WORLD OF CONNECTIONS</div><h1>Meet people.<br><span style="color:#e7a0e4">Share moments.</span></h1><p>Find new friends, share stories and build meaningful connections with adults around the world.</p><button class="primary" onclick="openAuth()">Join HeartTalk 💗</button></div><div class="grid"><div class="panel"><h3>💜 Discover</h3><p>Explore real community profiles from HeartTalk members.</p><button class="secondary" onclick="showView('discover')">Explore people</button></div><div class="panel"><h3>💬 Private chat</h3><p>Send direct messages to people you connect with.</p><button class="secondary" onclick="showView('chat')">Open messages</button></div><div class="panel"><h3>🛡️ Adults-only community</h3><p>HeartTalk is designed for adults aged 18 and above. Block and report tools are planned before public launch.</p></div></div></section>
 <section class="view" id="discoverView"><h2>Discover people 💜</h2><p>Real HeartTalk member profiles. Sign in to explore and message.</p><div class="toolbar"><input id="discoverSearch" placeholder="Search name or country..." oninput="renderDiscover()"><button class="secondary" onclick="loadDiscover()">Refresh</button></div><div id="discoverGrid" class="grid"><div class="notice">Login to discover community members.</div></div></section>
 <section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
-<section class="view" id="callsView"><h2>Voice & video calls 📹</h2><div class="placeholder panel"><h3>Calling setup required</h3><p>Calling is not active yet. HeartTalk needs a calling provider, call permissions, and secure call signaling before voice/video calls can work.</p><button class="secondary" onclick="notify('Voice/video calling is not connected yet.')">Check status</button></div></section>
+<section class="view" id="callsView"><h2>Voice & video calls 📹</h2><div class="panel" style="max-width:650px"><h3>Connect calling service</h3><p>Paste your Metered credential API Key here. It is saved only in this browser, not in your HeartTalk profile or database.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p><p class="muted">Use only the API Key for the HeartTalk_WebRTC TURN credential. Never paste your Metered account Secret Key or TURN password here.</p></div><div class="panel" style="margin-top:16px"><h3>Start a call</h3><p>Sign in and choose a member from Discover first. Voice/video calling will be enabled after the connection test and secure call signaling are completed.</p><button class="secondary" onclick="showView('discover')">Find a member</button></div></section>
 <section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
 <section class="view" id="profileView"><h2>My profile 👤</h2><div class="profile-box"><div class="field"><label>Your name</label><input id="profileName" placeholder="Enter your name"></div><div class="field"><label>Your age (18+)</label><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></div><div class="field"><label>Country</label><input id="profileCountry" placeholder="Country"></div><div class="field"><label>About you</label><textarea id="profileBio" rows="4" maxlength="500" placeholder="Tell people about yourself"></textarea></div><button class="primary" onclick="saveProfile()">Save Profile 💗</button><p id="profileMessage" class="muted"></p></div></section>
 </main>
@@ -138,6 +138,36 @@ async function sendMessage(e){
  const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:content});
  if(error){notify(error.message);return}input.value="";await loadMessages();await loadConversations()
 }
+
+function saveMeteredKey(){
+ const key=document.getElementById("meteredApiKey").value.trim();
+ if(!key){notify("Paste your Metered API Key first.");return}
+ localStorage.setItem("hearttalk_metered_turn_api_key",key);
+ document.getElementById("callSetupStatus").textContent="API Key saved on this browser. Test the connection next.";
+ notify("Metered key saved on this device.");
+}
+async function testMeteredConnection(){
+ const key=document.getElementById("meteredApiKey").value.trim()||localStorage.getItem("hearttalk_metered_turn_api_key")||"";
+ const status=document.getElementById("callSetupStatus");
+ if(!key){notify("Paste and save your Metered API Key first.");return}
+ status.textContent="Testing Metered connection...";
+ try{
+  const response=await fetch("https://hearttalkcalls.metered.live/api/v1/turn/credentials?apiKey="+encodeURIComponent(key));
+  if(!response.ok)throw new Error("Metered returned HTTP "+response.status+". Check the credential API Key.");
+  const servers=await response.json();
+  if(!Array.isArray(servers)||!servers.length)throw new Error("Metered did not return ICE servers.");
+  localStorage.setItem("hearttalk_metered_turn_api_key",key);
+  status.textContent="Metered connection successful. ICE server settings received. Voice/video call signaling still needs to be connected and tested.";
+  notify("Metered connection successful!");
+ }catch(e){
+  status.textContent="Connection test failed: "+(e.message||"Unknown error");
+  notify("Connection test failed. Check the API Key and try again.");
+ }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+ const saved=localStorage.getItem("hearttalk_metered_turn_api_key");
+ if(saved&&document.getElementById("meteredApiKey"))document.getElementById("meteredApiKey").value=saved;
+});
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
 </script>
