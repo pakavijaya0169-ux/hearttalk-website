@@ -82,6 +82,23 @@ p{color:#77747e}
  .bottom small{font-size:9px}
 }
 
+
+/* FRND-inspired Connect experience */
+.connect-banner{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:28px 30px;border-radius:25px;background:linear-gradient(115deg,#ffdaec,#f3e4ff 65%,#fff);margin-bottom:20px;overflow:hidden}
+.connect-banner h1{font-size:clamp(28px,4vw,42px);line-height:1.1;margin:8px 0;color:#211724}.connect-banner h1 span{color:#ec318d}.connect-banner p{color:#765f73;margin:0;max-width:480px}.connect-heart{font-size:76px;filter:drop-shadow(0 8px 12px #e83b9130)}
+.connect-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0 16px;border-bottom:1px solid #ece8ef;margin-bottom:20px}
+.connect-tabs{display:flex;gap:8px}.connect-tab{border:0;background:#f0eef3;color:#817987;padding:12px 24px;border-radius:30px;font-weight:750;cursor:pointer}.connect-tab.active{background:#24172c;color:white}
+.random-match{border:0;border-radius:30px;padding:12px 22px;background:linear-gradient(100deg,#21b6df,#168bd2);color:white;font-weight:800;cursor:pointer}
+.connect-section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 14px}.connect-section-title h2{margin:0;font-size:23px}.connect-section-title p{margin:3px 0 0;color:#8a8290;font-size:13px}
+.connect-search{display:flex;align-items:center;gap:10px;background:#f0f1f4;border-radius:30px;padding:0 18px;margin:14px 0 20px}.connect-search span{font-size:26px;color:#777}.connect-search input{border:0!important;background:transparent!important;box-shadow:none!important;padding:14px 0!important;outline:none;width:100%}
+.connect-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}
+.connect-member{background:#fff;border:1px solid #ece9ef;border-radius:22px;padding:18px;text-align:center;box-shadow:0 4px 16px #25152b0a;min-width:0}
+.connect-avatar{width:78px;height:78px;border-radius:50%;margin:2px auto 12px;display:grid;place-items:center;background:linear-gradient(140deg,#ffd3e8,#d9c7ff);font-size:35px;border:4px solid white;box-shadow:0 0 0 2px #f0d5e7}
+.connect-member h3{margin:0 0 5px;font-size:18px;overflow-wrap:anywhere}.connect-member .member-meta{font-size:13px;color:#8a8290}.connect-member .member-bio{font-size:13px;color:#655c69;min-height:38px;margin:12px 0}
+.connect-actions{display:flex;gap:8px}.connect-actions button{flex:1;padding:10px 8px;border-radius:24px;font-weight:750;cursor:pointer;border:0}.connect-message{background:#fce3ef;color:#d92c82}.connect-call{background:#20b6d7;color:white}
+.connect-chat-list{display:grid;gap:10px}.connect-chat-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #eee;border-radius:16px;padding:13px;text-align:left;width:100%;cursor:pointer}.connect-chat-row .chat-avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#f8dced;font-size:23px}
+@media(max-width:650px){.connect-banner{padding:22px 18px}.connect-heart{font-size:54px}.connect-tabs{gap:4px}.connect-tab{padding:10px 16px}.connect-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.connect-member{padding:13px 10px}.connect-actions{flex-direction:column}.connect-section-title h2{font-size:20px}}
+
 </style>
 </head>
 <body>
@@ -93,7 +110,14 @@ p{color:#77747e}
 <div class="section-head"><h2>HeartTalk spaces</h2><span class="pill">Made to connect</span></div><div class="grid"><div class="room-card"><div><div class="section-kicker" style="color:#ffd8ed">🎙️ Voice hangout</div><h3 style="color:white;margin:8px 0">Live rooms</h3><p style="color:#f8dff0">Talk together in a room</p></div><button class="primary" onclick="showView('live')" style="background:white;color:#9a2875;box-shadow:none">Explore rooms</button></div><div class="room-card"><div><div class="section-kicker" style="color:#eadbff">📞 Stay close</div><h3 style="color:white;margin:8px 0">Voice & video</h3><p style="color:#eee1ff">Call your connections</p></div><button class="primary" onclick="showView('calls')" style="background:white;color:#7542b8;box-shadow:none">Open calls</button></div><div class="room-card"><div><div class="section-kicker" style="color:#fff0d9">✨ Community</div><h3 style="color:white;margin:8px 0">Forums</h3><p style="color:#fff0e9">Share thoughts and photos</p></div><button class="primary" onclick="showView('forums')" style="background:white;color:#d34c61;box-shadow:none">View feed</button></div></div>
 <div class="section-head"><h2>Discover members</h2><button class="secondary" onclick="showView('discover')">See all</button></div><div id="homeDiscover" class="grid"><div class="notice">Sign in and discover HeartTalk members.</div></div>
 </section>
-<section class="view" id="discoverView"><h2>Discover people 💜</h2><p>Real HeartTalk member profiles. Sign in to explore and message.</p><div class="toolbar"><input id="discoverSearch" placeholder="Search name or country..." oninput="renderDiscover()"><button class="secondary" onclick="loadDiscover()">Refresh</button></div><div id="discoverGrid" class="grid"><div class="notice">Login to discover community members.</div></div></section>
+<section class="view connect-view" id="discoverView">
+ <div class="connect-banner"><div><div class="section-kicker">MEET YOUR KIND OF PEOPLE</div><h1>HeartTalk <span>Connect</span></h1><p>Find friends, start a conversation and make meaningful connections.</p></div><div class="connect-heart">💗</div></div>
+ <div class="connect-toolbar"><div class="connect-tabs"><button class="connect-tab active" id="connectTab" onclick="setConnectTab('connect')">Connect</button><button class="connect-tab" id="chatsTab" onclick="setConnectTab('chats')">Chats</button></div><button class="random-match" onclick="randomHeartTalkMatch()">↗ Random</button></div>
+ <div id="connectMembersPanel"><div class="connect-section-title"><div><h2>Discover members</h2><p>Explore people who joined HeartTalk</p></div><button class="secondary" onclick="loadDiscover()">↻ Refresh</button></div>
+ <div class="connect-search"><span>⌕</span><input id="discoverSearch" placeholder="Search members by name or country..." oninput="renderDiscover()"></div>
+ <div id="discoverGrid" class="connect-grid"><div class="notice">Login to discover community members.</div></div></div>
+ <div id="connectChatsPanel" style="display:none"><div class="connect-section-title"><div><h2>Your conversations</h2><p>Continue where you left off</p></div></div><div class="connect-chat-list" id="connectConversationList">Login to view your chats.</div></div>
+ </section>
 <section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
 <section class="view" id="callsView"><h2>Voice & video calls 📹</h2>
 <div class="panel" style="max-width:760px"><h3>Calling setup</h3><p>Metered TURN server helps connect users. Your credential API key stays in this browser.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button><button class="secondary" onclick="enableCallAlerts()">🔔 Enable ringtone & notifications</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p></div>
@@ -164,10 +188,40 @@ async function loadDiscover(){
  discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18);renderDiscover()
 }
 function renderDiscover(){
- const grid=document.getElementById("discoverGrid"),q=(document.getElementById("discoverSearch").value||"").toLowerCase();
+ const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),q=(search?.value||"").toLowerCase();
  const rows=discoverUsers.filter(u=>(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase().includes(q));
- if(!rows.length){grid.innerHTML='<div class="notice">No other member profiles found yet. Invite friends to join HeartTalk!</div>';return}
- grid.innerHTML=rows.map(u=>'<article class="person"><div class="avatar">💜</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="muted">'+escapeHtml(u.country||"")+'</div><p>'+escapeHtml(u.bio||"Hello! I am on HeartTalk.")+'</p><button class="primary" onclick="startChat(\''+u.id+'\')">Message</button></article>').join("")
+ if(!rows.length){grid.innerHTML='<div class="notice">No members found yet. Invite friends to join HeartTalk!</div>';return}
+ grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">💗</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button></div></article>').join("")
+}
+function setConnectTab(tab){
+ const chats=tab==="chats";
+ document.getElementById("connectTab").classList.toggle("active",!chats);
+ document.getElementById("chatsTab").classList.toggle("active",chats);
+ document.getElementById("connectMembersPanel").style.display=chats?"none":"block";
+ document.getElementById("connectChatsPanel").style.display=chats?"block":"none";
+ if(chats)loadConnectChats();
+}
+async function loadConnectChats(){
+ const box=document.getElementById("connectConversationList");
+ if(!currentUser){box.textContent="Please log in to view your chats.";return}
+ const {data,error}=await supabaseClient.from("messages").select("sender_id,receiver_id,message,created_at").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(100);
+ if(error){box.textContent="Could not load conversations: "+error.message;return}
+ const ids=[];(data||[]).forEach(m=>{const id=m.sender_id===currentUser.id?m.receiver_id:m.sender_id;if(!ids.includes(id))ids.push(id)});
+ if(!ids.length){box.innerHTML='<div class="notice">No conversations yet. Find a member and send a message.</div>';return}
+ const {data:people}=await supabaseClient.from("profiles").select("id,display_name").in("id",ids);
+ box.innerHTML=ids.map(id=>{const p=(people||[]).find(x=>x.id===id),m=data.find(x=>x.sender_id===id||x.receiver_id===id);return '<button class="connect-chat-row" onclick="openConversation(\''+id+'\');showView(\'chat\')"><span class="chat-avatar">💗</span><span><b>'+escapeHtml(p?.display_name||"HeartTalk member")+'</b><br><small class="muted">'+escapeHtml((m?.message||"").slice(0,65))+'</small></span></button>'}).join("");
+}
+function randomHeartTalkMatch(){
+ if(!currentUser){notify("Please log in first.");return}
+ if(!discoverUsers.length){notify("No other members are available yet.");return}
+ const pick=discoverUsers[Math.floor(Math.random()*discoverUsers.length)];
+ notify("Random match: "+pick.display_name);
+ startChat(pick.id);
+}
+function callHeartTalkMember(id){
+ const person=discoverUsers.find(x=>x.id===id);if(!person)return;
+ activeChatUser=person;showView("calls");
+ document.getElementById("callTargetLabel").textContent="Calling "+person.display_name+" (voice)";
 }
 async function startChat(userId){
  const user=discoverUsers.find(x=>x.id===userId);if(!user)return;activeChatUser=user;showView("chat");await loadMessages();await loadConversations()
