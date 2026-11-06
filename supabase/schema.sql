@@ -427,3 +427,12 @@ do $$ declare t text; begin
   end if;
  end loop;
 end $$;
+
+
+drop policy if exists "Group creators can add themselves as owners" on public.forum_group_members;
+create policy "Group creators can add themselves as owners" on public.forum_group_members
+for insert to authenticated with check (
+ user_id = auth.uid() and role = 'owner' and exists (
+  select 1 from public.forum_groups g where g.id = group_id and g.created_by = auth.uid()
+ )
+);
