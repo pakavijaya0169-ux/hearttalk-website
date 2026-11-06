@@ -221,7 +221,7 @@ function randomHeartTalkMatch(){
 function callHeartTalkMember(id){
  const person=discoverUsers.find(x=>x.id===id);if(!person)return;
  activeChatUser=person;showView("calls");
- document.getElementById("callTargetLabel").textContent="Calling "+person.display_name+" (voice)";
+ document.getElementById("callTargetLabel").textContent="Selected member: "+person.display_name+". Tap Voice call or Video call to start.";
 }
 async function startChat(userId){
  const user=discoverUsers.find(x=>x.id===userId);if(!user)return;activeChatUser=user;showView("chat");await loadMessages();await loadConversations()
