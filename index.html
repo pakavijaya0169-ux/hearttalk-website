@@ -256,14 +256,21 @@ async function checkCallStatus(){
  if(["rejected","ended","missed","cancelled"].includes(data.status)){callStatus(data.status==="rejected"?"Call declined.":"Call ended.");await cleanupCall(false)}
 }
 async function pollIncomingCalls(){
- if(!currentUser||activeCallId)return;
+ if(!currentUser||activeCallId||window.pendingIncomingCallId)return;
  const {data,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,created_at").eq("callee_id",currentUser.id).eq("status","ringing").order("created_at",{ascending:false}).limit(1);
  if(error||!data?.length)return;
- const call=data[0];if(window.pendingIncomingCallId===call.id)return;
- window.pendingIncomingCallId=call.id;
+ const call=data[0];window.pendingIncomingCallId=call.id;
  const p=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();
- document.getElementById("incomingCallText").textContent=(p.data?.display_name||"A HeartTalk member")+" is making a "+call.call_type+" call.";
- document.getElementById("incomingCallPanel").style.display="block";showView("calls");notify("Incoming "+call.call_type+" call from "+(p.data?.display_name||"a HeartTalk member")+". Tap Accept.");
+ const callerName=p.data?.display_name||"A HeartTalk member";
+ document.getElementById("incomingCallerName").textContent=callerName;
+ document.getElementById("incomingCallText").textContent=(call.call_type==="video"?"🎥 Video call":"📞 Voice call")+" · Answer now";
+ document.getElementById("incomingCallPanel").classList.add("show");
+ document.title="📞 Incoming call · HeartTalk";startRingtone();
+ if("Notification" in window && Notification.permission==="granted" && document.visibilityState!=="visible"){
+  const n=new Notification("Incoming "+call.call_type+" call",{body:callerName+" is calling you on HeartTalk.",tag:"hearttalk-call",requireInteraction:true});
+  n.onclick=()=>{window.focus();showView("calls");n.close()};
+ }
+ notify("Incoming call from "+callerName);
 }
 async function acceptIncomingCall(){
  const id=window.pendingIncomingCallId;if(!id||!currentUser)return;
