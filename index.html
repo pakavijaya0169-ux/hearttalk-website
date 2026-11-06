@@ -25,7 +25,7 @@ h1,h2,h3{margin-top:0}h1{font-size:clamp(30px,5vw,48px)}h2{color:#ff85c8}p{color
 .bottom button{background:none;border:0;color:#e8c8ef;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:19px;min-width:48px}.bottom small{font-size:10px}.bottom button.active{color:var(--pink)}
 .notice{padding:14px;border:1px solid #78558b;background:#271633;border-radius:12px;color:#ead5f0;margin:12px 0}
 #toast{display:none;position:fixed;z-index:50;bottom:95px;left:50%;transform:translateX(-50%);background:#3a2850;border:1px solid #a477f5;border-radius:12px;padding:12px 18px;max-width:90%;text-align:center}
-.modal{display:none;position:fixed;inset:0;z-index:40;background:#000b;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.dialog{width:min(100%,390px);background:#21132d;border:1px solid var(--line);border-radius:20px;padding:24px}.dialog label{display:block;margin:12px 0 6px}.dialog input{margin-bottom:8px}.close{float:right;background:none;border:0;color:white;font-size:24px}
+.modal{display:none;position:fixed;inset:0;z-index:40;background:#000b;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.incoming-overlay{display:none;position:fixed;inset:0;z-index:80;background:#100817ed;backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px}.incoming-overlay.show{display:flex}.incoming-card{width:min(100%,420px);text-align:center;padding:30px 24px;border:1px solid #bd54ad;border-radius:28px;background:radial-gradient(circle at 50% 0%,#66306c,#281433 65%);box-shadow:0 20px 80px #000b;animation:callPulse 1.8s infinite}.incoming-avatar{width:92px;height:92px;border-radius:50%;margin:8px auto 18px;display:grid;place-items:center;font-size:42px;background:linear-gradient(135deg,#ff4fa3,#a855f7);box-shadow:0 0 0 10px #ffffff10}.incoming-actions{display:flex;gap:14px;justify-content:center;margin-top:24px}.incoming-actions button{min-width:125px;padding:14px 18px}.reject-call{background:#e34b68!important;color:#fff!important;border:0!important}.call-ring{font-size:13px;color:#ffc4e5;letter-spacing:2px;text-transform:uppercase}@keyframes callPulse{50%{box-shadow:0 20px 80px #000b,0 0 0 10px #ff4fa322}}.dialog{width:min(100%,390px);background:#21132d;border:1px solid var(--line);border-radius:20px;padding:24px}.dialog label{display:block;margin:12px 0 6px}.dialog input{margin-bottom:8px}.close{float:right;background:none;border:0;color:white;font-size:24px}
 @media(max-width:650px){.chat-shell{grid-template-columns:1fr}.chat-list{border-right:0;border-bottom:1px solid var(--line);max-height:180px;overflow:auto}.messages{min-height:220px}.hero{padding:32px 22px}main{padding:20px 14px}}
 </style>
 </head>
@@ -36,9 +36,9 @@ h1,h2,h3{margin-top:0}h1{font-size:clamp(30px,5vw,48px)}h2{color:#ff85c8}p{color
 <section class="view" id="discoverView"><h2>Discover people 💜</h2><p>Real HeartTalk member profiles. Sign in to explore and message.</p><div class="toolbar"><input id="discoverSearch" placeholder="Search name or country..." oninput="renderDiscover()"><button class="secondary" onclick="loadDiscover()">Refresh</button></div><div id="discoverGrid" class="grid"><div class="notice">Login to discover community members.</div></div></section>
 <section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
 <section class="view" id="callsView"><h2>Voice & video calls 📹</h2>
-<div class="panel" style="max-width:760px"><h3>Calling setup</h3><p>Metered TURN server helps connect users. Your credential API key stays in this browser.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p></div>
+<div class="panel" style="max-width:760px"><h3>Calling setup</h3><p>Metered TURN server helps connect users. Your credential API key stays in this browser.</p><div class="field"><label for="meteredApiKey">Metered API Key</label><input id="meteredApiKey" type="password" autocomplete="off" placeholder="Paste API Key here"></div><div class="toolbar"><button class="primary" onclick="saveMeteredKey()">Save key on this device</button><button class="secondary" onclick="testMeteredConnection()">Test connection</button><button class="secondary" onclick="enableCallAlerts()">🔔 Enable ringtone & notifications</button></div><p id="callSetupStatus" class="muted">Not connected yet.</p></div>
 <div class="panel" style="margin-top:16px"><h3>Call a member</h3><p id="callTargetLabel">First choose a member from Discover, then return here.</p><div class="toolbar"><button class="primary" onclick="startOutgoingCall('voice')">📞 Voice call</button><button class="primary" onclick="startOutgoingCall('video')">🎥 Video call</button><button class="secondary" onclick="showView('discover')">Find a member</button></div><p id="callStatus" class="muted">No active call.</p><div class="grid"><div><label class="muted">You</label><video id="localCallVideo" autoplay playsinline muted style="width:100%;background:#09050e;border-radius:14px;min-height:150px"></video></div><div><label class="muted">Other member</label><video id="remoteCallVideo" autoplay playsinline style="width:100%;background:#09050e;border-radius:14px;min-height:150px"></video></div></div><div class="toolbar"><button class="secondary" id="muteCallBtn" onclick="toggleCallMute()" disabled>Mute mic</button><button class="secondary" id="cameraCallBtn" onclick="toggleCallCamera()" disabled>Camera off</button><button class="secondary" id="endCallBtn" onclick="endCurrentCall()" disabled>End call</button></div></div>
-<div class="panel" id="incomingCallPanel" style="display:none;margin-top:16px"><h3>Incoming call 💗</h3><p id="incomingCallText">Someone is calling you.</p><div class="toolbar"><button class="primary" onclick="acceptIncomingCall()">Accept</button><button class="secondary" onclick="rejectIncomingCall()">Reject</button></div></div>
+<div class="incoming-overlay" id="incomingCallPanel"><div class="incoming-card"><div class="call-ring">● Incoming HeartTalk call</div><div class="incoming-avatar">💗</div><h2 id="incomingCallerName">Someone is calling</h2><p id="incomingCallText">Voice call · HeartTalk</p><div class="incoming-actions"><button class="primary" onclick="acceptIncomingCall()">📞 Accept</button><button class="secondary reject-call" onclick="rejectIncomingCall()">✕ Decline</button></div></div></div>
 </section>
 <section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
 <section class="view" id="profileView"><h2>My profile 👤</h2><div class="profile-box"><div class="field"><label>Your name</label><input id="profileName" placeholder="Enter your name"></div><div class="field"><label>Your age (18+)</label><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></div><div class="field"><label>Country</label><input id="profileCountry" placeholder="Country"></div><div class="field"><label>About you</label><textarea id="profileBio" rows="4" maxlength="500" placeholder="Tell people about yourself"></textarea></div><button class="primary" onclick="saveProfile()">Save Profile 💗</button><p id="profileMessage" class="muted"></p></div></section>
@@ -174,7 +174,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
-let cachedIceServers=null, callMuted=false, cameraDisabled=false;
+let cachedIceServers=null, callMuted=false, cameraDisabled=false, ringTimer=null, ringAudioContext=null, callAlertsEnabled=false;
 function callStatus(s){const el=document.getElementById("callStatus");if(el)el.textContent=s}
 function selectedCallUser(){return activeChatUser||null}
 async function getMeteredIceServers(){
@@ -283,7 +283,7 @@ async function rejectIncomingCall(){
  const id=window.pendingIncomingCallId;if(!id)return;
  await supabaseClient.from("call_sessions").update({status:"rejected",ended_at:new Date().toISOString()}).eq("id",id);
  await supabaseClient.from("call_signals").insert({call_id:id,sender_id:currentUser.id,signal_type:"reject",payload:{}});
- window.pendingIncomingCallId=null;document.getElementById("incomingCallPanel").style.display="none";notify("Call rejected.")
+ window.pendingIncomingCallId=null;document.getElementById("incomingCallPanel").classList.remove("show");notify("Call declined.")
 }
 async function endCurrentCall(){
  if(activeCallId){try{await sendCallSignal("hangup",{});await supabaseClient.from("call_sessions").update({status:"ended",ended_at:new Date().toISOString()}).eq("id",activeCallId)}catch(e){console.warn(e)}}
@@ -297,12 +297,35 @@ async function cleanupCall(updateStatus){
  activeCallId=null;activeCallRole=null;pendingIce=[];updateCallButtons(false);
  if(updateStatus)callStatus("No active call.");
 }
+async function enableCallAlerts(){
+ try{
+  if("Notification" in window && Notification.permission==="default"){const permission=await Notification.requestPermission();if(permission!=="granted")notify("Notifications were not enabled. You can allow them in browser site settings.");}
+  if(!ringAudioContext){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(AudioCtx)ringAudioContext=new AudioCtx();}
+  if(ringAudioContext&&ringAudioContext.state==="suspended")await ringAudioContext.resume();
+  callAlertsEnabled=true;notify("Call alerts enabled on this device. Keep HeartTalk open to receive calls.");
+ }catch(e){notify("Could not enable call alerts: "+e.message)}
+}
+function startRingtone(){
+ if(!callAlertsEnabled||!ringAudioContext||ringTimer)return;
+ const playTone=()=>{
+  if(!ringAudioContext||ringAudioContext.state!=="running")return;
+  const now=ringAudioContext.currentTime;
+  [0,0.22].forEach(offset=>{
+   const osc=ringAudioContext.createOscillator(),gain=ringAudioContext.createGain();
+   osc.type="sine";osc.frequency.value=880;
+   gain.gain.setValueAtTime(0.0001,now+offset);gain.gain.exponentialRampToValueAtTime(0.12,now+offset+0.025);gain.gain.exponentialRampToValueAtTime(0.0001,now+offset+0.18);
+   osc.connect(gain);gain.connect(ringAudioContext.destination);osc.start(now+offset);osc.stop(now+offset+0.2);
+  });
+ };
+ playTone();ringTimer=setInterval(playTone,1300);
+}
+function stopRingtone(){if(ringTimer){clearInterval(ringTimer);ringTimer=null}}
 function toggleCallMute(){if(!localCallStream)return;callMuted=!callMuted;localCallStream.getAudioTracks().forEach(t=>t.enabled=!callMuted);document.getElementById("muteCallBtn").textContent=callMuted?"Unmute mic":"Mute mic"}
 function toggleCallCamera(){if(!localCallStream)return;cameraDisabled=!cameraDisabled;localCallStream.getVideoTracks().forEach(t=>t.enabled=!cameraDisabled);document.getElementById("cameraCallBtn").textContent=cameraDisabled?"Camera on":"Camera off"}
 
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function startIncomingCallPolling(){if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);if(currentUser)incomingCallPollTimer=setInterval(pollIncomingCalls,2000)}
-supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){startIncomingCallPolling()}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;document.getElementById("incomingCallPanel").style.display="none";cleanupCall(true)}});
+supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){startIncomingCallPolling()}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;startIncomingCallPolling();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Service worker",e)))}</script>
