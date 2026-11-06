@@ -127,7 +127,7 @@ p{color:#77747e}
 .profile-tab-content{display:grid;grid-template-columns:1fr 1fr;gap:14px}.profile-achievement-card,.profile-promo-card{min-height:280px;border-radius:24px;padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(145deg,#a66af2,#c68bf6);color:white;overflow:hidden}.profile-script{font-family:Georgia,serif;font-style:italic;font-size:27px}.profile-achievement-card h3,.profile-promo-card h3{color:white;margin:12px 0}.profile-medal,.profile-promo-orb{font-size:66px;margin:12px}.profile-achievement-card strong{font-size:19px}.profile-achievement-card p,.profile-promo-card p{color:white}.profile-achievement-card .primary{background:white;color:#9c3eaa;box-shadow:none;margin-top:8px}.profile-promo-card{background:linear-gradient(145deg,#271b77,#5d36b8)}
 .profile-edit-panel{margin-top:20px;border:1px solid #eee;border-radius:18px;padding:16px;color:#554d59}.profile-edit-panel summary{cursor:pointer;font-weight:750}.profile-edit-panel .field{border:0;padding:0;margin-top:14px}.profile-edit-panel input,.profile-edit-panel textarea{background:#f7f7fa;color:#211b25;border:1px solid #e8e5eb}
 @media(max-width:520px){.profile-page{padding:10px 14px 24px;border-radius:20px}.profile-follow-stats{gap:18px}.profile-follow-stats strong{font-size:22px}.profile-big-avatar{width:88px;height:88px;font-size:50px}.profile-tab-content{grid-template-columns:1fr}.profile-achievement-card,.profile-promo-card{min-height:240px}.profile-forum-banner{padding:14px;gap:10px}.profile-forum-banner>b{font-size:12px}.profile-tabs button{padding:11px 15px}}
-</style>
+.profile-big-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}</style>
 </head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
@@ -167,7 +167,7 @@ p{color:#77747e}
 <section class="view" id="profileView">
 <div class="profile-page">
  <div class="profile-topline"><button class="profile-back" onclick="showView('home')">‹</button><div class="profile-wallet">🪙 <span id="profileCoinBalance">0</span></div><button class="profile-menu" onclick="notify('More profile settings coming soon.')">☰</button></div>
- <div class="profile-identity"><div class="profile-avatar-wrap"><div class="profile-big-avatar">🙂</div><span class="profile-edit-dot">✎</span></div><div class="profile-follow-stats"><div><strong>0</strong><span>Followers</span></div><div><strong>0</strong><span>Following</span></div></div></div>
+ <div class="profile-identity"><div class="profile-avatar-wrap"><div class="profile-big-avatar">🙂</div><span class="profile-edit-dot">✎</span></div><div class="profile-follow-stats"><div><strong id="profileFollowers">0</strong><span>Followers</span></div><div><strong id="profileFollowing">0</strong><span>Following</span></div></div></div>
  <div class="profile-name-line"><h1 id="profileDisplayName">Your name</h1><span class="profile-check">✓</span></div>
  <div class="profile-meta-line"><span>🎂 <span id="profileDisplayAge">18+</span></span><span>📍 <span id="profileDisplayCountry">Add your country</span></span></div>
  <p id="profileDisplayBio" class="profile-bio">Add a little about yourself so people can get to know you.</p>
@@ -217,15 +217,23 @@ async function logout(){await supabaseClient.auth.signOut();currentUser=null;act
 async function loadProfile(){
  if(!currentUser){const r=await supabaseClient.auth.getUser();currentUser=r.data.user}
  if(!currentUser)return;
- const {data,error}=await supabaseClient.from("profiles").select("display_name,age,country,bio").eq("id",currentUser.id).maybeSingle();
- if(error){console.error(error);return}
+ const {data,error}=await supabaseClient.from("profiles").select("display_name,age,country,bio,avatar_url").eq("id",currentUser.id).maybeSingle();
+ if(error){console.error(error);notify("Profile load failed: "+error.message);return}
  if(data){
   document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";
   document.getElementById("profileDisplayName").textContent=data.display_name||"Your name";
   document.getElementById("profileDisplayAge").textContent=data.age?data.age+" years":"18+";
   document.getElementById("profileDisplayCountry").textContent=data.country||"Add your country";
   document.getElementById("profileDisplayBio").textContent=data.bio||"Add a little about yourself so people can get to know you.";
+  if(data.avatar_url){const av=document.getElementById("profileAvatar");if(av){av.innerHTML='<img src="'+escapeHtml(data.avatar_url)+'" alt="Profile photo">';}}
  }
+ const [followers,following]=await Promise.all([
+  supabaseClient.from("follows").select("follower_id",{count:"exact",head:true}).eq("followed_id",currentUser.id),
+  supabaseClient.from("follows").select("followed_id",{count:"exact",head:true}).eq("follower_id",currentUser.id)
+ ]);
+ if(followers.error||following.error){console.warn("Follow counts unavailable",followers.error||following.error);}
+ document.getElementById("profileFollowers").textContent=followers.count??0;
+ document.getElementById("profileFollowing").textContent=following.count??0;
  const coin=document.getElementById("coinBalance")?.textContent||"0";document.getElementById("profileCoinBalance").textContent=coin;
 }
 function setProfileTab(button,tab){
@@ -242,7 +250,7 @@ async function saveProfile(){
  const username=(name.toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,18)||"member")+"_"+currentUser.id.slice(0,6);
  const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio},{onConflict:"id"});
  if(error){notify(error.message);return}
- document.getElementById("profileMessage").textContent="Profile saved to your HeartTalk account. 💗";notify("Profile saved successfully.");await loadDiscover()
+ document.getElementById("profileMessage").textContent="Profile saved to your HeartTalk account. 💗";notify("Profile saved successfully.");await loadProfile();await loadDiscover();document.querySelector(".profile-edit-panel")?.removeAttribute("open")
 }
 async function loadDiscover(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
