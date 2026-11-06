@@ -241,11 +241,30 @@ async function loadProfile(){
  document.getElementById("profileFollowers").textContent=followers.count??0;
  document.getElementById("profileFollowing").textContent=following.count??0;
  const coin=document.getElementById("coinBalance")?.textContent||"0";document.getElementById("profileCoinBalance").textContent=coin;
+ await loadMyProfilePosts();
+}
+async function loadMyProfilePosts(){
+ const box=document.getElementById("profileTabContent");if(!box||!currentUser)return;
+ const r=await supabaseClient.from("forum_posts").select("id,content,image_url,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50);
+ if(r.error){console.warn("Profile posts unavailable",r.error);return}
+ const posts=r.data||[];
+ const postTab=document.querySelector('.profile-tabs button[onclick*="posts"]');
+ if(postTab)postTab.textContent="Posts ("+posts.length+")";
+ const banner=document.querySelector(".profile-forum-banner small");
+ if(banner)banner.textContent=posts.length+" posts · 0 comments · 0 groups";
+ if(!box.dataset.activeTab||box.dataset.activeTab==="posts")renderMyProfilePosts(posts);
+ window.heartTalkMyPosts=posts;
+}
+function renderMyProfilePosts(posts){
+ const box=document.getElementById("profileTabContent");if(!box)return;
+ box.dataset.activeTab="posts";
+ if(!posts.length){box.innerHTML='<div class="profile-achievement-card"><div class="profile-script">HeartTalk</div><h3>No posts yet</h3><div class="profile-medal">💗</div><p>Share your first moment with the community.</p><button class="primary" onclick="showView(\'forums\')">Explore forums</button></div>';return}
+ box.innerHTML=posts.map(p=>'<article class="feed-card"><small class="muted">'+new Date(p.created_at).toLocaleString()+'</small><p>'+escapeHtml(p.content)+'</p>'+(p.image_url?'<img src="'+escapeHtml(p.image_url)+'" alt="Your post photo" style="width:100%;max-height:320px;object-fit:cover;border-radius:15px;margin-top:8px">':'')+'<p><button class="secondary" onclick="showView(\'forums\')">Open Forums</button></p></article>').join("");
 }
 function setProfileTab(button,tab){
  document.querySelectorAll(".profile-tabs button").forEach(b=>b.classList.remove("active"));button.classList.add("active");
- const box=document.getElementById("profileTabContent");
- if(tab==="posts")box.innerHTML='<div class="profile-achievement-card"><div class="profile-script">HeartTalk</div><h3>No posts yet</h3><div class="profile-medal">💗</div><p>Share your first moment with the community.</p><button class="primary" onclick="showView(\'forums\')">Explore forums</button></div>';
+ const box=document.getElementById("profileTabContent");box.dataset.activeTab=tab;
+ if(tab==="posts")renderMyProfilePosts(window.heartTalkMyPosts||[]);
  else if(tab==="groups")box.innerHTML='<div class="profile-promo-card"><div class="profile-promo-orb">👥</div><h3>No groups joined yet</h3><p>Explore HeartTalk community spaces.</p></div>';
  else box.innerHTML='<div class="profile-promo-card"><div class="profile-promo-orb">💬</div><h3>No comments yet</h3><p>Your comments will appear here.</p></div>';
 }
