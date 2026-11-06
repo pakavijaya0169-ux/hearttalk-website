@@ -125,7 +125,7 @@ async function openConversation(id){
 }
 async function loadMessages(){
  if(!currentUser||!activeChatUser)return;
- document.getElementById("chatHeading").innerHTML="<span style=\"display:inline-flex;align-items:center;gap:10px\"><span class=\"avatar\" style=\"width:36px;height:36px;margin:0;border-radius:50%;font-size:17px\">💜</span><span><b>"+escapeHtml(activeChatUser.display_name)+"</b><br><small class=\"muted\">HeartTalk member"+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+"</small></span></span>";
+ document.getElementById("chatHeading").innerHTML="<div style=\"display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%\"><span style=\"display:inline-flex;align-items:center;gap:10px\"><span class=\"avatar\" style=\"width:36px;height:36px;margin:0;border-radius:50%;font-size:17px\">💜</span><span><b>"+escapeHtml(activeChatUser.display_name)+"</b><br><small class=\"muted\">HeartTalk member"+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+"</small></span></span><span class=\"toolbar\" style=\"margin:0\"><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('voice')\">📞</button><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('video')\">🎥</button></span></div>";
  document.getElementById("messageInput").disabled=false;document.getElementById("sendButton").disabled=false;
  const filter="and(sender_id.eq."+currentUser.id+",receiver_id.eq."+activeChatUser.id+"),and(sender_id.eq."+activeChatUser.id+",receiver_id.eq."+currentUser.id+")";
  const {data,error}=await supabaseClient.from("messages").select("id,sender_id,message,created_at").or(filter).order("created_at",{ascending:true}).limit(300);
