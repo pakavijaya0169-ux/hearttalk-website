@@ -188,7 +188,7 @@ p{color:#77747e}
 <section class="view" id="walletView"><div class="section-kicker">HeartTalk rewards</div><h2>My wallet 🪙</h2><div class="panel" style="background:linear-gradient(120deg,#fff0d1,#ffe5f0)"><div class="muted">Available coins</div><div style="font-size:42px;font-weight:850;color:#33202b">🪙 <span id="walletCoins">0</span></div><p>Coins and rewards will be shown here.</p></div><div class="grid"><div class="panel"><h3>🎁 Daily reward</h3><p>Daily rewards are not active yet.</p><button class="secondary" onclick="notify('Daily rewards are not connected yet.')">Check reward</button></div><div class="panel"><h3>💳 Transactions</h3><p>Your wallet activity will appear here after payments are connected.</p></div></div><div class="notice">Wallet balance and payments are not active yet. No real money or coins are being processed.</div></section>
 </main>
 <nav class="bottom"><button class="active" data-view="home" onclick="showView('home')">🏠<small>Home</small></button><button data-view="discover" onclick="showView('discover')">💞<small>Connect</small></button><button data-view="chat" onclick="showView('chat')">💬<small>Chats</small></button><button data-view="forums" onclick="showView('forums')">👥<small>Forums</small></button><button data-view="calls" onclick="showView('calls')">📞<small>Calls</small></button><button data-view="profile" onclick="showView('profile')">👤<small>Profile</small></button></nav>
-<div class="modal" id="authModal"><div class="dialog"><button class="close" onclick="closeAuth()">×</button><h2 id="authTitle">Welcome to HeartTalk</h2><p id="authDescription" class="muted">Create your account or log in.</p><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" minlength="6" placeholder="At least 6 characters"><button class="primary" id="authSubmit" style="width:100%;margin-top:12px" onclick="handleAuth()">Sign Up</button><p class="muted" style="text-align:center"><span id="authSwitchLabel">Already have an account?</span> <button class="secondary" style="padding:5px 10px" onclick="toggleAuthMode()" id="authSwitch">Login</button></p></div></div>
+<div class="modal" id="authModal"><div class="dialog"><button class="close" onclick="closeAuth()">×</button><h2 id="authTitle">Welcome to HeartTalk</h2><p id="authDescription" class="muted">Create your account or log in.</p><div style="display:flex;gap:8px;margin:12px 0"><button class="secondary" id="emailAuthTab" onclick="setAuthMethod('email')">Email</button><button class="secondary" id="phoneAuthTab" onclick="setAuthMethod('phone')">Phone number</button></div><div id="emailAuthFields"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" minlength="6" placeholder="At least 6 characters"><button class="primary" id="authSubmit" style="width:100%;margin-top:12px" onclick="handleAuth()">Sign Up</button><p class="muted" style="text-align:center"><span id="authSwitchLabel">Already have an account?</span> <button class="secondary" style="padding:5px 10px" onclick="toggleAuthMode()" id="authSwitch">Login</button></p></div><div id="phoneAuthFields" style="display:none"><label>Phone number</label><input id="authPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+919876543210"><button class="primary" id="phoneSendOtp" style="width:100%;margin-top:12px" onclick="sendPhoneOtp()">Send OTP</button><div id="phoneOtpFields" style="display:none;margin-top:12px"><label>Enter SMS OTP</label><input id="authPhoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter verification code"><button class="primary" id="phoneVerifyOtp" style="width:100%;margin-top:12px" onclick="verifyPhoneOtp()">Verify & Login</button></div><p class="muted">Use international format, for example +91 followed by your 10-digit number. SMS charges may apply.</p></div></div></div>
 <div class="modal" id="languageModal"><div class="dialog" style="max-width:520px"><div class="section-kicker">Welcome to HeartTalk</div><h2>Select your language</h2><p>Show your language proudly and meet people who speak it.</p><div class="grid" style="grid-template-columns:repeat(3,1fr)"><button class="secondary" onclick="chooseHeartTalkLanguage('Telugu')">తెలుగు<br>Telugu</button><button class="secondary" onclick="chooseHeartTalkLanguage('Hindi')">हिन्दी<br>Hindi</button><button class="secondary" onclick="chooseHeartTalkLanguage('Tamil')">தமிழ்<br>Tamil</button><button class="secondary" onclick="chooseHeartTalkLanguage('English')">English</button><button class="secondary" onclick="chooseHeartTalkLanguage('Kannada')">ಕನ್ನಡ<br>Kannada</button><button class="secondary" onclick="chooseHeartTalkLanguage('Malayalam')">മലയാളം<br>Malayalam</button></div><p class="muted">You can change this later from settings.</p></div></div><div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -206,6 +206,38 @@ function showView(name){
  if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
 }
 function openAuth(){document.getElementById("authModal").classList.add("show")}
+let authMethod="email",pendingPhone="";
+function setAuthMethod(method){
+ authMethod=method;
+ document.getElementById("emailAuthFields").style.display=method==="email"?"block":"none";
+ document.getElementById("phoneAuthFields").style.display=method==="phone"?"block":"none";
+ document.getElementById("emailAuthTab").classList.toggle("primary",method==="email");
+ document.getElementById("phoneAuthTab").classList.toggle("primary",method==="phone");
+ document.getElementById("authDescription").textContent=method==="phone"?"Sign up or log in securely with an SMS verification code.":"Create your account or log in.";
+}
+async function sendPhoneOtp(){
+ const phone=document.getElementById("authPhone").value.trim();
+ if(!/^\\+[1-9]\\d{7,14}$/.test(phone)){notify("Enter phone number with country code, e.g. +919876543210.");return}
+ const b=document.getElementById("phoneSendOtp");b.disabled=true;b.textContent="Sending...";
+ try{
+  const {error}=await supabaseClient.auth.signInWithOtp({phone,options:{channel:"sms"}});
+  if(error)throw error;
+  pendingPhone=phone;document.getElementById("phoneOtpFields").style.display="block";notify("OTP sent. Check your SMS.");
+ }catch(e){notify(e.message||"Could not send OTP. Check Supabase phone authentication and SMS provider settings.");}
+ finally{b.disabled=false;b.textContent="Resend / Send OTP"}
+}
+async function verifyPhoneOtp(){
+ const token=document.getElementById("authPhoneOtp").value.trim();
+ if(!pendingPhone||!token){notify("Enter the OTP sent to your phone.");return}
+ const b=document.getElementById("phoneVerifyOtp");b.disabled=true;b.textContent="Verifying...";
+ try{
+  const {data,error}=await supabaseClient.auth.verifyOtp({phone:pendingPhone,token,type:"sms"});
+  if(error)throw error;
+  currentUser=data.user;closeAuth();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;
+  await loadProfile();await loadDiscover();notify("Phone number verified. Welcome to HeartTalk!");
+ }catch(e){notify(e.message||"OTP verification failed. Try again.");}
+ finally{b.disabled=false;b.textContent="Verify & Login"}
+}
 function closeAuth(){document.getElementById("authModal").classList.remove("show")}
 function toggleAuthMode(){authMode=authMode==="signup"?"login":"signup";document.getElementById("authTitle").textContent=authMode==="signup"?"Create your account":"Welcome back";document.getElementById("authDescription").textContent=authMode==="signup"?"Join HeartTalk. You must be 18 or older.":"Log in to your HeartTalk account.";document.getElementById("authSubmit").textContent=authMode==="signup"?"Sign Up":"Login";document.getElementById("authSwitchLabel").textContent=authMode==="signup"?"Already have an account?":"New to HeartTalk?";document.getElementById("authSwitch").textContent=authMode==="signup"?"Login":"Sign Up"}
 async function handleAuth(){
