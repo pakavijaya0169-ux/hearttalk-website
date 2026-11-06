@@ -263,7 +263,7 @@ async function pollIncomingCalls(){
  window.pendingIncomingCallId=call.id;
  const p=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();
  document.getElementById("incomingCallText").textContent=(p.data?.display_name||"A HeartTalk member")+" is making a "+call.call_type+" call.";
- document.getElementById("incomingCallPanel").style.display="block";
+ document.getElementById("incomingCallPanel").style.display="block";showView("calls");notify("Incoming "+call.call_type+" call from "+(p.data?.display_name||"a HeartTalk member")+". Tap Accept.");
 }
 async function acceptIncomingCall(){
  const id=window.pendingIncomingCallId;if(!id||!currentUser)return;
@@ -301,8 +301,9 @@ function toggleCallMute(){if(!localCallStream)return;callMuted=!callMuted;localC
 function toggleCallCamera(){if(!localCallStream)return;cameraDisabled=!cameraDisabled;localCallStream.getVideoTracks().forEach(t=>t.enabled=!cameraDisabled);document.getElementById("cameraCallBtn").textContent=cameraDisabled?"Camera on":"Camera off"}
 
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=setInterval(pollIncomingCalls,2500)}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;cleanupCall(true)}});
-supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
+function startIncomingCallPolling(){if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);if(currentUser)incomingCallPollTimer=setInterval(pollIncomingCalls,2000)}
+supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){startIncomingCallPolling()}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;document.getElementById("incomingCallPanel").style.display="none";cleanupCall(true)}});
+supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;startIncomingCallPolling();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Service worker",e)))}</script>
 </body></html>
