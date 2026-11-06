@@ -1,734 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0d0a14">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="HeartTalk">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#180d27"><link rel="manifest" href="./manifest.json">
 <title>HeartTalk — Meet. Connect. Belong.</title>
 <style>
-:root{--bg:#100817;--panel:#1c1028;--panel2:#291438;--line:#493052;--text:#fff5ff;--muted:#c5aecb;--purple:#a855f7;--pink:#ff4fa3}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}
-header{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 7%;position:sticky;top:0;background:#100d18f5;z-index:5}
-.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}.heart{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--pink));display:grid;place-items:center}
-nav{display:flex;gap:24px}nav button,.login{border:0;background:none;color:#d2c9dc;font-size:13px}nav button:hover{color:#c39bff}
-.login{border:1px solid #59446f;border-radius:9px;padding:10px 15px}
-main{max-width:1120px;margin:auto;padding:38px 24px 70px}.hero{border:1px solid #49345d;border-radius:24px;padding:55px 6%;background:radial-gradient(circle at 82% 45%,#573776 0,#30203f 30%,#1c1528 70%);display:grid;grid-template-columns:1.3fr .7fr;align-items:center;gap:25px;min-height:340px}
-.tag{color:#d2b5ff;font-size:11px;font-weight:bold;letter-spacing:2px}.hero h1{font-size:clamp(34px,5vw,58px);line-height:1.08;margin:16px 0}.hero h1 span{color:#d99bdf}.hero p{color:#d0c3dc;line-height:1.7;max-width:500px}.primary{border:0;border-radius:10px;padding:14px 20px;background:linear-gradient(110deg,#9c6cf1,#d77bc8);color:white;font-weight:bold;margin-top:12px}.hero-art{font-size:105px;text-align:center;filter:drop-shadow(0 0 28px #d78bff)}
-.section-head{display:flex;justify-content:space-between;align-items:end;margin:38px 0 18px}.section-head h2{margin:0 0 6px;font-size:21px}.section-head p{margin:0;color:var(--muted);font-size:13px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card,.feature,.plan{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}.person-art{height:130px;display:grid;place-items:center;font-size:50px;background:linear-gradient(135deg,#684c83,#b77f9f)}.person-art.two{background:linear-gradient(135deg,#3c6881,#8872a9)}.person-art.three{background:linear-gradient(135deg,#9a6b52,#604879)}.card-body{padding:16px}.card-body small{color:var(--muted)}.card-body p{color:#c3b8ce;font-size:13px}.outline{width:100%;border:1px solid #644c7d;background:#271c35;color:#e4d3ff;border-radius:9px;padding:10px}
-.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.feature{padding:20px}.feature .ico{font-size:24px}.feature h3{font-size:15px;margin:12px 0 7px}.feature p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
-.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.plan{padding:23px}.plan.highlight{border-color:#a477f5;background:linear-gradient(160deg,#2a1d3c,#181321)}.plan h3{color:#c8aaff;font-size:12px;letter-spacing:1px}.price{font-size:30px;font-weight:bold;margin:12px 0}.plan p,.plan li{color:#c3b8ce;font-size:13px;line-height:1.8}.plan ul{padding-left:18px;min-height:120px}
-footer{border-top:1px solid var(--line);padding:25px 7%;color:#91879d;font-size:12px;display:flex;justify-content:space-between;gap:15px}
-.modal{display:none;position:fixed;inset:0;background:#000b;z-index:10;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.dialog{background:#1b1525;border:1px solid #59436f;border-radius:17px;padding:25px;width:min(100%,390px)}.dialog h2{margin-top:0}.dialog input{width:100%;padding:12px;margin:8px 0 12px;background:#100d17;border:1px solid var(--line);border-radius:8px;color:white}.close{float:right;background:none;border:0;color:white;font-size:22px}
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#3a2850;border:1px solid #8060a3;padding:12px 18px;border-radius:10px;display:none;z-index:20;font-size:13px}
-@media(max-width:700px){header{padding:0 16px}nav{gap:10px}nav button{font-size:11px}.hero{grid-template-columns:1fr;padding:35px 24px}.hero-art{display:none}.cards,.features,.pricing{grid-template-columns:1fr}.section-head{align-items:start;gap:12px;flex-direction:column}footer{flex-direction:column}}
-.app-header{
-  height:65px;
-  padding:0 20px;
-  background:linear-gradient(90deg,#251033,#421344);
-  border-bottom:1px solid #71356e;
-}
-.app-header .brand{
-  background:linear-gradient(90deg,#ff70bd,#b57aff);
-  background-clip:text;
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-.app-header .heart{
-  background:linear-gradient(135deg,#ff4fa3,#a855f7);
-  color:white;
-  -webkit-text-fill-color:white;
-}
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  display:flex;
-  justify-content:space-around;
-  background:#24102f;
-  border-top:1px solid #71356e;
-  padding:10px 2px;
-  z-index:99;
-}
-.bottom-nav button{
-  background:none;
-  border:0;
-  color:#ff85c8;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:5px;
-  font-size:20px;
-}
-.bottom-nav small{
-  font-size:10px;
-  color:#e8c8ef;
-}
-body{padding-bottom:75px} 
-.bottom-nav button{
-  cursor:pointer;
-  transition:0.2s;
-}
-.bottom-nav button:active{
-  transform:scale(0.90);
-}
-.bottom-nav button:hover{
-  color:#ffffff;
-}
-.bottom-nav small{
-  font-weight:600;
-}
-.hero{
-  min-height:75vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:45px 20px;
-  background:
-    radial-gradient(circle at top left,#65245f 0%,transparent 45%),
-    linear-gradient(145deg,#180d27,#35143f);
-  border-radius:0 0 30px 30px;
-}
-.hero h1{
-  font-size:clamp(32px,8vw,52px);
-  font-weight:800;
-  background:linear-gradient(90deg,#ff75bd,#bd8aff);
-  background-clip:text;
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-.hero p{
-  color:#ead5f0;
-  line-height:1.7;
-  max-width:500px;
-}
-.hero button{
-  background:linear-gradient(90deg,#ff4fa3,#a855f7);
-  color:white;
-  border:0;
-  border-radius:25px;
-  padding:13px 25px;
-  font-weight:700;
-}
-#discover{
-  padding:35px 18px;
-}
-#discover h2{
-  color:#ff75bd;
-  font-size:28px;
-  text-align:center;
-}
-#discover .card{
-  background:linear-gradient(145deg,#30183f,#1c1028);
-  border:1px solid #71356e;
-  border-radius:20px;
-  padding:20px;
-  transition:transform .2s;
-}
-#discover .card:hover{
-  transform:translateY(-5px);
-}
-.person-art{
-  border-radius:18px;
-  min-height:130px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:55px;
-  background:linear-gradient(135deg,#65245f,#a855f7);
-}
-.card-body b{
-  color:#ff85c8;
-  font-size:18px;
-}
-.card-body small{
-  color:#d7b9e5;
-}
-.card-body p{
-  color:#eee0f2;
-}
-.outline{
-  border:1px solid #ff65b4;
-  color:#ff85c8;
-  background:transparent;
-  border-radius:20px;
-  padding:10px 20px;
-  cursor:pointer;
-}
-.outline:hover{
-  background:linear-gradient(90deg,#ff4fa3,#a855f7);
-  color:white;
-}
-.online-status{
-  color:#48e69a;
-  font-size:11px;
-  font-weight:600;
-  margin-left:6px;
-}
-#chat-preview{
-  padding:35px 18px;
-}
-#chat-preview h2{
-  color:#ff75bd;
-  text-align:center;
-}
-#chat-preview>p{
-  text-align:center;
-  color:#d7b9e5;
-}
-.chat-preview-card{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:18px;
-  background:linear-gradient(135deg,#30183f,#1c1028);
-  border:1px solid #71356e;
-  border-radius:18px;
-}
-.chat-avatar{
-  font-size:35px;
-}
-.chat-preview-card p{
-  color:#d7b9e5;
-  margin-bottom:0;
-}
-.chat-label{
-  margin-left:auto;
-  color:#ff85c8;
-  font-size:12px;
-}
-#calls-preview{
-  padding:35px 18px;
-  text-align:center;
-}
-#calls-preview h2{
-  color:#ff75bd;
-}
-#calls-preview>p{
-  color:#d7b9e5;
-}
-.call-options{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:14px;
-}
-.call-card{
-  padding:18px 10px;
-  background:linear-gradient(145deg,#30183f,#1c1028);
-  border:1px solid #71356e;
-  border-radius:18px;
-}
-.call-card>div{
-  font-size:38px;
-}
-.call-card h3{
-  color:#ff85c8;
-}
-.call-card p{
-  color:#d7b9e5;
-  font-size:13px;
-}
-.call-card button{
-  background:linear-gradient(90deg,#ff4fa3,#a855f7);
-  color:white;
-  border:0;
-  border-radius:20px;
-  padding:10px;
-  cursor:pointer;
-}
-#live-preview{
-  padding:35px 18px;
-}
-#live-preview h2{
-  color:#ff75bd;
-  text-align:center;
-}
-#live-preview>p{
-  color:#d7b9e5;
-  text-align:center;
-}
-.live-card{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  flex-wrap:wrap;
-  padding:18px;
-  background:linear-gradient(135deg,#48164c,#24102f);
-  border:1px solid #a64b9b;
-  border-radius:18px;
-}
-.live-icon{
-  font-size:38px;
-}
-.live-card h3{
-  color:#ff85c8;
-}
-.live-card p{
-  color:#e4cce9;
-  font-size:13px;
-}
-.live-card button{
-  background:linear-gradient(90deg,#ff4fa3,#a855f7);
-  color:white;
-  border:0;
-  border-radius:20px;
-  padding:10px 18px;
-}
-#profile-preview{
-  padding:35px 18px;
-  text-align:center;
-}
-#profile-preview h2{
-  color:#ff75bd;
-}
-.profile-card{
-  max-width:420px;
-  margin:auto;
-  padding:25px;
-  background:linear-gradient(145deg,#48164c,#24102f);
-  border:1px solid #a64b9b;
-  border-radius:22px;
-}
-.profile-avatar{
-  font-size:65px;
-}
-.profile-card h3{
-  color:#ff85c8;
-}
-.profile-card p{
-  color:#e4cce9;
-}
-.profile-card button{
-  background:linear-gradient(90deg,#ff4fa3,#a855f7);
-  color:white;
-  border:0;
-  border-radius:22px;
-  padding:12px 22px;
-}
- .profile-card label{
-  display:block;
-  text-align:left;
-  margin:12px 0 6px;
-  color:#fff;
-}
-
-.profile-card input,
-.profile-card textarea{
-  display:block;
-  width:100%;
-  box-sizing:border-box;
-  padding:12px;
-  margin-bottom:10px;
-  border:1px solid #a855f7;
-  border-radius:10px;
-  background:#fff;
-  color:#222;
-  font-size:14px;
-}
-
-.profile-card input[type="file"]{
-  background:transparent;
-  color:#fff;
-  border:0;
-}
-
-.profile-card textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
-.profile-card button{
-  display:block;
-  margin:15px auto 0;
-} 
-.modal{
-  background:rgba(10,5,18,.85);
-  backdrop-filter:blur(8px);
-}
-.dialog{
-  background:linear-gradient(145deg,#32163f,#190d27);
-  border:1px solid #a64b9b;
-  border-radius:24px;
-  box-shadow:0 15px 50px rgba(255,79,163,.2);
-  padding:28px;
-}
-.dialog h2{
-  color:#ff85c8;
-  text-align:center;
-}
-.dialog label{
-  color:#f2d8f0;
-  display:block;
-  margin:14px 0 7px;
-}
-.dialog input{
-  width:100%;
-  box-sizing:border-box;
-  background:#21132d;
-  border:1px solid #71436f;
-  color:white;
-  border-radius:12px;
-  padding:13px;
-  outline:none;
-}
-.dialog input:focus{
-  border-color:#ff4fa3;
-  box-shadow:0 0 0 2px rgba(255,79,163,.15);
-}
-.dialog .close{
-  color:#ff85c8;
-  font-size:25px;
-}
-@media(max-width:480px){
-  .dialog{
-    width:calc(100% - 40px);
-    max-width:360px;
-    box-sizing:border-box;
-    padding:22px;
-    margin:15px;
-  }
-  .dialog h2{
-    font-size:23px;
-  }
-  .dialog input{
-    font-size:16px;
-  }
-  .dialog .primary{
-    min-height:46px;
-  }
-}
-.bottom-nav button{
-  min-width:48px;
-  cursor:pointer;
-  transition:all .2s ease;
-}
-.bottom-nav button:focus{
-  color:#ffffff;
-  text-shadow:0 0 12px #ff4fa3;
-}
-.bottom-nav button:focus small{
-  color:#ff85c8;
-}
+:root{--bg:#100817;--panel:#21132d;--panel2:#30183f;--line:#71356e;--text:#fff5ff;--muted:#d7b9e5;--pink:#ff4fa3;--purple:#a855f7;--green:#48e69a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif;padding-bottom:82px}button,input,textarea{font:inherit}button{cursor:pointer}
+header{height:64px;position:sticky;top:0;z-index:10;background:linear-gradient(90deg,#251033,#421344);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(18px,calc((100% - 1100px)/2))}
+.brand{font-weight:800;font-size:22px;color:#ff85c8;display:flex;align-items:center;gap:10px}.heart{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--pink),var(--purple));display:grid;place-items:center;color:white}
+button.primary{background:linear-gradient(90deg,var(--pink),var(--purple));border:0;color:white;border-radius:22px;padding:12px 20px;font-weight:700}
+button.secondary{background:transparent;border:1px solid var(--pink);color:#ff85c8;border-radius:20px;padding:10px 17px}
+button:disabled{opacity:.55;cursor:not-allowed}
+main{max-width:1080px;margin:auto;padding:25px 18px}.view{display:none}.view.active{display:block}
+h1,h2,h3{margin-top:0}h1{font-size:clamp(30px,5vw,48px)}h2{color:#ff85c8}p{color:var(--muted);line-height:1.55}
+.hero,.panel,.person,.chat-shell,.profile-box,.placeholder{background:linear-gradient(145deg,#30183f,#1c1028);border:1px solid var(--line);border-radius:20px}
+.hero{padding:45px 30px;min-height:260px;background:radial-gradient(circle at 85% 20%,#65245f,transparent 40%),linear-gradient(145deg,#21102e,#35143f)}
+.hero p{max-width:560px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px}
+.panel{padding:20px}.person{padding:18px}.avatar{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#65245f,#a855f7);font-size:27px;margin-bottom:12px}
+.muted{color:var(--muted);font-size:13px}.status{color:var(--green);font-size:12px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}.toolbar input,.field,input,textarea{background:#130b1b;color:white;border:1px solid #71436f;border-radius:11px;padding:12px;width:100%}
+.toolbar input{max-width:350px}.field{margin:8px 0 14px}.field label{display:block;margin-bottom:7px;color:#f2d8f0}.profile-box{max-width:540px;padding:22px}
+.chat-shell{display:grid;grid-template-columns:300px 1fr;min-height:520px;overflow:hidden}.chat-list{border-right:1px solid var(--line);padding:14px}.chat-list button{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid #493052;color:white;padding:14px 8px}.chat-window{display:flex;flex-direction:column;min-width:0}.chat-head{padding:16px;border-bottom:1px solid var(--line);font-weight:bold}.messages{padding:16px;display:flex;flex-direction:column;gap:10px;flex:1;min-height:300px;max-height:420px;overflow:auto}.bubble{max-width:78%;padding:11px 14px;border-radius:15px;background:#39244a;align-self:flex-start;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:linear-gradient(120deg,#8f3d9a,#9e4db7)}.sendbar{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}.sendbar input{flex:1;min-width:0}
+.bottom{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;justify-content:space-around;background:#24102f;border-top:1px solid var(--line);padding:8px 2px calc(8px + env(safe-area-inset-bottom))}
+.bottom button{background:none;border:0;color:#e8c8ef;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:19px;min-width:48px}.bottom small{font-size:10px}.bottom button.active{color:var(--pink)}
+.notice{padding:14px;border:1px solid #78558b;background:#271633;border-radius:12px;color:#ead5f0;margin:12px 0}
+#toast{display:none;position:fixed;z-index:50;bottom:95px;left:50%;transform:translateX(-50%);background:#3a2850;border:1px solid #a477f5;border-radius:12px;padding:12px 18px;max-width:90%;text-align:center}
+.modal{display:none;position:fixed;inset:0;z-index:40;background:#000b;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.dialog{width:min(100%,390px);background:#21132d;border:1px solid var(--line);border-radius:20px;padding:24px}.dialog label{display:block;margin:12px 0 6px}.dialog input{margin-bottom:8px}.close{float:right;background:none;border:0;color:white;font-size:24px}
+@media(max-width:650px){.chat-shell{grid-template-columns:1fr}.chat-list{border-right:0;border-bottom:1px solid var(--line);max-height:180px;overflow:auto}.messages{min-height:220px}.hero{padding:32px 22px}main{padding:20px 14px}}
 </style>
 </head>
 <body>
-<header class="app-header">
-  <div class="brand">
-    <span class="heart">♥</span>
-    <span>HeartTalk</span>
-  </div>
-  <button class="login" onclick="openLogin()">Login / Sign Up</button>
-</header>
- 
-  <main>
-  <section class="hero" id="home">
-    <div><div class="tag">YOUR WORLD OF CONNECTIONS</div><h1>Meet people.<br><span>Share moments.</span></h1><p>Find new friends, share stories and build meaningful connections with people around the world.</p><button class="primary" onclick="openLogin()">Join HeartTalk 💗</button></div>
-    <div class="hero-art">💜</div>
-  </section>
-  <section id="discover">
-    <div class="section-head"><div><h2>People you may like</h2><p>A few friendly faces from our demo community.</p></div></div>
-    <div class="cards">
-      <article class="card"><div class="person-art">🌸</div><div class="card-body"><b>Sofia, 24</b> <span class="online-status">● Online</span><br><small>Spain · Travel & art</small><p>Loves exploring new places and cultures.</p><button class="outline" onclick="openLogin()">Connect</button></div></article>
-      <article class="card"><div class="person-art two">🎧</div><div class="card-body"><b>Aarav, 25</b><br><small>India · Music lover</small><p>Always looking for new music and friends.</p><button class="outline" onclick="hello('Aarav')">Say hello</button></div></article>
-      <article class="card"><div class="person-art three">📚</div><div class="card-body"><b>Mia, 23</b><br><small>Australia · Books & coffee</small><p>Enjoys good stories and thoughtful chats.</p><button class="outline" onclick="hello('Mia')">Say hello</button></div></article>
-    </div>
-  </section>
-  <section id="features">
-    <div class="section-head"><div><h2>Everything in one place</h2><p>Designed to help people connect safely and comfortably.</p></div></div>
-    <div class="features">
-      <div class="feature"><div class="ico">💬</div><h3>Private messaging</h3><p>Have friendly conversations and get to know people.</p></div>
-      <div class="feature"><div class="ico">📹</div><h3>Voice & video calls</h3><p>Talk face to face when calling features are connected.</p></div>
-      <div class="feature"><div class="ico">🌍</div><h3>Worldwide community</h3><p>Discover people and cultures from different countries.</p></div>
-      <div class="feature"><div class="ico">🎙️</div><h3>Live rooms</h3><p>Join group conversations and community events.</p></div>
-      <div class="feature"><div class="ico">✨</div><h3>Creator spaces</h3><p>Share talents, stories and positive experiences.</p></div>
-      <div class="feature"><div class="ico">🛡️</div><h3>Safety tools</h3><p>Reporting, blocking and moderation are essential before launch.</p></div>
-    </div>
-  </section>
-  <section id="plans">
-    <div class="section-head"><div><h2>Membership plans</h2><p>Sample prices only — payments are not active.</p></div></div>
-    <div class="pricing">
-      <div class="plan"><h3>FREE</h3><div class="price">₹0</div><p>Start meeting the community.</p><ul><li>Create a profile</li><li>Discover people</li><li>Basic features preview</li></ul><button class="outline" onclick="notify('You are viewing the free demo plan.')">Selected</button></div>
-      <div class="plan highlight"><h3>PLUS</h3><div class="price">₹199 <small>/ month</small></div><p>More ways to connect.</p><ul><li>More discovery options</li><li>Calling feature access</li><li>Profile highlights</li></ul><button class="primary" onclick="notify('Payments are not connected in this demo.')">Explore Plus</button></div>
-      <div class="plan"><h3>VIP</h3><div class="price">₹399 <small>/ month</small></div><p>Your premium connection space.</p><ul><li>VIP profile badge</li><li>Premium live rooms</li><li>Priority support</li></ul><button class="outline" onclick="notify('Payments are not connected in this demo.')">Explore VIP</button></div>
-    </div>
-  </section>
-<section id="chat-preview">
-  <h2>Your Conversations 💬</h2>
-  <p>Meet people and start meaningful conversations.</p>
-
-  <div class="chat-preview-card">
-    <div class="chat-avatar">💜</div>
-    <div>
-      <b>Welcome to HeartTalk</b>
-      <p>Your conversations will appear here.</p>
-    </div>
-    <span class="chat-label">New</span>
-  </div>
-</section>
- <section id="calls-preview">
-  <h2>Voice & Video Calls 📹</h2>
-  <p>Connect face-to-face with people around the world.</p>
-  <div class="call-options">
-    <div class="call-card">
-      <div>📞</div>
-      <h3>Voice Call</h3>
-      <p>Talk and make new friends.</p>
-      <button onclick="openLogin()">Start Voice Call</button>
-    </div>
-    <div class="call-card">
-      <div>🎥</div>
-      <h3>Video Call</h3>
-      <p>See and connect with friends.</p>
-      <button onclick="openLogin()">Start Video Call</button>
-    </div>
-  </div>
-</section>
-<section id="live-preview">
-  <h2>Live Rooms 🎙️</h2>
-  <p>Join conversations, share your interests and meet new people.</p>
-
-  <div class="live-card">
-    <div class="live-icon">🎤</div>
-    <div>
-      <h3>HeartTalk Live</h3>
-      <p>Discover live conversations around the world.</p>
-    </div>
-    <button onclick="openLogin()">Join Live</button> 
-  </div>
-</section>
-<section id="profile-preview">
-  <h2>My Profile 👤</h2>
-  <div class="profile-card">
-    <div class="profile-avatar">📸</div>
-    <h3>Create Your Profile</h3>
-
-    <label>Profile Photo (upload setup pending)</label>
-    <input type="file" id="profilePhoto" accept="image/*" disabled>
-    <small style="color:#d7b9e5">Photo upload will be enabled after Storage setup.</small>
-
-    <label>Your Name</label>
-    <input type="text" id="profileName" placeholder="Enter your name">
-
-    <label>Your Age</label>
-    <input type="number" id="profileAge" placeholder="Enter your age">
-
-    <label>Country</label>
-    <input type="text" id="profileCountry" placeholder="Enter your country">
-
-    <label>About You</label>
-    <textarea id="profileBio" placeholder="Write something about yourself"></textarea>
-
-    <button onclick="saveProfile()">Save Profile 💗</button>
-    <p id="profileMessage"></p>
-  </div>
-</section>
-  </main>
-<footer><span>© 2026 HeartTalk. Made for meaningful connections.</span><span>Safety first · Privacy · Help</span></footer>
-<div class="modal" id="loginModal">
-  <div class="dialog">
-    <button class="close" onclick="closeLogin()">×</button>
-
-    <h2 id="authTitle">Welcome to HeartTalk</h2>
-
-    <p id="authMessage" style="color:#aaa0b7;font-size:13px">
-      Create your account or login.
-    </p>
-
-    <label>Email address</label>
-    <input id="authEmail" type="email" placeholder="you@example.com" required>
-
-    <label>Password</label>
-    <input id="authPassword" type="password" placeholder="Minimum 6 characters" minlength="6" required>
-
-    <button class="primary" id="authButton" style="width:100%" onclick="handleAuth()">
-      Sign Up
-    </button>
-
-    <p style="text-align:center;font-size:13px">
-      <span id="authSwitchText">Already have an account?</span>
-      <button onclick="toggleAuthMode()" style="background:none;border:0;color:#c39bff">
-        Login
-      </button>
-    </p>
-  </div>
-</div>
-  <div id="toast"></div>
+<header><div class="brand"><span class="heart">♥</span>HeartTalk</div><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></header>
+<main>
+<section class="view active" id="homeView"><div class="hero"><div class="muted">YOUR WORLD OF CONNECTIONS</div><h1>Meet people.<br><span style="color:#e7a0e4">Share moments.</span></h1><p>Find new friends, share stories and build meaningful connections with adults around the world.</p><button class="primary" onclick="openAuth()">Join HeartTalk 💗</button></div><div class="grid"><div class="panel"><h3>💜 Discover</h3><p>Explore real community profiles from HeartTalk members.</p><button class="secondary" onclick="showView('discover')">Explore people</button></div><div class="panel"><h3>💬 Private chat</h3><p>Send direct messages to people you connect with.</p><button class="secondary" onclick="showView('chat')">Open messages</button></div><div class="panel"><h3>🛡️ Adults-only community</h3><p>HeartTalk is designed for adults aged 18 and above. Block and report tools are planned before public launch.</p></div></div></section>
+<section class="view" id="discoverView"><h2>Discover people 💜</h2><p>Real HeartTalk member profiles. Sign in to explore and message.</p><div class="toolbar"><input id="discoverSearch" placeholder="Search name or country..." oninput="renderDiscover()"><button class="secondary" onclick="loadDiscover()">Refresh</button></div><div id="discoverGrid" class="grid"><div class="notice">Login to discover community members.</div></div></section>
+<section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading">Choose a conversation</div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
+<section class="view" id="callsView"><h2>Voice & video calls 📹</h2><div class="placeholder panel"><h3>Calling setup required</h3><p>Calling is not active yet. HeartTalk needs a calling provider, call permissions, and secure call signaling before voice/video calls can work.</p><button class="secondary" onclick="notify('Voice/video calling is not connected yet.')">Check status</button></div></section>
+<section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
+<section class="view" id="profileView"><h2>My profile 👤</h2><div class="profile-box"><div class="field"><label>Your name</label><input id="profileName" placeholder="Enter your name"></div><div class="field"><label>Your age (18+)</label><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></div><div class="field"><label>Country</label><input id="profileCountry" placeholder="Country"></div><div class="field"><label>About you</label><textarea id="profileBio" rows="4" maxlength="500" placeholder="Tell people about yourself"></textarea></div><button class="primary" onclick="saveProfile()">Save Profile 💗</button><p id="profileMessage" class="muted"></p></div></section>
+</main>
+<nav class="bottom"><button class="active" data-view="home" onclick="showView('home')">🏠<small>Home</small></button><button data-view="discover" onclick="showView('discover')">💜<small>Discover</small></button><button data-view="chat" onclick="showView('chat')">💬<small>Chat</small></button><button data-view="calls" onclick="showView('calls')">📹<small>Calls</small></button><button data-view="live" onclick="showView('live')">🎙️<small>Live</small></button><button data-view="profile" onclick="showView('profile')">👤<small>Profile</small></button></nav>
+<div class="modal" id="authModal"><div class="dialog"><button class="close" onclick="closeAuth()">×</button><h2 id="authTitle">Welcome to HeartTalk</h2><p id="authDescription" class="muted">Create your account or log in.</p><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" minlength="6" placeholder="At least 6 characters"><button class="primary" id="authSubmit" style="width:100%;margin-top:12px" onclick="handleAuth()">Sign Up</button><p class="muted" style="text-align:center"><span id="authSwitchLabel">Already have an account?</span> <button class="secondary" style="padding:5px 10px" onclick="toggleAuthMode()" id="authSwitch">Login</button></p></div></div>
+<div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>    
+<script>
 const SUPABASE_URL = "https://dognojmymhlaewrjqswz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_e9ugpv_1hT1kSOCHpLWk2w_lB-ccMJk";
-    const supabaseClient  = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
-function notify(message){const t=document.getElementById('toast');t.textContent=message;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
-function hello(name){notify('Demo only: Say hello to '+name+'. Messaging is not connected yet.')}
-let authMode = "signup";
-
-function openLogin(){
-  document.getElementById("loginModal").classList.add("show");
+const supabaseClient = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let authMode="signup", currentUser=null, discoverUsers=[], activeChatUser=null, messageChannel=null;
+function notify(s){const t=document.getElementById("toast");t.textContent=s;t.style.display="block";clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display="none",3200)}
+function showView(name){
+ document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+ const target=document.getElementById(name+"View");if(target)target.classList.add("active");
+ document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+ window.scrollTo({top:0,behavior:"smooth"});
+ if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();
+ if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
 }
-
-function closeLogin(){
-  document.getElementById("loginModal").classList.remove("show");
-}
-
-function toggleAuthMode(){
-  authMode = authMode === "signup" ? "login" : "signup";
-
-  document.getElementById("authTitle").textContent =
-    authMode === "signup" ? "Create Account" : "Welcome Back";
-
-  document.getElementById("authButton").textContent =
-    authMode === "signup" ? "Sign Up" : "Login";
-
-  document.getElementById("authSwitchText").textContent =
-    authMode === "signup" ? "Already have an account?" : "New to HeartTalk?";
-
-  document.querySelector("#authSwitchText + button").textContent =
-    authMode === "signup" ? "Login" : "Sign Up";
-
-  document.getElementById("authMessage").textContent =
-    authMode === "signup" ? "Join the HeartTalk community." : "Login to your account.";
-}
-
+function openAuth(){document.getElementById("authModal").classList.add("show")}
+function closeAuth(){document.getElementById("authModal").classList.remove("show")}
+function toggleAuthMode(){authMode=authMode==="signup"?"login":"signup";document.getElementById("authTitle").textContent=authMode==="signup"?"Create your account":"Welcome back";document.getElementById("authDescription").textContent=authMode==="signup"?"Join HeartTalk. You must be 18 or older.":"Log in to your HeartTalk account.";document.getElementById("authSubmit").textContent=authMode==="signup"?"Sign Up":"Login";document.getElementById("authSwitchLabel").textContent=authMode==="signup"?"Already have an account?":"New to HeartTalk?";document.getElementById("authSwitch").textContent=authMode==="signup"?"Login":"Sign Up"}
 async function handleAuth(){
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-
-  if(!email || password.length < 6){
-    notify("Enter a valid email and password (minimum 6 characters).");
-    return;
-  }
-
-  const button = document.getElementById("authButton");
-  button.disabled = true;
-  button.textContent = "Please wait...";
-
-  try {
-    let result;
-
-    if(authMode === "signup"){
-      result = await supabaseClient.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          emailRedirectTo: "https://pakavijaya0169-ux.github.io/hearttalk-website/"
-        }
-      });
-    } else {
-      result = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-    }
-
-    if(result.error) throw result.error;
-
-    if(authMode === "signup"){
-      notify("Account created! Check your email to confirm your account.");
-    } else {
-      notify("Login successful! Welcome to HeartTalk.");
-      closeLogin();
-      await loadProfile();
-    }
-
-  } catch(error) {
-    notify(error.message || "Something went wrong. Please try again.");
-  } finally {
-    button.disabled = false;
-    button.textContent = authMode === "signup" ? "Sign Up" : "Login";
-  }
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||password.length<6){notify("Enter a valid email and password of at least 6 characters.");return}
+ const b=document.getElementById("authSubmit");b.disabled=true;b.textContent="Please wait...";
+ try{
+  const r=authMode==="signup"?await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:"https://pakavijaya0169-ux.github.io/hearttalk-website/"}}):await supabaseClient.auth.signInWithPassword({email,password});
+  if(r.error)throw r.error;
+  if(authMode==="signup"){notify("Account created. Please confirm your email, then log in.");}
+  else{currentUser=r.data.user;closeAuth();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover();notify("Welcome back to HeartTalk!")}
+ }catch(e){notify(e.message||"Authentication failed")}finally{b.disabled=false;b.textContent=authMode==="signup"?"Sign Up":"Login"}
 }
+async function logout(){await supabaseClient.auth.signOut();currentUser=null;activeChatUser=null;document.getElementById("authTop").textContent="Login / Sign Up";document.getElementById("authTop").onclick=openAuth;document.getElementById("discoverGrid").innerHTML='<div class="notice">Login to discover community members.</div>';document.getElementById("conversationList").textContent="Login to view messages.";document.getElementById("messageList").innerHTML='<div class="muted">Log in to start chatting.</div>';notify("You have logged out.");showView("home")}
 async function loadProfile(){
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-  if(authError || !user) return;
-  const { data, error } = await supabaseClient.from("profiles")
-    .select("display_name, age, country, bio")
-    .eq("id", user.id).maybeSingle();
-  if(error){ console.error("Profile load error:", error); return; }
-  if(data){
-    document.getElementById("profileName").value = data.display_name || "";
-    document.getElementById("profileAge").value = data.age || "";
-    document.getElementById("profileCountry").value = data.country || "";
-    document.getElementById("profileBio").value = data.bio || "";
-  }
+ if(!currentUser){const r=await supabaseClient.auth.getUser();currentUser=r.data.user}
+ if(!currentUser)return;
+ const {data,error}=await supabaseClient.from("profiles").select("display_name,age,country,bio").eq("id",currentUser.id).maybeSingle();
+ if(error){console.error(error);return}
+ if(data){document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||""}
 }
-
 async function saveProfile(){
-  const name = document.getElementById("profileName").value.trim();
-  const ageValue = Number(document.getElementById("profileAge").value);
-  const country = document.getElementById("profileCountry").value.trim();
-  const bio = document.getElementById("profileBio").value.trim();
-  const message = document.getElementById("profileMessage");
-  if(!name || !ageValue || !country){ notify("Please fill your name, age and country."); return; }
-  if(!Number.isInteger(ageValue) || ageValue < 18 || ageValue > 100){
-    notify("HeartTalk is currently for adults aged 18 and above."); return;
-  }
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-  if(authError || !user){ notify("Please login before saving your profile."); openLogin(); return; }
-  const saveButton = document.querySelector(".profile-card button");
-  saveButton.disabled = true;
-  saveButton.textContent = "Saving...";
-  try {
-    const username = (name.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 18) || "member") + "_" + user.id.slice(0, 6);
-    const { error } = await supabaseClient.from("profiles").upsert({
-      id: user.id, display_name: name, username, age: ageValue, country, bio
-    }, { onConflict: "id" });
-    if(error) throw error;
-    message.textContent = "Profile saved to your HeartTalk account. 💗";
-    notify("Profile saved successfully.");
-  } catch(error) {
-    console.error("Profile save error:", error);
-    message.textContent = "Profile could not be saved. Check Supabase setup.";
-    notify(error.message || "Profile save failed.");
-  } finally {
-    saveButton.disabled = false;
-    saveButton.textContent = "Save Profile 💗";
-  }
+ if(!currentUser){notify("Please log in first.");openAuth();return}
+ const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim();
+ if(!name||!country||!Number.isInteger(age)||age<18||age>100){notify("Enter your name, country and a valid age (18–100).");return}
+ const username=(name.toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,18)||"member")+"_"+currentUser.id.slice(0,6);
+ const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio},{onConflict:"id"});
+ if(error){notify(error.message);return}
+ document.getElementById("profileMessage").textContent="Profile saved to your HeartTalk account. 💗";notify("Profile saved successfully.");await loadDiscover()
 }
-
-supabaseClient.auth.getSession().then(({data}) => {
-  if(data.session) loadProfile();
-});
-  </script>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .then(() => console.log("HeartTalk service worker ready"))
-      .catch(error => console.error("Service worker error:", error));
-  });
+async function loadDiscover(){
+ const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
+ grid.innerHTML='<div class="notice">Loading community members...</div>';
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(60);
+ if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
+ discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18);renderDiscover()
 }
+function renderDiscover(){
+ const grid=document.getElementById("discoverGrid"),q=(document.getElementById("discoverSearch").value||"").toLowerCase();
+ const rows=discoverUsers.filter(u=>(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase().includes(q));
+ if(!rows.length){grid.innerHTML='<div class="notice">No other member profiles found yet. Invite friends to join HeartTalk!</div>';return}
+ grid.innerHTML=rows.map(u=>'<article class="person"><div class="avatar">💜</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="muted">'+escapeHtml(u.country||"")+'</div><p>'+escapeHtml(u.bio||"Hello! I am on HeartTalk.")+'</p><button class="primary" onclick="startChat(\''+u.id+'\')">Message</button></article>').join("")
+}
+async function startChat(userId){
+ const user=discoverUsers.find(x=>x.id===userId);if(!user)return;activeChatUser=user;showView("chat");await loadMessages();await loadConversations()
+}
+async function loadConversations(){
+ const list=document.getElementById("conversationList");if(!currentUser){list.textContent="Login to view messages.";return}
+ const {data,error}=await supabaseClient.from("messages").select("sender_id,receiver_id,content,created_at").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(200);
+ if(error){list.innerHTML='<div class="muted">Chat setup needed. '+escapeHtml(error.message)+'</div>';return}
+ const ids=[];(data||[]).forEach(m=>{const id=m.sender_id===currentUser.id?m.receiver_id:m.sender_id;if(!ids.includes(id))ids.push(id)});
+ if(!ids.length){list.innerHTML='<div class="muted">No conversations yet. Visit Discover and message a member.</div>';return}
+ const {data:people}=await supabaseClient.from("profiles").select("id,display_name").in("id",ids);
+ list.innerHTML=ids.map(id=>{const p=(people||[]).find(x=>x.id===id),last=data.find(m=>m.sender_id===id||m.receiver_id===id);return '<button onclick="openConversation(\''+id+'\')"><b>'+escapeHtml(p?p.display_name:"HeartTalk member")+'</b><br><span class="muted">'+escapeHtml((last.content||"").slice(0,48))+'</span></button>'}).join("")
+}
+async function openConversation(id){
+ let p=discoverUsers.find(x=>x.id===id);
+ if(!p){const r=await supabaseClient.from("profiles").select("id,display_name,age,country,bio").eq("id",id).maybeSingle();p=r.data}
+ if(!p){notify("This profile is unavailable.");return}
+ activeChatUser=p;await loadMessages()
+}
+async function loadMessages(){
+ if(!currentUser||!activeChatUser)return;
+ document.getElementById("chatHeading").textContent="Chat with "+activeChatUser.display_name;
+ document.getElementById("messageInput").disabled=false;document.getElementById("sendButton").disabled=false;
+ const filter="and(sender_id.eq."+currentUser.id+",receiver_id.eq."+activeChatUser.id+"),and(sender_id.eq."+activeChatUser.id+",receiver_id.eq."+currentUser.id+")";
+ const {data,error}=await supabaseClient.from("messages").select("id,sender_id,content,created_at").or(filter).order("created_at",{ascending:true}).limit(300);
+ const box=document.getElementById("messageList");
+ if(error){box.innerHTML='<div class="notice">Chat database setup is not complete: '+escapeHtml(error.message)+'</div>';return}
+ box.innerHTML=(data||[]).map(m=>'<div class="bubble '+(m.sender_id===currentUser.id?"mine":"")+'">'+escapeHtml(m.content)+'</div>').join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
+ box.scrollTop=box.scrollHeight;
+ if(messageChannel)supabaseClient.removeChannel(messageChannel);
+ messageChannel=supabaseClient.channel("hearttalk-chat-"+currentUser.id+"-"+activeChatUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{const m=payload.new;if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id))loadMessages()}).subscribe()
+}
+async function sendMessage(e){
+ e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
+ const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
+ const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,content});
+ if(error){notify(error.message);return}input.value="";await loadMessages();await loadConversations()
+}
+function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}});
 </script>
-<style>
-section[id$="-preview"] {
-  scroll-margin-top: 80px;
-  min-height: 75vh;
-  padding-top: 45px;
-  padding-bottom: 90px;
-}
-.bottom-nav button:focus {
-  color: #ff4fa3;
-  outline: none;
-}
-.bottom-nav button:hover {
-  color: #ff4fa3;
-  transform: translateY(-3px);
-}
-</style>
-  
-<nav class="bottom-nav">
-  <button onclick="scrollToId('home')">🏠<small>Home</small></button>
-  <button onclick="scrollToId('discover')">💜<small>Discover</small></button>
-  <button onclick="scrollToId('chat-preview')">💬<small>Chat</small></button>
-  <button onclick="scrollToId('calls-preview')">📹<small>Calls</small></button>
-  <button onclick="scrollToId('live-preview')">🎙️<small>Live</small></button>
-  <button onclick="scrollToId('profile-preview')">👤<small>Profile</small></button>
-</nav>
-</body>
-</html>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Service worker",e)))}</script>
+</body></html>
