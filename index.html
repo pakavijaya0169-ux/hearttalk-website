@@ -213,7 +213,7 @@ function setAuthMethod(method){
  document.getElementById("emailAuthFields").style.display=method==="email"?"block":"none";
  document.getElementById("phoneAuthFields").style.display=method==="phone"?"block":"none";
  document.getElementById("emailAuthTab").classList.toggle("primary",method==="email");
- document.getElementById("phoneAuthTab").classList.toggle("primary",method==="phone");
+ document.getElementById("phoneAuthTab")?.classList.toggle("primary",method==="phone");
  document.getElementById("authDescription").textContent=method==="phone"?"Sign up or log in securely with an SMS verification code.":"Create your account or log in.";
 }
 async function sendPhoneOtp(){
