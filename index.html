@@ -168,6 +168,32 @@ p{color:#77747e}
  #chatView .sendbar{padding:8px}
 }
 </style>
+
+<style>
+/* HeartTalk baby-pink chat theme */
+#chatView .chat-shell{border-color:#f6c9dc!important}
+#chatView .chat-list{border-right-color:#f8dce8!important}
+#chatView .chat-list>div:first-child,
+#chatView .chat-head{background:#fff0f6!important;border-color:#f6d6e4!important}
+#chatView #conversationList>button:hover{background:#fff7fa!important}
+#chatView #conversationList>button:before{background:#ffe1ed!important}
+#chatView .chat-window{background:#fff7fa!important}
+#chatView .messages{
+ background-color:#fff7fa!important;
+ background-image:radial-gradient(#f4d8e4 .65px,transparent .65px)!important;
+}
+#chatView .bubble.mine{background:#ffd6e7!important;color:#4b2637!important}
+#chatView .bubble.theirs{background:#fff!important;color:#4b2637!important}
+#chatView .bubble .sender-label{color:#d64b87!important}
+#chatView .bubble .message-time{color:#9b7183!important}
+#chatView .sendbar{background:#fff0f6!important}
+#chatView .sendbar input:focus{outline:2px solid #f3a9c8!important}
+#chatView .sendbar button{background:linear-gradient(110deg,#f58ab5,#e85a99)!important;box-shadow:0 3px 10px #e85a9928!important}
+@media(max-width:650px){
+ #chatView .chat-list{border-bottom-color:#f6d6e4!important}
+}
+</style>
+
 </head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
