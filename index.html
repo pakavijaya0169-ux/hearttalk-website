@@ -194,7 +194,20 @@ p{color:#77747e}
 }
 </style>
 
-</head>
+<style>
+/* HeartTalk chat emoji, sticker and GIF tools */
+#chatView .chat-tools{padding:8px 12px 0;background:#fff0f6}
+#chatView .chat-tool-row{display:flex;gap:8px;flex-wrap:wrap}
+#chatView .chat-tool-btn{border:1px solid #f2bfd4;background:#fff;border-radius:18px;color:#b83d75;padding:7px 12px;font-size:13px;cursor:pointer}
+#chatView .chat-picker{display:flex;flex-wrap:wrap;gap:6px;padding:10px 2px 4px}
+#chatView .chat-picker[hidden]{display:none}
+#chatView .chat-picker button{border:1px solid #f6d6e4;background:#fff;border-radius:12px;min-width:40px;min-height:38px;font-size:23px;cursor:pointer;padding:5px}
+#chatView .sticker-picker button{display:flex;flex-direction:column;align-items:center;min-width:65px;font-size:28px}
+#chatView .sticker-picker small{font-size:10px;color:#a56a83}
+#chatView .sendbar{padding-top:8px!important}
+#chatView .bubble .sent-sticker{font-size:48px;line-height:1.3;text-align:center;padding:5px}
+#chatView .bubble .sent-gif{display:block;max-width:min(260px,65vw);max-height:220px;border-radius:12px;object-fit:contain}
+</style></head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
 <main>
@@ -212,7 +225,7 @@ p{color:#77747e}
  <div id="discoverGrid" class="connect-grid"><div class="notice">Login to discover community members.</div></div></div>
  <div id="connectChatsPanel" style="display:none"><div class="connect-section-title"><div><h2>Your conversations</h2><p>Continue where you left off</p></div></div><div class="connect-chat-list" id="connectConversationList">Login to view your chats.</div></div>
  </section>
-<section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
+<section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><div class="chat-tools" id="chatTools"><div class="chat-tool-row"><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('emojiPicker')">😊 Emoji</button><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('stickerPicker')">💗 Stickers</button><button type="button" class="chat-tool-btn" onclick="openGifSearch()">🎞️ GIFs</button></div><div class="chat-picker" id="emojiPicker" hidden><button type="button" onclick="addChatEmoji('😀')">😀</button><button type="button" onclick="addChatEmoji('😂')">😂</button><button type="button" onclick="addChatEmoji('🥰')">🥰</button><button type="button" onclick="addChatEmoji('😍')">😍</button><button type="button" onclick="addChatEmoji('😘')">😘</button><button type="button" onclick="addChatEmoji('😊')">😊</button><button type="button" onclick="addChatEmoji('😭')">😭</button><button type="button" onclick="addChatEmoji('🤗')">🤗</button><button type="button" onclick="addChatEmoji('❤️')">❤️</button><button type="button" onclick="addChatEmoji('💕')">💕</button><button type="button" onclick="addChatEmoji('💗')">💗</button><button type="button" onclick="addChatEmoji('👍')">👍</button><button type="button" onclick="addChatEmoji('🙏')">🙏</button><button type="button" onclick="addChatEmoji('🎉')">🎉</button><button type="button" onclick="addChatEmoji('🌸')">🌸</button><button type="button" onclick="addChatEmoji('✨')">✨</button></div><div class="chat-picker sticker-picker" id="stickerPicker" hidden><button type="button" onclick="sendChatSticker('🥰','Love')">🥰<small>Love</small></button><button type="button" onclick="sendChatSticker('🤗','Hug')">🤗<small>Hug</small></button><button type="button" onclick="sendChatSticker('😘','Kisses')">😘<small>Kisses</small></button><button type="button" onclick="sendChatSticker('🌸','Flower')">🌸<small>Flower</small></button><button type="button" onclick="sendChatSticker('💖','Heart')">💖<small>Heart</small></button><button type="button" onclick="sendChatSticker('🐻','Bear')">🐻<small>Bear</small></button><button type="button" onclick="sendChatSticker('🎉','Party')">🎉<small>Party</small></button><button type="button" onclick="sendChatSticker('🥳','Yay')">🥳<small>Yay</small></button></div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
 <section class="view" id="callsView">
 <div class="calls-heading"><div class="section-kicker">STAY CLOSE</div><h2>Calls <span>💗</span></h2><p>Talk face-to-face or say hello with a voice call.</p></div>
 <div class="call-layout">
@@ -446,11 +459,18 @@ async function loadMessages(){
  const {data,error}=await supabaseClient.from("messages").select("id,sender_id,message,created_at").or(filter).order("created_at",{ascending:true}).limit(300);
  const box=document.getElementById("messageList");
  if(error){box.innerHTML='<div class="notice">Chat database setup is not complete: '+escapeHtml(error.message)+'</div>';return}
- box.innerHTML=(data||[]).map(m=>{const mine=m.sender_id===currentUser.id;const label=mine?"You":escapeHtml(activeChatUser.display_name);const time=m.created_at?new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";return '<div class="bubble '+(mine?"mine":"theirs")+'"><span class="sender-label">'+label+'</span>'+escapeHtml(m.message)+'<span class="message-time">'+time+'</span></div>'}).join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
+ box.innerHTML=(data||[]).map(m=>{const mine=m.sender_id===currentUser.id;const label=mine?"You":escapeHtml(activeChatUser.display_name);const time=m.created_at?new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";return '<div class="bubble '+(mine?"mine":"theirs")+'"><span class="sender-label">'+label+'</span>'+renderChatMessageContent(m.message)+'<span class="message-time">'+time+'</span></div>'}).join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
  box.scrollTop=box.scrollHeight;
  if(messageChannel)supabaseClient.removeChannel(messageChannel);
  messageChannel=supabaseClient.channel("hearttalk-chat-"+currentUser.id+"-"+activeChatUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{const m=payload.new;if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id))loadMessages()}).subscribe()
 }
+
+function toggleChatPicker(id){const target=document.getElementById(id);if(!target)return;const opening=target.hidden;document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);target.hidden=!opening}
+function addChatEmoji(emoji){const input=document.getElementById("messageInput");if(!input)return;input.value+=emoji;input.focus()}
+async function sendChatSticker(emoji,label){if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
+function openGifSearch(){window.open("https://tenor.com/search/cute-love-gifs","_blank","noopener");notify("Tenor opened. Copy a direct .gif image link and paste it in chat.")}
+function renderChatMessageContent(raw){const value=String(raw||"");if(value.startsWith("[[STICKER]]")){const parts=value.slice(10).split("|");return '<div class="sent-sticker" aria-label="'+escapeHtml(parts[1]||"Sticker")+'">'+escapeHtml(parts[0]||"💗")+'</div>'}if(/^https?:\/\/[^\s]+\.gif(?:\?[^\s]*)?$/i.test(value)){let u;try{u=new URL(value)}catch(e){}if(u&&["tenor.com","media.tenor.com","giphy.com","media.giphy.com","i.giphy.com"].includes(u.hostname))return '<a href="'+escapeHtml(u.href)+'" target="_blank" rel="noopener"><img class="sent-gif" src="'+escapeHtml(u.href)+'" alt="GIF"></a>'}return escapeHtml(value).replace(/\n/g,"<br>")}
+
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
