@@ -207,6 +207,9 @@ p{color:#77747e}
 #chatView .sendbar{padding-top:8px!important}
 #chatView .bubble .sent-sticker{font-size:48px;line-height:1.3;text-align:center;padding:5px}
 #chatView .bubble .sent-gif{display:block;max-width:min(260px,65vw);max-height:220px;border-radius:12px;object-fit:contain}
+</style><style>
+#chatView .chat-media{display:block;max-width:min(260px,65vw);max-height:260px;border-radius:13px;object-fit:cover}
+#chatView .chat-audio{display:block;width:min(260px,65vw);height:42px}
 </style></head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
@@ -459,7 +462,7 @@ async function loadMessages(){
  const {data,error}=await supabaseClient.from("messages").select("id,sender_id,message,created_at").or(filter).order("created_at",{ascending:true}).limit(300);
  const box=document.getElementById("messageList");
  if(error){box.innerHTML='<div class="notice">Chat database setup is not complete: '+escapeHtml(error.message)+'</div>';return}
- box.innerHTML=(data||[]).map(m=>{const mine=m.sender_id===currentUser.id;const label=mine?"You":escapeHtml(activeChatUser.display_name);const time=m.created_at?new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";return '<div class="bubble '+(mine?"mine":"theirs")+'"><span class="sender-label">'+label+'</span>'+renderChatMessageContent(m.message)+'<span class="message-time">'+time+'</span></div>'}).join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
+ box.innerHTML=(await Promise.all((data||[]).map(async m=>{const mine=m.sender_id===currentUser.id;const label=mine?"You":escapeHtml(activeChatUser.display_name);const time=m.created_at?new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";return '<div class="bubble '+(mine?"mine":"theirs")+'"><span class="sender-label">'+label+'</span>'+await renderChatMessageContent(m.message)+'<span class="message-time">'+time+'</span></div>'}))).join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
  box.scrollTop=box.scrollHeight;
  if(messageChannel)supabaseClient.removeChannel(messageChannel);
  messageChannel=supabaseClient.channel("hearttalk-chat-"+currentUser.id+"-"+activeChatUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{const m=payload.new;if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id))loadMessages()}).subscribe()
@@ -469,7 +472,48 @@ function toggleChatPicker(id){const target=document.getElementById(id);if(!targe
 function addChatEmoji(emoji){const input=document.getElementById("messageInput");if(!input)return;input.value+=emoji;input.focus()}
 async function sendChatSticker(emoji,label){if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
 function openGifSearch(){window.open("https://tenor.com/search/cute-love-gifs","_blank","noopener");notify("Tenor opened. Copy a direct .gif image link and paste it in chat.")}
-function renderChatMessageContent(raw){const value=String(raw||"");if(value.startsWith("[[STICKER]]")){const parts=value.slice(10).split("|");return '<div class="sent-sticker" aria-label="'+escapeHtml(parts[1]||"Sticker")+'">'+escapeHtml(parts[0]||"💗")+'</div>'}if(/^https?:\/\/[^\s]+\.gif(?:\?[^\s]*)?$/i.test(value)){let u;try{u=new URL(value)}catch(e){}if(u&&["tenor.com","media.tenor.com","giphy.com","media.giphy.com","i.giphy.com"].includes(u.hostname))return '<a href="'+escapeHtml(u.href)+'" target="_blank" rel="noopener"><img class="sent-gif" src="'+escapeHtml(u.href)+'" alt="GIF"></a>'}return escapeHtml(value).replace(/\n/g,"<br>")}
+async function renderChatMessageContent(raw){
+ const value=String(raw||"");
+ if(value.startsWith("[[MEDIA]]")){
+  const bits=value.slice(9).split("|");let path;
+  try{path=decodeURIComponent(bits.slice(1).join("|"))}catch(e){return "Attachment unavailable"}
+  const {data,error}=await supabaseClient.storage.from("chat-media").createSignedUrl(path,3600);
+  if(error||!data||!data.signedUrl)return '<span class="muted">Attachment unavailable</span>';
+  const url=escapeHtml(data.signedUrl);
+  if(bits[0]==="image")return '<a href="'+url+'" target="_blank" rel="noopener"><img class="chat-media" src="'+url+'" alt="Shared photo"></a>';
+  if(bits[0]==="audio")return '<audio class="chat-audio" controls preload="none" src="'+url+'"></audio>';
+  return "Attachment";
+ }
+ if(value.startsWith("[[STICKER]]")){const parts=value.slice(10).split("|");return '<div class="sent-sticker">'+escapeHtml(parts[0]||"💗")+'</div>'}
+ return escapeHtml(value).replace(/\n/g,"<br>");
+}
+let chatRecorder=null,chatRecordStream=null,chatRecordChunks=[];
+async function uploadChatMedia(file,kind){
+ if(!file||!currentUser||!activeChatUser){notify("Open a conversation first.");return}
+ const valid=kind==="image"?file.type.startsWith("image/"):file.type.startsWith("audio/");
+ if(!valid){notify("Unsupported file type.");return}
+ if(file.size>(kind==="image"?8388608:12582912)){notify("File is too large.");return}
+ const ext=kind==="image"?(file.type.split("/")[1]||"jpg"):"webm";
+ const path=currentUser.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"."+ext;
+ notify("Uploading "+(kind==="image"?"photo":"voice message")+"…");
+ const up=await supabaseClient.storage.from("chat-media").upload(path,file,{contentType:file.type,upsert:false});
+ if(up.error){notify("Upload failed: "+up.error.message+" (run chat-media SQL setup)");return}
+ const marker="[[MEDIA]]"+kind+"|"+encodeURIComponent(path);
+ const sent=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:marker});
+ if(sent.error){notify("Message failed: "+sent.error.message);return}
+ notify(kind==="image"?"Photo sent 💗":"Voice message sent 🎙️");await loadMessages();await loadConversations();
+}
+async function toggleVoiceRecording(){
+ const btn=document.getElementById("voiceRecordBtn");if(!btn)return;
+ if(chatRecorder&&chatRecorder.state==="recording"){chatRecorder.stop();btn.textContent="🎙️ Voice message";return}
+ try{
+  chatRecordStream=await navigator.mediaDevices.getUserMedia({audio:true});chatRecordChunks=[];
+  chatRecorder=new MediaRecorder(chatRecordStream);
+  chatRecorder.ondataavailable=e=>{if(e.data&&e.data.size)chatRecordChunks.push(e.data)};
+  chatRecorder.onstop=async()=>{const blob=new Blob(chatRecordChunks,{type:chatRecorder.mimeType||"audio/webm"});chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;chatRecorder=null;btn.textContent="🎙️ Voice message";if(blob.size)await uploadChatMedia(new File([blob],"voice-message.webm",{type:blob.type}),"audio")};
+  chatRecorder.start();btn.textContent="⏹ Stop recording";notify("Recording… Tap Stop recording when finished.");
+ }catch(e){if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;notify("Allow microphone access to record a voice message.")}
+}
 
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
