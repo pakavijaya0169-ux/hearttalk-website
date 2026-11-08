@@ -409,15 +409,35 @@ async function saveProfile(){
 async function loadDiscover(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
  grid.innerHTML='<div class="notice">Loading community members...</div>';
- const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(60);
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
- discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18);renderDiscover()
+ const [mine,theirs]=await Promise.all([supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id)]);
+ if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
+ const hidden=new Set([...(mine.data||[]).map(x=>x.blocked_user_id),...(theirs.data||[]).map(x=>x.blocker_id)]);
+ discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id));renderDiscover()
 }
 function renderDiscover(){
  const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),q=(search?.value||"").toLowerCase();
  const rows=discoverUsers.filter(u=>(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase().includes(q));
  if(!rows.length){grid.innerHTML='<div class="notice">No members found yet. Invite friends to join HeartTalk!</div>';return}
- grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">💗</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button></div></article>').join("")
+ grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">💗</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
+}
+
+async function reportMember(userId){
+ if(!currentUser){openAuth();return}
+ const reason=prompt("Why are you reporting this member? (Spam, harassment, fake profile, other)");
+ if(!reason||!reason.trim())return;
+ const details=prompt("Optional details")||"";
+ const {error}=await supabaseClient.from("user_reports").insert({reporter_id:currentUser.id,reported_user_id:userId,reason:reason.trim().slice(0,80),details:details.trim().slice(0,1000)});
+ if(error){notify("Report could not be sent. Run supabase/safety.sql first.");return}
+ notify("Report submitted. Thank you for helping keep HeartTalk safe.");
+}
+async function blockMember(userId){
+ if(!currentUser){openAuth();return}
+ if(!confirm("Block this member? They will disappear from Discover."))return;
+ const {error}=await supabaseClient.from("blocked_users").upsert({blocker_id:currentUser.id,blocked_user_id:userId},{onConflict:"blocker_id,blocked_user_id"});
+ if(error){notify("Block could not be saved. Run supabase/safety.sql first.");return}
+ discoverUsers=discoverUsers.filter(u=>u.id!==userId);renderDiscover();notify("Member blocked.");
 }
 function setConnectTab(tab){
  const chats=tab==="chats";
