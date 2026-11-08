@@ -1,7 +1,9 @@
-const CACHE_NAME = "hearttalk-v2";
+const CACHE_NAME = "hearttalk-v3";
 const FILES_TO_CACHE = [
   "/hearttalk-website/",
-  "/hearttalk-website/manifest.json"
+  "/hearttalk-website/manifest.json",
+  "/hearttalk-website/icons/icon-192.svg",
+  "/hearttalk-website/icon-512.png"
 ];
 
 self.addEventListener("install", event => {
