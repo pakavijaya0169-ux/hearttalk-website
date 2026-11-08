@@ -201,7 +201,8 @@ p{color:#77747e}
 /* HeartTalk chat emoji, sticker and GIF tools */
 #chatView .chat-tools{padding:8px 12px 0;background:#fff0f6}
 #chatView .chat-tool-row{display:flex;gap:8px;flex-wrap:wrap}
-#chatView .chat-tool-btn{border:1px solid #f2bfd4;background:#fff;border-radius:18px;color:#b83d75;padding:7px 12px;font-size:13px;cursor:pointer}
+#chatView .voice-hold-btn{touch-action:none;user-select:none;-webkit-user-select:none}.voice-hold-btn.recording{background:#ffe0ec;border-color:#ec4899;color:#be185d;box-shadow:0 0 0 3px #fce7f3}
+.chat-tool-btn{border:1px solid #f2bfd4;background:#fff;border-radius:18px;color:#b83d75;padding:7px 12px;font-size:13px;cursor:pointer}
 #chatView .chat-picker{display:flex;flex-wrap:wrap;gap:6px;padding:10px 2px 4px}
 #chatView .chat-picker[hidden]{display:none}
 #chatView .chat-picker button{border:1px solid #f6d6e4;background:#fff;border-radius:12px;min-width:40px;min-height:38px;font-size:23px;cursor:pointer;padding:5px}
@@ -231,7 +232,7 @@ p{color:#77747e}
  <div id="discoverGrid" class="connect-grid"><div class="notice">Login to discover community members.</div></div></div>
  <div id="connectChatsPanel" style="display:none"><div class="connect-section-title"><div><h2>Your conversations</h2><p>Continue where you left off</p></div></div><div class="connect-chat-list" id="connectConversationList">Login to view your chats.</div></div>
  </section>
-<section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><div class="chat-tools" id="chatTools"><div class="chat-tool-row"><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('emojiPicker')">😊 Emoji</button><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('stickerPicker')">💗 Stickers</button><button type="button" class="chat-tool-btn" onclick="openGifSearch()">🎞️ GIFs</button><button type="button" class="chat-tool-btn" onclick="openChatPhotos()">🖼️ Photos</button><button type="button" class="chat-tool-btn" id="voiceRecordBtn" onclick="toggleVoiceRecording()">🎙️ Voice message</button><input id="chatPhotoInput" type="file" accept="image/*" multiple hidden onchange="uploadChatPhotos(this.files)"></div><div class="chat-picker" id="emojiPicker" hidden><button type="button" onclick="addChatEmoji('😀')">😀</button><button type="button" onclick="addChatEmoji('😂')">😂</button><button type="button" onclick="addChatEmoji('🥰')">🥰</button><button type="button" onclick="addChatEmoji('😍')">😍</button><button type="button" onclick="addChatEmoji('😘')">😘</button><button type="button" onclick="addChatEmoji('😊')">😊</button><button type="button" onclick="addChatEmoji('😭')">😭</button><button type="button" onclick="addChatEmoji('🤗')">🤗</button><button type="button" onclick="addChatEmoji('❤️')">❤️</button><button type="button" onclick="addChatEmoji('💕')">💕</button><button type="button" onclick="addChatEmoji('💗')">💗</button><button type="button" onclick="addChatEmoji('👍')">👍</button><button type="button" onclick="addChatEmoji('🙏')">🙏</button><button type="button" onclick="addChatEmoji('🎉')">🎉</button><button type="button" onclick="addChatEmoji('🌸')">🌸</button><button type="button" onclick="addChatEmoji('✨')">✨</button></div><div class="chat-picker sticker-picker" id="stickerPicker" hidden><button type="button" onclick="sendChatSticker('🥰','Love')">🥰<small>Love</small></button><button type="button" onclick="sendChatSticker('🤗','Hug')">🤗<small>Hug</small></button><button type="button" onclick="sendChatSticker('😘','Kisses')">😘<small>Kisses</small></button><button type="button" onclick="sendChatSticker('🌸','Flower')">🌸<small>Flower</small></button><button type="button" onclick="sendChatSticker('💖','Heart')">💖<small>Heart</small></button><button type="button" onclick="sendChatSticker('🐻','Bear')">🐻<small>Bear</small></button><button type="button" onclick="sendChatSticker('🎉','Party')">🎉<small>Party</small></button><button type="button" onclick="sendChatSticker('🥳','Yay')">🥳<small>Yay</small></button></div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
+<section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><div class="chat-tools" id="chatTools"><div class="chat-tool-row"><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('emojiPicker')">😊 Emoji</button><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('stickerPicker')">💗 Stickers</button><button type="button" class="chat-tool-btn" onclick="openGifSearch()">🎞️ GIFs</button><button type="button" class="chat-tool-btn" onclick="openChatPhotos()">🖼️ Photos</button><button type="button" class="chat-tool-btn voice-hold-btn" id="voiceRecordBtn" onpointerdown="startVoiceRecording(event)" onpointerup="finishVoiceRecording(event)" onpointercancel="cancelVoiceRecording(event)" oncontextmenu="return false" aria-label="Hold to record voice message">🎙️ Hold to record</button><input id="chatPhotoInput" type="file" accept="image/*" multiple hidden onchange="uploadChatPhotos(this.files)"></div><div class="chat-picker" id="emojiPicker" hidden><button type="button" onclick="addChatEmoji('😀')">😀</button><button type="button" onclick="addChatEmoji('😂')">😂</button><button type="button" onclick="addChatEmoji('🥰')">🥰</button><button type="button" onclick="addChatEmoji('😍')">😍</button><button type="button" onclick="addChatEmoji('😘')">😘</button><button type="button" onclick="addChatEmoji('😊')">😊</button><button type="button" onclick="addChatEmoji('😭')">😭</button><button type="button" onclick="addChatEmoji('🤗')">🤗</button><button type="button" onclick="addChatEmoji('❤️')">❤️</button><button type="button" onclick="addChatEmoji('💕')">💕</button><button type="button" onclick="addChatEmoji('💗')">💗</button><button type="button" onclick="addChatEmoji('👍')">👍</button><button type="button" onclick="addChatEmoji('🙏')">🙏</button><button type="button" onclick="addChatEmoji('🎉')">🎉</button><button type="button" onclick="addChatEmoji('🌸')">🌸</button><button type="button" onclick="addChatEmoji('✨')">✨</button></div><div class="chat-picker sticker-picker" id="stickerPicker" hidden><button type="button" onclick="sendChatSticker('🥰','Love')">🥰<small>Love</small></button><button type="button" onclick="sendChatSticker('🤗','Hug')">🤗<small>Hug</small></button><button type="button" onclick="sendChatSticker('😘','Kisses')">😘<small>Kisses</small></button><button type="button" onclick="sendChatSticker('🌸','Flower')">🌸<small>Flower</small></button><button type="button" onclick="sendChatSticker('💖','Heart')">💖<small>Heart</small></button><button type="button" onclick="sendChatSticker('🐻','Bear')">🐻<small>Bear</small></button><button type="button" onclick="sendChatSticker('🎉','Party')">🎉<small>Party</small></button><button type="button" onclick="sendChatSticker('🥳','Yay')">🥳<small>Yay</small></button></div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
 <section class="view" id="callsView">
 <div class="calls-heading"><div class="section-kicker">STAY CLOSE</div><h2>Calls <span>💗</span></h2><p>Talk face-to-face or say hello with a voice call.</p></div>
 <div class="call-layout">
@@ -509,16 +510,41 @@ async function uploadChatMedia(file,kind){
  if(sent.error){notify("Message failed: "+sent.error.message);return}
  notify(kind==="image"?"Photo sent 💗":"Voice message sent 🎙️");await loadMessages();await loadConversations();
 }
-async function toggleVoiceRecording(){
- const btn=document.getElementById("voiceRecordBtn");if(!btn)return;
- if(chatRecorder&&chatRecorder.state==="recording"){chatRecorder.stop();btn.textContent="🎙️ Voice message";return}
+let voiceHoldActive=false,voicePermissionPending=false,discardVoiceOnStop=false;
+async function startVoiceRecording(event){
+ const btn=document.getElementById("voiceRecordBtn");if(!btn||voiceHoldActive)return;
+ if(!currentUser){openAuth();return}if(!activeChatUser){notify("Open a conversation first.");return}
+ event.preventDefault();voiceHoldActive=true;discardVoiceOnStop=false;
+ try{btn.setPointerCapture(event.pointerId)}catch(e){}
+ btn.classList.add("recording");btn.textContent="🔴 Recording… release to send";voicePermissionPending=true;
  try{
-  chatRecordStream=await navigator.mediaDevices.getUserMedia({audio:true});chatRecordChunks=[];
-  chatRecorder=new MediaRecorder(chatRecordStream);
+  chatRecordStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  if(!voiceHoldActive){chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;return}
+  chatRecordChunks=[];chatRecorder=new MediaRecorder(chatRecordStream);
   chatRecorder.ondataavailable=e=>{if(e.data&&e.data.size)chatRecordChunks.push(e.data)};
-  chatRecorder.onstop=async()=>{const blob=new Blob(chatRecordChunks,{type:chatRecorder.mimeType||"audio/webm"});chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;chatRecorder=null;btn.textContent="🎙️ Voice message";if(blob.size)await uploadChatMedia(new File([blob],"voice-message.webm",{type:blob.type}),"audio")};
-  chatRecorder.start();btn.textContent="⏹ Stop recording";notify("Recording… Tap Stop recording when finished.");
- }catch(e){if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;notify("Allow microphone access to record a voice message.")}
+  chatRecorder.onstop=async()=>{
+   const recorder=chatRecorder;const blob=new Blob(chatRecordChunks,{type:recorder?.mimeType||"audio/webm"});
+   if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());
+   chatRecordStream=null;chatRecorder=null;chatRecordChunks=[];
+   btn.classList.remove("recording");btn.textContent="🎙️ Hold to record";
+   if(!discardVoiceOnStop&&blob.size)await uploadChatMedia(new File([blob],"voice-message.webm",{type:blob.type||"audio/webm"}),"audio");
+  };
+  chatRecorder.start();
+ }catch(e){
+  voiceHoldActive=false;btn.classList.remove("recording");btn.textContent="🎙️ Hold to record";
+  if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;
+  notify("Allow microphone access to record a voice message.");
+ }finally{voicePermissionPending=false;if(!voiceHoldActive&&chatRecorder?.state==="recording")chatRecorder.stop()}
+}
+function finishVoiceRecording(event){
+ event.preventDefault();if(!voiceHoldActive)return;voiceHoldActive=false;
+ const btn=document.getElementById("voiceRecordBtn");if(btn)btn.textContent="Sending voice message…";
+ if(chatRecorder&&chatRecorder.state==="recording")chatRecorder.stop();
+}
+function cancelVoiceRecording(event){
+ event.preventDefault();if(!voiceHoldActive)return;voiceHoldActive=false;discardVoiceOnStop=true;
+ if(chatRecorder&&chatRecorder.state==="recording")chatRecorder.stop();
+ else if(!voicePermissionPending){if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;const btn=document.getElementById("voiceRecordBtn");if(btn){btn.classList.remove("recording");btn.textContent="🎙️ Hold to record"}}
 }
 
 async function sendMessage(e){
