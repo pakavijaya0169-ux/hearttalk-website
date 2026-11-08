@@ -487,7 +487,7 @@ async function renderChatMessageContent(raw){
   if(bits[0]==="audio")return '<audio class="chat-audio" controls preload="none" src="'+url+'"></audio>';
   return "Attachment";
  }
- if(value.startsWith("[[STICKER]]")){const parts=value.slice(10).split("|");return '<div class="sent-sticker">'+escapeHtml(parts[0]||"💗")+'</div>'}
+ if(value.startsWith("[[STICKER]]")){const parts=value.slice("[[STICKER]]".length).split("|");return '<div class="sent-sticker">'+escapeHtml(parts[0]||"💗")+'</div>'}
  return escapeHtml(value).replace(/\n/g,"<br>");
 }
 let chatRecorder=null,chatRecordStream=null,chatRecordChunks=[];
