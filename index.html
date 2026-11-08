@@ -218,7 +218,7 @@ p{color:#77747e}
 #chatView .chat-audio{display:block;width:min(260px,65vw);height:42px}
 </style></head>
 <body>
-<header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
+<header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" id="installAppBtn" type="button" style="display:none;padding:8px 12px">⬇ Install</button><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
 <main>
 <section class="view active" id="homeView">
 <div class="hero"><div class="section-kicker">Your world. Your people.</div><h1>Find your people.<br><span style="color:#e52d83">Feel connected.</span></h1><p>Meet new friends, share your moments and join conversations in languages you love.</p><div class="toolbar"><button class="primary" onclick="showView('discover')">💗 Find people</button><button class="secondary" onclick="showView('forums')">Explore forums</button><button class="secondary" onclick="showView('recents')">Recent calls</button><button class="secondary" onclick="showView('wallet')">My wallet</button></div></div>
@@ -836,5 +836,13 @@ function subscribeLiveChat(roomId){
 }
 async function sendLiveChat(){const input=document.getElementById("liveChatInput"),text=input.value.trim();if(!text||!liveChatChannel||!currentUser)return;const name=document.getElementById("profileDisplayName")?.textContent||"Member";await liveChatChannel.send({type:"broadcast",event:"message",payload:{name,text}});input.value=""}
 document.addEventListener("DOMContentLoaded",()=>{const originalShowView=window.showView;window.showView=function(name){originalShowView(name);if(name==="live")loadLiveRooms()}});
+</script>
+
+<script>
+let heartTalkInstallPrompt=null;
+const heartTalkInstallButton=document.getElementById("installAppBtn");
+window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();heartTalkInstallPrompt=event;if(heartTalkInstallButton)heartTalkInstallButton.style.display="inline-flex"});
+heartTalkInstallButton?.addEventListener("click",async()=>{if(!heartTalkInstallPrompt){notify("Chrome menu ⋮ → Install app / Add to Home screen");return}heartTalkInstallPrompt.prompt();await heartTalkInstallPrompt.userChoice;heartTalkInstallPrompt=null;heartTalkInstallButton.style.display="none"});
+window.addEventListener("appinstalled",()=>{if(heartTalkInstallButton)heartTalkInstallButton.style.display="none";notify("HeartTalk installed successfully 💗")});
 </script>
 </body></html>
