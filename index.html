@@ -455,7 +455,7 @@ async function openConversation(id){
  let p=discoverUsers.find(x=>x.id===id);
  if(!p){const r=await supabaseClient.from("profiles").select("id,display_name,age,country,bio").eq("id",id).maybeSingle();p=r.data}
  if(!p){notify("This profile is unavailable.");return}
- activeChatUser=p;await loadMessages()
+ activeChatUser=p;await loadMessages();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadMessages(){
  if(!currentUser||!activeChatUser)return;
