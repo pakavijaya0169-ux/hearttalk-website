@@ -765,11 +765,11 @@ function liveEsc(v){return escapeHtml(v||"")}
 async function loadLiveRooms(){
  const box=document.getElementById("liveRoomsList");if(!box)return;
  if(!currentUser){box.innerHTML='<div class="notice">Please log in to create or join live rooms.</div>';return}
- const {data,error}=await supabaseClient.from("live_rooms").select("id,host_id,title,description,status,created_at,profiles:host_id(display_name)").eq("status","live").order("created_at",{ascending:false}).limit(40);
+ const {data,error}=await supabaseClient.from("live_rooms").select("id,host_id,title,description,status,created_at").eq("status","live").order("created_at",{ascending:false}).limit(40);
  if(error){box.innerHTML='<div class="notice">Could not load rooms: '+liveEsc(error.message)+'</div>';return}
  if(!data?.length){box.innerHTML='<div class="notice">No live rooms right now. Create the first one 💗</div>';return}
- const ids=data.map(x=>x.id);const counts=await supabaseClient.from("live_room_members").select("room_id,user_id").in("room_id",ids).is("left_at",null);
- box.innerHTML=data.map(r=>{const count=(counts.data||[]).filter(m=>m.room_id===r.id).length;return '<article class="live-room-card"><span class="live-dot"></span> <b>LIVE</b><h3>'+liveEsc(r.title)+'</h3><p>'+liveEsc(r.description||"HeartTalk live conversation")+'</p><p>Host: '+liveEsc(r.profiles?.display_name||"HeartTalk member")+' · 👁️ '+count+' watching</p><div class="live-room-actions"><button class="primary" onclick="joinLiveRoom(\''+r.id+'\')">Join live</button>'+(r.host_id===currentUser.id?'<button class="secondary" onclick="endLiveRoom(\''+r.id+'\')">End room</button>':'')+'</div></article>'}).join("");
+ const ids=data.map(x=>x.id),hostIds=[...new Set(data.map(x=>x.host_id))];const [counts,hosts]=await Promise.all([supabaseClient.from("live_room_members").select("room_id,user_id").in("room_id",ids).is("left_at",null),supabaseClient.from("profiles").select("id,display_name").in("id",hostIds)]);const hostMap=Object.fromEntries((hosts.data||[]).map(p=>[p.id,p.display_name]));
+ box.innerHTML=data.map(r=>{const count=(counts.data||[]).filter(m=>m.room_id===r.id).length;return '<article class="live-room-card"><span class="live-dot"></span> <b>LIVE</b><h3>'+liveEsc(r.title)+'</h3><p>'+liveEsc(r.description||"HeartTalk live conversation")+'</p><p>Host: '+liveEsc(hostMap[r.host_id]||"HeartTalk member")+' · 👁️ '+count+' watching</p><div class="live-room-actions"><button class="primary" onclick="joinLiveRoom(\''+r.id+'\')">Join live</button>'+(r.host_id===currentUser.id?'<button class="secondary" onclick="endLiveRoom(\''+r.id+'\')">End room</button>':'')+'</div></article>'}).join("");
 }
 async function createLiveRoom(){
  if(!currentUser){openAuth();return}
@@ -790,6 +790,7 @@ async function startLiveKitRoom(roomId,isHost){
  if(!window.LivekitClient){notify("Live video library failed to load. Refresh the page.");return}
  try{
   const tokenData=await getLiveKitToken(roomId);
+  const roomInfo=await supabaseClient.from("live_rooms").select("title").eq("id",roomId).maybeSingle();
   const room=new LivekitClient.Room({adaptiveStream:true,dynacast:true});
   room.on(LivekitClient.RoomEvent.TrackSubscribed,(track,publication,participant)=>attachLiveTrack(track,participant));
   room.on(LivekitClient.RoomEvent.TrackUnsubscribed,(track)=>{track.detach().forEach(el=>el.remove())});
@@ -800,7 +801,7 @@ async function startLiveKitRoom(roomId,isHost){
   liveKitRoom=room;activeLiveRoom=roomId;liveIsHost=isHost;
   if(isHost){await room.localParticipant.enableCameraAndMicrophone();await supabaseClient.from("live_rooms").update({status:"live"}).eq("id",roomId).eq("host_id",currentUser.id);await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"host",left_at:null},{onConflict:"room_id,user_id"});}
   else{await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"viewer",left_at:null},{onConflict:"room_id,user_id"});}
-  document.getElementById("liveStage").style.display="block";document.getElementById("liveStageTitle").textContent=document.getElementById("liveRoomTitle").value||"HeartTalk Live";
+  document.getElementById("liveStage").style.display="block";document.getElementById("liveStageTitle").textContent=roomInfo.data?.title||"HeartTalk Live";
   document.getElementById("liveStageInfo").textContent=isHost?"You are hosting · "+room.remoteParticipants.size+" viewers":"Joined live · "+room.remoteParticipants.size+" other participants";
   document.getElementById("liveEndBtn").style.display=isHost?"inline-block":"none";document.getElementById("liveMicBtn").disabled=!isHost;document.getElementById("liveCamBtn").disabled=!isHost;
   room.localParticipant.videoTrackPublications.forEach(p=>{if(p.track)attachLiveTrack(p.track,room.localParticipant,true)});
