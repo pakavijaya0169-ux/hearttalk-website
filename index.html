@@ -74,9 +74,12 @@ p{color:#77747e}
  .hero:after{right:5%;top:65px;font-size:72px}
  .feature-strip{grid-template-columns:1fr 1fr}
  .feature-tile{padding:13px}.feature-tile:last-child{grid-column:span 2}
- .chat-shell{grid-template-columns:1fr;min-height:520px;border-radius:20px}
- .chat-list{border-right:0;border-bottom:1px solid #eee;max-height:145px;overflow:auto}
- .messages{min-height:230px;max-height:48vh}
+ .chat-shell{grid-template-columns:1fr;min-height:0;border-radius:20px;align-content:start}
+ .chat-list{border-right:0;border-bottom:1px solid #eee;max-height:120px;overflow:auto}
+ .chat-window{min-height:0}
+ .chat-head{flex:0 0 auto}
+ .messages{min-height:180px;max-height:42vh;overflow-y:auto;overscroll-behavior:contain}
+ .sendbar{position:sticky;bottom:0;background:#fff;z-index:2}
  .bottom{justify-content:space-around;overflow-x:auto}
  .bottom button{font-size:19px;min-width:0}
  .bottom small{font-size:9px}
@@ -608,9 +611,17 @@ async function checkCallStatus(){
 }
 async function pollIncomingCalls(){
  if(!currentUser||activeCallId||window.pendingIncomingCallId)return;
- const {data,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,created_at").eq("callee_id",currentUser.id).eq("status","ringing").order("created_at",{ascending:false}).limit(1);
+ const {data,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,created_at").eq("callee_id",currentUser.id).eq("status","ringing").order("created_at",{ascending:false}).limit(5);
  if(error||!data?.length)return;
- const call=data[0];window.pendingIncomingCallId=call.id;
+ const now=Date.now();
+ for(const oldCall of data){
+  if(now-new Date(oldCall.created_at).getTime()>55000){
+   await supabaseClient.from("call_sessions").update({status:"missed",ended_at:new Date().toISOString()}).eq("id",oldCall.id).eq("status","ringing");
+  }
+ }
+ const call=data.find(c=>now-new Date(c.created_at).getTime()<=55000);
+ if(!call)return;
+ window.pendingIncomingCallId=call.id;
  const p=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();
  const callerName=p.data?.display_name||"A HeartTalk member";
  document.getElementById("incomingCallerName").textContent=callerName;
@@ -641,9 +652,12 @@ async function acceptIncomingCall(){
 async function rejectIncomingCall(){
  stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");document.title="HeartTalk — Meet. Connect. Belong.";
  const id=window.pendingIncomingCallId;if(!id)return;
- await supabaseClient.from("call_sessions").update({status:"rejected",ended_at:new Date().toISOString()}).eq("id",id);
+ window.pendingIncomingCallId=null;
+ const {data,error}=await supabaseClient.from("call_sessions").update({status:"rejected",ended_at:new Date().toISOString()}).eq("id",id).eq("status","ringing").select("id,status").maybeSingle();
+ if(error){notify("Could not decline call: "+error.message);window.pendingIncomingCallId=id;return}
+ if(!data){const check=await supabaseClient.from("call_sessions").select("status").eq("id",id).maybeSingle();if(check.data?.status==="ringing"){notify("Call is still ringing. Please try Decline again.");window.pendingIncomingCallId=id;return}}
  await supabaseClient.from("call_signals").insert({call_id:id,sender_id:currentUser.id,signal_type:"reject",payload:{}});
- window.pendingIncomingCallId=null;document.getElementById("incomingCallPanel").classList.remove("show");notify("Call declined.")
+ stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");notify("Call declined.");
 }
 async function endCurrentCall(){
  if(activeCallId){try{await sendCallSignal("hangup",{});await supabaseClient.from("call_sessions").update({status:"ended",ended_at:new Date().toISOString()}).eq("id",activeCallId)}catch(e){console.warn(e)}}
