@@ -170,6 +170,8 @@ p{color:#77747e}
  #chatView .bubble{max-width:86%;font-size:14px}
  #chatView .sendbar{padding:8px}
 }
+
+.live-create-card{margin:14px 0;padding:18px}.live-create-card .field{margin:12px 0}.live-list-title{margin:22px 0 10px}.live-rooms-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.live-room-card{background:#fff;border:1px solid #f5c5dc;border-radius:16px;padding:16px}.live-room-card h3{margin:8px 0}.live-room-card p{color:#777;font-size:13px}.live-room-card .live-room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 4px #fee2e2}.live-stage{margin:16px 0;padding:16px}.live-stage-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.live-video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0}.live-video-grid video{width:100%;aspect-ratio:16/9;object-fit:cover;background:#17121b;border-radius:14px}.live-video-placeholder{padding:60px 12px;text-align:center;background:#211827;color:white;border-radius:14px}.live-stage-actions{display:flex;gap:8px;flex-wrap:wrap}.live-chat-wrap{margin-top:18px;border-top:1px solid #f4d5e3;padding-top:12px}.live-chat-messages{max-height:180px;overflow:auto;background:#fff8fb;border-radius:12px;padding:10px;min-height:45px}.live-chat-messages p{margin:6px 0;font-size:13px}.live-provider-note{margin-top:14px;font-size:12px}@media(max-width:600px){.live-stage-head{align-items:flex-start;flex-direction:column}}
 </style>
 
 <style>
@@ -249,7 +251,13 @@ p{color:#77747e}
 <p id="callSetupStatus" class="muted" style="display:none">Secure calling connection is configured automatically.</p>
 </section>
 <div class="incoming-overlay" id="incomingCallPanel"><div class="incoming-card"><div class="call-ring">● Incoming HeartTalk call</div><div class="incoming-avatar">💗</div><h2 id="incomingCallerName">Someone is calling</h2><p id="incomingCallText">Voice call · HeartTalk</p><div class="incoming-actions"><button class="primary" onclick="acceptIncomingCall()">📞 Accept</button><button class="secondary reject-call" onclick="rejectIncomingCall()">✕ Decline</button></div></div></div>
-<section class="view" id="liveView"><h2>Live rooms 🎙️</h2><div class="placeholder panel"><h3>Live streaming setup required</h3><p>Live rooms are not active yet. A streaming provider, host controls, moderation and safety tools must be connected first.</p><button class="secondary" onclick="notify('Live streaming is not connected yet.')">Check status</button></div></section>
+<section class="view" id="liveView">
+ <div class="section-head"><div><div class="section-kicker">HeartTalk community</div><h2>Live rooms 🎙️</h2><p>Start a room or join a live conversation.</p></div><button class="secondary" onclick="loadLiveRooms()">↻ Refresh</button></div>
+ <div class="live-create-card panel"><h3>🎤 Create a live room</h3><div class="field"><label>Room title</label><input id="liveRoomTitle" maxlength="100" placeholder="What do you want to talk about?"></div><div class="field"><label>Description (optional)</label><textarea id="liveRoomDescription" rows="2" maxlength="500" placeholder="Tell people about your live room"></textarea></div><button class="primary" onclick="createLiveRoom()">＋ Create room</button><p class="muted">You must be signed in and allow camera/microphone when starting a broadcast.</p></div>
+ <div class="live-stage panel" id="liveStage" style="display:none"><div class="live-stage-head"><div><span class="live-dot"></span> <strong id="liveStageTitle">Live room</strong><p id="liveStageInfo" class="muted">Connecting…</p></div><button class="secondary" onclick="leaveLiveRoom()">Leave room</button></div><div id="liveVideoGrid" class="live-video-grid"><div class="live-video-placeholder">🎥 Waiting for video…</div></div><div class="live-stage-actions"><button id="liveMicBtn" class="secondary" onclick="toggleLiveMic()" disabled>🎙️ Mute</button><button id="liveCamBtn" class="secondary" onclick="toggleLiveCamera()" disabled>📷 Camera off</button><button id="liveEndBtn" class="end-call-btn" onclick="endLiveRoom()" style="display:none">End live</button></div><div class="live-chat-wrap"><h4>Live chat</h4><div id="liveChatMessages" class="live-chat-messages"></div><div class="toolbar"><input id="liveChatInput" maxlength="500" placeholder="Say something kind…"><button class="primary" onclick="sendLiveChat()">Send</button></div></div></div>
+ <h3 class="live-list-title">🔴 Live now</h3><div id="liveRoomsList" class="live-rooms-list"><div class="notice">Loading live rooms…</div></div>
+ <p class="muted live-provider-note">Secure live video requires the HeartTalk LiveKit token service to be configured. Rooms can be created now; broadcasting starts after the secure service is connected.</p>
+</section>
 <section class="view" id="profileView">
 <div class="profile-page">
  <div class="profile-topline"><button class="profile-back" onclick="showView('home')">‹</button><div class="profile-wallet">🪙 <span id="profileCoinBalance">0</span></div><button class="profile-menu" onclick="notify('More profile settings coming soon.')">☰</button></div>
@@ -277,6 +285,7 @@ p{color:#77747e}
 <div class="modal" id="authModal"><div class="dialog"><button class="close" onclick="closeAuth()">×</button><h2 id="authTitle">Welcome to HeartTalk</h2><p id="authDescription" class="muted">Create your account or log in.</p><div style="display:flex;gap:8px;margin:12px 0"><button class="primary" id="emailAuthTab" type="button">Email login</button></div><div id="emailAuthFields" style="display:block"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" minlength="6" placeholder="At least 6 characters"><button class="primary" id="authSubmit" style="width:100%;margin-top:12px" onclick="handleAuth()">Sign Up</button><p class="muted" style="text-align:center"><span id="authSwitchLabel">Already have an account?</span> <button class="secondary" style="padding:5px 10px" onclick="toggleAuthMode()" id="authSwitch">Login</button></p></div></div></div>
 <div class="modal" id="languageModal"><div class="dialog" style="max-width:520px"><div class="section-kicker">Welcome to HeartTalk</div><h2>Select your language</h2><p>Show your language proudly and meet people who speak it.</p><div class="grid" style="grid-template-columns:repeat(3,1fr)"><button class="secondary" onclick="chooseHeartTalkLanguage('Telugu')">తెలుగు<br>Telugu</button><button class="secondary" onclick="chooseHeartTalkLanguage('Hindi')">हिन्दी<br>Hindi</button><button class="secondary" onclick="chooseHeartTalkLanguage('Tamil')">தமிழ்<br>Tamil</button><button class="secondary" onclick="chooseHeartTalkLanguage('English')">English</button><button class="secondary" onclick="chooseHeartTalkLanguage('Kannada')">ಕನ್ನಡ<br>Kannada</button><button class="secondary" onclick="chooseHeartTalkLanguage('Malayalam')">മലയാളം<br>Malayalam</button></div><p class="muted">You can change this later from settings.</p></div></div><div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@livekit/client/dist/livekit-client.umd.min.js"></script>
 <script>
 const SUPABASE_URL = "https://dognojmymhlaewrjqswz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_e9ugpv_1hT1kSOCHpLWk2w_lB-ccMJk";
@@ -748,5 +757,83 @@ async function loadForumGroups(){const box=document.getElementById("forumGroupsL
 async function joinForumGroup(id){const r=await supabaseClient.from("forum_group_members").insert({group_id:id,user_id:currentUser.id,role:"member"});if(r.error){notify(r.code==="23505"?"Already joined":r.error.message);return}notify("You joined the group");await loadForumGroups()}
 function renderForumSearch(){const q=(document.getElementById("forumSearch").value||"").toLowerCase();if(document.getElementById("forumFeedPanel").style.display!=="none"){const rows=(window.heartTalkPosts||[]).filter(p=>p.content.toLowerCase().includes(q));if(q) {const box=document.getElementById("forumFeedList");box.innerHTML=rows.map(p=>'<article class="feed-card"><p>'+escapeHtml(p.content)+'</p></article>').join("")}else loadForumFeed()}else document.querySelectorAll("#forumGroupsList article").forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?"":"none")}
 
+</script>
+
+<script>
+let liveKitRoom=null,activeLiveRoom=null,liveIsHost=false,liveMicMuted=false,liveCameraOff=false,liveRoomsChannel=null,liveChatChannel=null;
+function liveEsc(v){return escapeHtml(v||"")}
+async function loadLiveRooms(){
+ const box=document.getElementById("liveRoomsList");if(!box)return;
+ if(!currentUser){box.innerHTML='<div class="notice">Please log in to create or join live rooms.</div>';return}
+ const {data,error}=await supabaseClient.from("live_rooms").select("id,host_id,title,description,status,created_at,profiles:host_id(display_name)").eq("status","live").order("created_at",{ascending:false}).limit(40);
+ if(error){box.innerHTML='<div class="notice">Could not load rooms: '+liveEsc(error.message)+'</div>';return}
+ if(!data?.length){box.innerHTML='<div class="notice">No live rooms right now. Create the first one 💗</div>';return}
+ const ids=data.map(x=>x.id);const counts=await supabaseClient.from("live_room_members").select("room_id,user_id").in("room_id",ids).is("left_at",null);
+ box.innerHTML=data.map(r=>{const count=(counts.data||[]).filter(m=>m.room_id===r.id).length;return '<article class="live-room-card"><span class="live-dot"></span> <b>LIVE</b><h3>'+liveEsc(r.title)+'</h3><p>'+liveEsc(r.description||"HeartTalk live conversation")+'</p><p>Host: '+liveEsc(r.profiles?.display_name||"HeartTalk member")+' · 👁️ '+count+' watching</p><div class="live-room-actions"><button class="primary" onclick="joinLiveRoom(\''+r.id+'\')">Join live</button>'+(r.host_id===currentUser.id?'<button class="secondary" onclick="endLiveRoom(\''+r.id+'\')">End room</button>':'')+'</div></article>'}).join("");
+}
+async function createLiveRoom(){
+ if(!currentUser){openAuth();return}
+ const title=document.getElementById("liveRoomTitle").value.trim(),description=document.getElementById("liveRoomDescription").value.trim();
+ if(title.length<3){notify("Enter a room title with at least 3 characters.");return}
+ const {data,error}=await supabaseClient.from("live_rooms").insert({host_id:currentUser.id,title,description,status:"scheduled",provider:"livekit"}).select("id").single();
+ if(error){notify("Room creation failed: "+error.message+" — check live_rooms SQL setup.");return}
+ document.getElementById("liveRoomTitle").value="";document.getElementById("liveRoomDescription").value="";
+ notify("Room created. Connecting live broadcast…");await startLiveKitRoom(data.id,true);
+}
+async function getLiveKitToken(roomId){
+ const {data,error}=await supabaseClient.functions.invoke("livekit-token",{body:{room:roomId,username:currentUser.id}});
+ if(error)throw new Error(error.message||"LiveKit token service is not configured");
+ if(!data?.token||!data?.url)throw new Error("LiveKit token service did not return a token and server URL");
+ return data;
+}
+async function startLiveKitRoom(roomId,isHost){
+ if(!window.LivekitClient){notify("Live video library failed to load. Refresh the page.");return}
+ try{
+  const tokenData=await getLiveKitToken(roomId);
+  const room=new LivekitClient.Room({adaptiveStream:true,dynacast:true});
+  room.on(LivekitClient.RoomEvent.TrackSubscribed,(track,publication,participant)=>attachLiveTrack(track,participant));
+  room.on(LivekitClient.RoomEvent.TrackUnsubscribed,(track)=>{track.detach().forEach(el=>el.remove())});
+  room.on(LivekitClient.RoomEvent.ParticipantDisconnected,()=>updateLiveParticipantInfo());
+  room.on(LivekitClient.RoomEvent.ParticipantConnected,()=>updateLiveParticipantInfo());
+  room.on(LivekitClient.RoomEvent.Disconnected,()=>{if(liveKitRoom===room)liveKitRoom=null});
+  await room.connect(tokenData.url,tokenData.token);
+  liveKitRoom=room;activeLiveRoom=roomId;liveIsHost=isHost;
+  if(isHost){await room.localParticipant.enableCameraAndMicrophone();await supabaseClient.from("live_rooms").update({status:"live"}).eq("id",roomId).eq("host_id",currentUser.id);await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"host",left_at:null},{onConflict:"room_id,user_id"});}
+  else{await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"viewer",left_at:null},{onConflict:"room_id,user_id"});}
+  document.getElementById("liveStage").style.display="block";document.getElementById("liveStageTitle").textContent=document.getElementById("liveRoomTitle").value||"HeartTalk Live";
+  document.getElementById("liveStageInfo").textContent=isHost?"You are hosting · "+room.remoteParticipants.size+" viewers":"Joined live · "+room.remoteParticipants.size+" other participants";
+  document.getElementById("liveEndBtn").style.display=isHost?"inline-block":"none";document.getElementById("liveMicBtn").disabled=!isHost;document.getElementById("liveCamBtn").disabled=!isHost;
+  room.localParticipant.videoTrackPublications.forEach(p=>{if(p.track)attachLiveTrack(p.track,room.localParticipant,true)});
+  room.remoteParticipants.forEach(p=>p.trackPublications.forEach(pub=>{if(pub.track)attachLiveTrack(pub.track,p)}));
+  subscribeLiveChat(roomId);updateLiveParticipantInfo();loadLiveRooms();
+ }catch(e){console.error(e);notify("Live connection failed: "+e.message+". LiveKit secure token service must be configured.");}
+}
+function attachLiveTrack(track,participant,isLocal=false){
+ const grid=document.getElementById("liveVideoGrid");if(!grid)return;
+ const el=track.attach();if(track.kind==="video"){el.autoplay=true;el.playsInline=true;if(isLocal)el.muted=true;el.dataset.participant=participant.identity;grid.querySelectorAll('[data-participant="'+CSS.escape(participant.identity)+'"]').forEach(old=>old.remove());grid.appendChild(el)}
+}
+async function joinLiveRoom(id){if(!currentUser){openAuth();return}const r=await supabaseClient.from("live_rooms").select("id,title,status").eq("id",id).maybeSingle();if(r.error||!r.data||r.data.status!=="live"){notify("This live room has ended.");await loadLiveRooms();return}await startLiveKitRoom(id,false);if(activeLiveRoom)document.getElementById("liveStageTitle").textContent=r.data.title}
+function updateLiveParticipantInfo(){if(!liveKitRoom)return;const n=liveKitRoom.remoteParticipants.size;document.getElementById("liveStageInfo").textContent=(liveIsHost?"You are hosting":"Watching live")+" · "+n+" other participant(s)"}
+async function leaveLiveRoom(){
+ const id=activeLiveRoom;if(!id)return;
+ if(liveChatChannel){await supabaseClient.removeChannel(liveChatChannel);liveChatChannel=null}
+ if(liveKitRoom){await liveKitRoom.disconnect();liveKitRoom=null}
+ await supabaseClient.from("live_room_members").update({left_at:new Date().toISOString()}).eq("room_id",id).eq("user_id",currentUser.id);
+ activeLiveRoom=null;liveIsHost=false;document.getElementById("liveStage").style.display="none";document.getElementById("liveVideoGrid").innerHTML='<div class="live-video-placeholder">🎥 Waiting for video…</div>';await loadLiveRooms();
+}
+async function endLiveRoom(id=activeLiveRoom){
+ const roomId=id;if(!roomId||!currentUser)return;
+ const {error}=await supabaseClient.from("live_rooms").update({status:"ended",ended_at:new Date().toISOString()}).eq("id",roomId).eq("host_id",currentUser.id);
+ if(error){notify("Could not end room: "+error.message);return}
+ if(activeLiveRoom===roomId)await leaveLiveRoom();notify("Live room ended.");await loadLiveRooms();
+}
+async function toggleLiveMic(){if(!liveKitRoom)return;liveMicMuted=!liveMicMuted;await liveKitRoom.localParticipant.setMicrophoneEnabled(!liveMicMuted);document.getElementById("liveMicBtn").textContent=liveMicMuted?"Unmute mic":"🎙️ Mute"}
+async function toggleLiveCamera(){if(!liveKitRoom)return;liveCameraOff=!liveCameraOff;await liveKitRoom.localParticipant.setCameraEnabled(!liveCameraOff);document.getElementById("liveCamBtn").textContent=liveCameraOff?"Camera on":"📷 Camera off"}
+function subscribeLiveChat(roomId){
+ const box=document.getElementById("liveChatMessages");box.innerHTML="";
+ liveChatChannel=supabaseClient.channel("live-chat-"+roomId).on("broadcast",{event:"message"},({payload})=>{const p=document.createElement("p");p.textContent=(payload.name||"Member")+": "+(payload.text||"");box.appendChild(p);box.scrollTop=box.scrollHeight}).subscribe();
+}
+async function sendLiveChat(){const input=document.getElementById("liveChatInput"),text=input.value.trim();if(!text||!liveChatChannel||!currentUser)return;const name=document.getElementById("profileDisplayName")?.textContent||"Member";await liveChatChannel.send({type:"broadcast",event:"message",payload:{name,text}});input.value=""}
+document.addEventListener("DOMContentLoaded",()=>{const originalShowView=window.showView;window.showView=function(name){originalShowView(name);if(name==="live")loadLiveRooms()}});
 </script>
 </body></html>
