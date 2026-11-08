@@ -440,7 +440,7 @@ function callHeartTalkMember(id){
  document.getElementById("callTargetLabel").textContent="Selected member: "+person.display_name+". Tap Voice call or Video call to start.";
 }
 async function startChat(userId){
- const user=discoverUsers.find(x=>x.id===userId);if(!user)return;activeChatUser=user;showView("chat");await loadMessages();await loadConversations()
+ const user=discoverUsers.find(x=>x.id===userId);if(!user)return;activeChatUser=user;showView("chat");await loadMessages();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadConversations(){
  const list=document.getElementById("conversationList");if(!currentUser){list.textContent="Login to view messages.";return}
@@ -491,8 +491,9 @@ async function renderChatMessageContent(raw){
  return escapeHtml(value).replace(/\n/g,"<br>");
 }
 let chatRecorder=null,chatRecordStream=null,chatRecordChunks=[];
-function openChatPhotos(){if(!currentUser){openAuth();return}if(!activeChatUser){notify("Open a conversation first.");return}document.getElementById("chatPhotoInput").click()}
-async function uploadChatPhotos(files){const input=document.getElementById("chatPhotoInput");const chosen=Array.from(files||[]);if(!chosen.length)return;if(chosen.length>10){notify("Select up to 10 photos at a time.");input.value="";return}for(const file of chosen){if(!file.type.startsWith("image/")){notify("Choose image files only.");continue}await uploadChatMedia(file,"image")}input.value=""}
+let pendingChatPhotos=[];
+function openChatPhotos(){if(!currentUser){openAuth();return}const picker=document.getElementById("chatPhotoInput");if(picker)picker.click()}
+async function uploadChatPhotos(files){const input=document.getElementById("chatPhotoInput");const chosen=Array.from(files||[]);if(!chosen.length)return;if(chosen.length>10){notify("Select up to 10 photos at a time.");input.value="";return}const valid=chosen.filter(file=>file.type.startsWith("image/"));if(!valid.length){notify("Choose image files only.");input.value="";return}if(!activeChatUser){pendingChatPhotos.push(...valid);notify(valid.length+" photo(s) selected. Open a conversation to send them.");input.value="";return}for(const file of valid)await uploadChatMedia(file,"image");input.value=""}
 async function uploadChatMedia(file,kind){
  if(!file||!currentUser||!activeChatUser){notify("Open a conversation first.");return}
  const valid=kind==="image"?file.type.startsWith("image/"):file.type.startsWith("audio/");
