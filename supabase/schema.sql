@@ -436,3 +436,20 @@ for insert to authenticated with check (
   select 1 from public.forum_groups g where g.id = group_id and g.created_by = auth.uid()
  )
 );
+
+ 
+-- Private storage for direct-chat photos and voice messages.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('chat-media', 'chat-media', false, 12582912, array['image/jpeg','image/png','image/webp','image/gif','audio/webm','audio/ogg','audio/mp4','audio/mpeg'])
+on conflict (id) do update set public = false, file_size_limit = 12582912,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Chat members can upload their own media" on storage.objects;
+create policy "Chat members can upload their own media"
+on storage.objects for insert to authenticated
+with check (bucket_id = 'chat-media' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Signed-in users can read chat media" on storage.objects;
+create policy "Signed-in users can read chat media"
+on storage.objects for select to authenticated
+using (bucket_id = 'chat-media');
