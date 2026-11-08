@@ -423,6 +423,15 @@ function renderDiscover(){
  grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">💗</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
 }
 
+async function isHeartTalkBlocked(userId){
+ if(!currentUser||!userId)return false;
+ const [a,b]=await Promise.all([
+  supabaseClient.from("blocked_users").select("blocker_id").eq("blocker_id",currentUser.id).eq("blocked_user_id",userId).maybeSingle(),
+  supabaseClient.from("blocked_users").select("blocker_id").eq("blocker_id",userId).eq("blocked_user_id",currentUser.id).maybeSingle()
+ ]);
+ if(a.error||b.error)throw new Error("Safety database setup is required.");
+ return !!(a.data||b.data);
+}
 async function reportMember(userId){
  if(!currentUser){openAuth();return}
  const reason=prompt("Why are you reporting this member? (Spam, harassment, fake profile, other)");
@@ -464,13 +473,16 @@ function randomHeartTalkMatch(){
  notify("Random match: "+pick.display_name);
  startChat(pick.id);
 }
-function callHeartTalkMember(id){
+async function callHeartTalkMember(id){
  const person=discoverUsers.find(x=>x.id===id);if(!person)return;
+ try{if(await isHeartTalkBlocked(id)){notify("You cannot contact this member because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
  activeChatUser=person;showView("calls");
  document.getElementById("callTargetLabel").textContent="Selected member: "+person.display_name+". Tap Voice call or Video call to start.";
 }
 async function startChat(userId){
- const user=discoverUsers.find(x=>x.id===userId);if(!user)return;activeChatUser=user;showView("chat");await loadMessages();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
+ const user=discoverUsers.find(x=>x.id===userId);if(!user)return;
+ try{if(await isHeartTalkBlocked(userId)){notify("You cannot message this member because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
+ activeChatUser=user;showView("chat");await loadMessages();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadConversations(){
  const list=document.getElementById("conversationList");if(!currentUser){list.textContent="Login to view messages.";return}
@@ -579,6 +591,7 @@ function cancelVoiceRecording(event){
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
+ try{if(await isHeartTalkBlocked(activeChatUser.id)){notify("This conversation is unavailable because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
  const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:content});
  if(error){notify(error.message);return}input.value="";await loadMessages();await loadConversations()
 }
