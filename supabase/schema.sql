@@ -453,3 +453,41 @@ drop policy if exists "Signed-in users can read chat media" on storage.objects;
 create policy "Signed-in users can read chat media"
 on storage.objects for select to authenticated
 using (bucket_id = 'chat-media');
+
+
+-- Compatibility and missing fields used by the current HeartTalk UI.
+alter table public.forum_posts add column if not exists image_url text;
+
+-- The current app uses blocked_users(blocker_id, blocked_user_id).
+create table if not exists public.blocked_users (
+  blocker_id uuid not null references auth.users(id) on delete cascade,
+  blocked_user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_user_id),
+  check (blocker_id <> blocked_user_id)
+);
+alter table public.blocked_users enable row level security;
+drop policy if exists "Users can view their own blocks" on public.blocked_users;
+create policy "Users can view their own blocks" on public.blocked_users
+for select to authenticated using (blocker_id = auth.uid() or blocked_user_id = auth.uid());
+drop policy if exists "Users can block members" on public.blocked_users;
+create policy "Users can block members" on public.blocked_users
+for insert to authenticated with check (blocker_id = auth.uid() and blocked_user_id <> auth.uid());
+drop policy if exists "Users can unblock members" on public.blocked_users;
+create policy "Users can unblock members" on public.blocked_users
+for delete to authenticated using (blocker_id = auth.uid());
+
+-- Public read is intentional because forum post cards display public image URLs.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('forum-images', 'forum-images', true, 5242880,
+        array['image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do update set public = true, file_size_limit = 5242880,
+  allowed_mime_types = excluded.allowed_mime_types;
+drop policy if exists "Forum members can upload their own post images" on storage.objects;
+create policy "Forum members can upload their own post images" on storage.objects
+for insert to authenticated
+with check (bucket_id = 'forum-images' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "Users can delete their own forum images" on storage.objects;
+create policy "Users can delete their own forum images" on storage.objects
+for delete to authenticated
+using (bucket_id = 'forum-images' and (storage.foldername(name))[1] = auth.uid()::text);
