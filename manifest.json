@@ -6,8 +6,8 @@
   "start_url": "/hearttalk-website/",
   "scope": "/hearttalk-website/",
   "display": "standalone",
-  "background_color": "#0d0a14",
-  "theme_color": "#0d0a14",
+  "background_color": "#3A1038",
+  "theme_color": "#3A1038",
   "orientation": "portrait",
   "icons": [
     {
