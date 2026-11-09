@@ -506,3 +506,24 @@ as $$
   where user_id = auth.uid();
 $$;
 grant execute on function public.get_wallet_balance() to authenticated;
+
+
+-- Enable PostgREST profile joins used by the community feed.
+insert into public.profiles (id, display_name)
+select u.id, coalesce(u.raw_user_meta_data ->> 'display_name', '')
+from auth.users u
+on conflict (id) do nothing;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'forum_posts_profile_fkey') then
+    alter table public.forum_posts
+      add constraint forum_posts_profile_fkey foreign key (user_id)
+      references public.profiles(id) on delete cascade;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'forum_comments_profile_fkey') then
+    alter table public.forum_comments
+      add constraint forum_comments_profile_fkey foreign key (user_id)
+      references public.profiles(id) on delete cascade;
+  end if;
+end $$;
