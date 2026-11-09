@@ -122,6 +122,28 @@ p{color:#77747e}
 .video-tile{height:210px;position:relative;overflow:hidden;border-radius:18px;background:linear-gradient(145deg,#24142e,#100b18);display:grid;place-items:center}
 .video-tile video{width:100%;height:100%;object-fit:cover}.video-tile span{position:absolute;left:12px;bottom:10px;background:#0008;color:#fff;padding:5px 10px;border-radius:20px;font-size:12px}
 .call-controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.call-controls button{border:1px solid #eadde8;background:#fff;color:#514756;border-radius:22px;padding:10px 14px;font-weight:650}.call-controls .end-call-btn{background:#e94364;color:#fff;border-color:#e94364}.call-controls button:disabled{opacity:.45}
+/* Full-screen active call experience */
+.active-call-overlay{display:none;position:fixed;inset:0;z-index:90;background:linear-gradient(160deg,#1b0b28,#321044 55%,#100817);color:#fff;padding:calc(22px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));}
+.active-call-overlay.show{display:flex;flex-direction:column}
+.active-call-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.active-call-top button{border:1px solid #ffffff40;background:#ffffff16;color:#fff;border-radius:24px;padding:9px 14px}
+.active-call-audio{align-items:center;justify-content:space-between;text-align:center}
+.active-call-person{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:14px}
+.active-call-avatar{width:132px;height:132px;border-radius:50%;display:grid;place-items:center;font-size:64px;background:linear-gradient(140deg,#ff70b4,#9b55ee);border:5px solid #ffffff35;box-shadow:0 0 0 12px #ffffff12,0 15px 45px #0005}
+.active-call-person h2{color:#fff;font-size:28px;margin:10px 0 0}.active-call-person p{color:#f2d9f5;margin:0}
+.active-call-timer{font-size:15px;letter-spacing:1px;color:#f6c9ec}
+.active-audio-controls{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:25px auto 8px}
+.active-audio-controls button{width:68px;height:68px;border:1px solid #ffffff30;border-radius:50%;background:#ffffff18;color:#fff;font-size:24px}
+.active-audio-controls button small{display:block;font-size:10px;margin-top:4px}
+.active-audio-controls .active-hangup{background:#ed426b;border:0}
+.active-call-video{gap:14px}
+.active-video-stage{position:relative;flex:1;min-height:0;display:grid;grid-template-rows:1fr 1fr;gap:10px}
+.active-video-stage video{width:100%;height:100%;min-height:0;object-fit:cover;border-radius:20px;background:#09050e}
+.active-video-self{position:absolute!important;right:12px;top:12px;width:28%;height:22%!important;min-height:90px!important;border:2px solid #fff;border-radius:15px!important;z-index:2}
+.active-video-controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 0}
+.active-video-controls button{border:1px solid #ffffff40;border-radius:25px;background:#ffffff18;color:#fff;padding:13px 17px;font-weight:700}
+.active-video-controls .active-hangup{background:#ed426b;border:0}
+@media(min-width:700px){.active-video-stage{grid-template-columns:1fr 1fr;grid-template-rows:1fr}.active-video-self{width:20%;height:24%!important}}
 .advanced-call-setup{margin-top:18px;background:#fff;border:1px solid #eee;border-radius:16px;padding:14px 17px;color:#756d79;font-size:13px}.advanced-call-setup summary{cursor:pointer;font-weight:700;color:#8a7e8e}.advanced-call-setup p{font-size:12px}
 @media(max-width:700px){.call-layout{grid-template-columns:1fr}.call-start-card,.call-video-card{padding:17px}.video-tile{height:160px}.calls-heading h2{font-size:26px}.call-alert-row{align-items:flex-start;flex-direction:column}}
 
@@ -454,6 +476,16 @@ p{color:#77747e}
 </div>
 <p id="callSetupStatus" class="muted" style="display:none">Secure calling connection is configured automatically.</p>
 </section>
+<div class="active-call-overlay active-call-audio" id="activeAudioCall">
+ <div class="active-call-top"><button onclick="endCurrentCall()">‹ End</button><span>HeartTalk · Voice call</span><span>🔒</span></div>
+ <div class="active-call-person"><div class="active-call-avatar" id="audioCallAvatar">💗</div><h2 id="audioCallName">HeartTalk member</h2><p id="audioCallStatus">Calling…</p><div class="active-call-timer" id="audioCallTimer">00:00</div></div>
+ <div class="active-audio-controls"><button onclick="toggleCallMute()" id="audioMuteBtn">🎙️<small>Mute</small></button><button onclick="toggleAudioSpeaker()" id="audioSpeakerBtn">🔊<small>Speaker</small></button><button class="active-hangup" onclick="endCurrentCall()">📞<small>End</small></button></div>
+</div>
+<div class="active-call-overlay active-call-video" id="activeVideoCall">
+ <div class="active-call-top"><button onclick="endCurrentCall()">‹ Back</button><span id="videoCallName">HeartTalk video call</span><span id="videoCallStatus">Connecting…</span></div>
+ <div class="active-video-stage"><video id="remoteCallVideoFull" autoplay playsinline></video><video id="localCallVideoFull" class="active-video-self" autoplay playsinline muted></video></div>
+ <div class="active-video-controls"><button onclick="toggleCallMute()" id="videoMuteBtn">🎙️ Mute</button><button onclick="toggleCallCamera()" id="videoCameraBtn">📷 Camera off</button><button class="active-hangup" onclick="endCurrentCall()">📞 End call</button></div>
+</div>
 <div class="incoming-overlay" id="incomingCallPanel"><div class="incoming-card"><div class="call-ring">● Incoming HeartTalk call</div><div class="incoming-avatar">💗</div><h2 id="incomingCallerName">Someone is calling</h2><p id="incomingCallText">Voice call · HeartTalk</p><div class="incoming-actions"><button class="primary" onclick="acceptIncomingCall()">📞 Accept</button><button class="secondary reject-call" onclick="rejectIncomingCall()">✕ Decline</button></div></div></div>
 <section class="view" id="liveView">
  <div class="section-head"><div><div class="section-kicker">HeartTalk community</div><h2>Live rooms 🎙️</h2><p>Start a room or join a live conversation.</p></div><button class="secondary" onclick="loadLiveRooms()">↻ Refresh</button></div>
@@ -984,7 +1016,7 @@ async function getMeteredIceServers(){
 }
 
 let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
-let cachedIceServers=null, callMuted=false, cameraDisabled=false, ringTimer=null, ringAudioContext=null, callAlertsEnabled=false;
+let cachedIceServers=null, callMuted=false, cameraDisabled=false, ringTimer=null, ringAudioContext=null, callAlertsEnabled=false,callStartedAt=null,callDurationTimer=null,audioSpeakerOn=false;
 function callStatus(s){const el=document.getElementById("callStatus");if(el)el.textContent=s}
 function selectedCallUser(){return activeChatUser||null}
 function updateCallButtons(on){
@@ -994,13 +1026,13 @@ async function createPeer(){
  const iceServers=await getMeteredIceServers();
  peerConnection=new RTCPeerConnection({iceServers});
  peerConnection.onicecandidate=async e=>{if(e.candidate&&activeCallId)await sendCallSignal("ice",e.candidate.toJSON())};
- peerConnection.ontrack=e=>{const v=document.getElementById("remoteCallVideo");if(v)v.srcObject=e.streams[0]};
+ peerConnection.ontrack=e=>{["remoteCallVideo","remoteCallVideoFull"].forEach(id=>{const v=document.getElementById(id);if(v)v.srcObject=e.streams[0]})};
  peerConnection.onconnectionstatechange=()=>{if(peerConnection)callStatus("Call connection: "+peerConnection.connectionState)};
  peerConnection.oniceconnectionstatechange=()=>{if(peerConnection&&["failed","disconnected"].includes(peerConnection.iceConnectionState))callStatus("Connection interrupted. Check internet and permissions.")};
 }
 async function getLocalMedia(type){
  localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==="video"});
- const v=document.getElementById("localCallVideo");if(v)v.srcObject=localCallStream;
+ ["localCallVideo","localCallVideoFull"].forEach(id=>{const v=document.getElementById(id);if(v)v.srcObject=localCallStream});
  localCallStream.getTracks().forEach(t=>peerConnection.addTrack(t,localCallStream));
  updateCallButtons(true);
 }
@@ -1046,7 +1078,7 @@ async function startOutgoingCall(type){
   const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
   await sendCallSignal("offer",peerConnection.localDescription.toJSON());
   document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
-  callStatus("Calling "+target.display_name+"… waiting for them to answer.");
+  showActiveCallUI(type,target.display_name||"HeartTalk member",false);callStatus("Calling "+target.display_name+"… waiting for them to answer.");
   signalPollTimer=setInterval(pollCallSignals,1200);
   callPollTimer=setInterval(checkCallStatus,1800);
  }catch(e){console.error(e);callStatus("Could not start call: "+(e.message||e));notify("Call could not start. Check microphone/camera permission and database access.");await cleanupCall(false)}
@@ -1055,7 +1087,7 @@ async function checkCallStatus(){
  if(!activeCallId)return;
  const {data,error}=await supabaseClient.from("call_sessions").select("status").eq("id",activeCallId).maybeSingle();
  if(error||!data)return;
- if(data.status==="accepted")callStatus("Connected. You can talk now.");
+ if(data.status==="accepted"){callStatus("Connected. You can talk now.");setActiveCallConnected();}
  if(["rejected","ended","missed","cancelled"].includes(data.status)){callStatus(data.status==="rejected"?"Call declined.":"Call ended.");await cleanupCall(false)}
 }
 async function pollIncomingCalls(){
@@ -1094,7 +1126,7 @@ async function acceptIncomingCall(){
   document.getElementById("incomingCallPanel").classList.remove("show");
   const {data:sigs,error:serr}=await supabaseClient.from("call_signals").select("id,sender_id,signal_type,payload").eq("call_id",id).eq("signal_type","offer").order("id",{ascending:true}).limit(1);if(serr)throw serr;
   if(sigs?.[0]){lastSignalId=sigs[0].id;await handleCallSignal(sigs[0])}
-  callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,1800);
+  showActiveCallUI(call.call_type,callerProfile?.display_name||"HeartTalk member",true);callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,1800);
   window.pendingIncomingCallId=null;
  }catch(e){notify("Could not accept call: "+e.message);await cleanupCall(false)}
 }
@@ -1116,7 +1148,7 @@ async function cleanupCall(updateStatus){
  if(signalPollTimer)clearInterval(signalPollTimer);if(callPollTimer)clearInterval(callPollTimer);signalPollTimer=null;callPollTimer=null;
  if(peerConnection){peerConnection.ontrack=null;peerConnection.close();peerConnection=null}
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
- const a=document.getElementById("localCallVideo"),b=document.getElementById("remoteCallVideo");if(a)a.srcObject=null;if(b)b.srcObject=null;
+ const a=document.getElementById("localCallVideo"),b=document.getElementById("remoteCallVideo"),c=document.getElementById("localCallVideoFull"),d=document.getElementById("remoteCallVideoFull");[a,b,c,d].forEach(v=>{if(v)v.srcObject=null});hideActiveCallUI();
  activeCallId=null;activeCallRole=null;pendingIce=[];updateCallButtons(false);
  const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent="Other member";
  if(updateStatus)callStatus("No active call.");
@@ -1144,7 +1176,12 @@ function startRingtone(){
  playTone();ringTimer=setInterval(playTone,1300);
 }
 function stopRingtone(){if(ringTimer){clearInterval(ringTimer);ringTimer=null}}
-function toggleCallMute(){if(!localCallStream)return;callMuted=!callMuted;localCallStream.getAudioTracks().forEach(t=>t.enabled=!callMuted);document.getElementById("muteCallBtn").textContent=callMuted?"Unmute mic":"Mute mic"}
+function toggleCallMute(){if(!localCallStream)return;callMuted=!callMuted;localCallStream.getAudioTracks().forEach(t=>t.enabled=!callMuted);["muteCallBtn","audioMuteBtn","videoMuteBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.textContent=id==="audioMuteBtn"?(callMuted?"🔇\\nUnmute":"🎙️\\nMute"):(callMuted?"Unmute mic":"Mute mic")})}
+function toggleAudioSpeaker(){audioSpeakerOn=!audioSpeakerOn;const b=document.getElementById("audioSpeakerBtn");if(b)b.innerHTML=(audioSpeakerOn?"🔊":"🔈")+"<small>"+(audioSpeakerOn?"Speaker on":"Speaker")+"</small>";}
+function showActiveCallUI(type,name,connected){const audio=type==="voice",a=document.getElementById("activeAudioCall"),v=document.getElementById("activeVideoCall");if(a)a.classList.toggle("show",audio);if(v)v.classList.toggle("show",!audio);const safeName=name||"HeartTalk member";["audioCallName","videoCallName","remoteCallName"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=safeName});const avatar=document.getElementById("audioCallAvatar");if(avatar)avatar.textContent="💗";const st=document.getElementById("audioCallStatus");if(st)st.textContent=connected?"Connected":"Calling…";const vs=document.getElementById("videoCallStatus");if(vs)vs.textContent=connected?"Connected":"Calling…";if(callDurationTimer)clearInterval(callDurationTimer);callStartedAt=connected?Date.now():null;updateCallDuration();callDurationTimer=setInterval(updateCallDuration,1000)}
+function setActiveCallConnected(){if(!callStartedAt)callStartedAt=Date.now();const st=document.getElementById("audioCallStatus"),vs=document.getElementById("videoCallStatus");if(st)st.textContent="Connected";if(vs)vs.textContent="Connected"}
+function updateCallDuration(){const el=document.getElementById("audioCallTimer");if(!el||!callStartedAt)return;const sec=Math.floor((Date.now()-callStartedAt)/1000);el.textContent=String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function hideActiveCallUI(){["activeAudioCall","activeVideoCall"].forEach(id=>document.getElementById(id)?.classList.remove("show"));if(callDurationTimer)clearInterval(callDurationTimer);callDurationTimer=null;callStartedAt=null;callMuted=false;cameraDisabled=false;audioSpeakerOn=false}
 function toggleCallCamera(){if(!localCallStream)return;cameraDisabled=!cameraDisabled;localCallStream.getVideoTracks().forEach(t=>t.enabled=!cameraDisabled);document.getElementById("cameraCallBtn").textContent=cameraDisabled?"Camera on":"Camera off"}
 
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
