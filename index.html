@@ -351,6 +351,34 @@ p{color:#77747e}
 .instagram-profile .profile-setting-card small{color:#8d7194!important}
 @media(max-width:520px){.instagram-profile{border-radius:20px!important;padding:8px 12px 26px!important}.instagram-profile .ig-profile-identity{padding:12px 9px}.instagram-profile .ig-highlight{min-width:66px}}
 
+
+/* HeartTalk Calls refresh — pink & purple */
+#callsView{position:relative;padding:24px;border-radius:26px;background:radial-gradient(ellipse at 8% 0%,#ffe0f1 0,transparent 42%),radial-gradient(ellipse at 100% 25%,#e9dcff 0,transparent 42%),linear-gradient(135deg,#fff7fc,#f7f1ff);overflow:hidden}
+#callsView .calls-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 22px}
+#callsView .calls-heading h2{font-size:32px;color:#281335;letter-spacing:-.5px}
+#callsView .calls-heading p{color:#786783}
+#callsView .calls-heading .section-kicker{color:#e52b91;font-weight:800;letter-spacing:2px}
+.calls-recent-btn{flex:0 0 auto;border:1px solid #f3a7d2;border-radius:24px;padding:12px 18px;background:linear-gradient(110deg,#fff,#fff0fa);color:#c51c83;font-weight:750;box-shadow:0 6px 18px #d82b8918}
+.calls-recent-btn span{margin-left:8px}
+#callsView .call-layout{grid-template-columns:minmax(280px,.9fr) minmax(340px,1.1fr);gap:18px;align-items:stretch}
+#callsView .call-start-card{background:linear-gradient(145deg,#fff,#fff0f8);border:1px solid #f3b7d8;border-radius:26px;padding:25px;box-shadow:0 14px 35px #a82b7912}
+#callsView .call-start-icon{background:linear-gradient(145deg,#ff4ca5,#b43be0);color:#fff;box-shadow:0 8px 20px #d92b9238}
+#callsView .call-start-card h3{font-size:21px;color:#30143c;margin-top:17px}
+#callsView .call-start-card>p{color:#806b88;line-height:1.55}
+#callsView .call-start-actions{gap:10px}
+#callsView .call-start-actions .primary{background:linear-gradient(110deg,#f52c96,#c02bd0);box-shadow:0 7px 18px #d72c9c35}
+#callsView .call-start-actions .video-call-btn{background:linear-gradient(110deg,#9845ec,#6544d8);box-shadow:0 7px 18px #7845d833}
+#callsView .call-start-actions .secondary{border-color:#edadd3;color:#c51c83;background:#fff}
+#callsView .call-alert-row{border-color:#f1c8e0;color:#6f5878}
+#callsView .call-alert-row .secondary{border-color:#e9b0d4;color:#bd2385;background:#fff}
+#callsView .call-status{background:#f4e8fa;color:#6e4a81!important;border:1px solid #ead7f4}
+#callsView .call-video-card{background:linear-gradient(145deg,#29113a,#4c1760 60%,#27103c);border:1px solid #8e45a7;border-radius:26px;padding:20px;box-shadow:0 14px 35px #5e1d7730}
+#callsView .video-tile{height:220px;border:1px solid #c45ad2;background:linear-gradient(145deg,#4c1b66,#1a0d2b);box-shadow:inset 0 0 28px #ec52c733}
+#callsView .video-tile span{background:#1b0b2cdd}
+#callsView .call-controls{justify-content:center;align-items:center;gap:12px}
+#callsView .call-controls button{background:#fff1ff;color:#59266e;border:1px solid #d58be0;padding:11px 17px}
+#callsView .call-controls .end-call-btn{background:linear-gradient(110deg,#ff4b9b,#d92579);border:0;color:#fff;box-shadow:0 7px 18px #e32c8b55}
+@media(max-width:700px){#callsView{padding:16px;border-radius:20px}#callsView .calls-heading{align-items:flex-start;flex-direction:column}#callsView .calls-heading h2{font-size:27px}#callsView .call-layout{grid-template-columns:1fr}#callsView .video-tile{height:155px}.calls-recent-btn{padding:10px 15px}}
 </style>
 </head>
 <body>
@@ -411,11 +439,11 @@ p{color:#77747e}
  </section>
 <section class="view" id="chatView"><h2>Your messages 💬</h2><p>Private conversations with HeartTalk members.</p><div class="chat-shell"><aside class="chat-list"><div style="font-weight:bold;margin:5px 0 10px">Conversations</div><div id="conversationList" class="muted">Login to view messages.</div></aside><div class="chat-window"><div class="chat-head" id="chatHeading"><span>Choose a conversation</span></div><div class="messages" id="messageList"><div class="muted">Select a person from Discover to start chatting.</div></div><div class="chat-tools" id="chatTools"><div class="chat-tool-row"><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('emojiPicker')">😊 Emoji</button><button type="button" class="chat-tool-btn" onclick="toggleChatPicker('stickerPicker')">💗 Stickers</button><button type="button" class="chat-tool-btn" onclick="openGifSearch()">🎞️ GIFs</button><button type="button" class="chat-tool-btn" onclick="openChatPhotos()">🖼️ Photos</button><button type="button" class="chat-tool-btn voice-hold-btn" id="voiceRecordBtn" onpointerdown="startVoiceRecording(event)" onpointerup="finishVoiceRecording(event)" onpointercancel="cancelVoiceRecording(event)" oncontextmenu="return false" aria-label="Hold to record voice message">🎙️ Hold to record</button><input id="chatPhotoInput" type="file" accept="image/*" multiple hidden onchange="uploadChatPhotos(this.files)"></div><div class="chat-picker" id="emojiPicker" hidden><button type="button" onclick="addChatEmoji('😀')">😀</button><button type="button" onclick="addChatEmoji('😂')">😂</button><button type="button" onclick="addChatEmoji('🥰')">🥰</button><button type="button" onclick="addChatEmoji('😍')">😍</button><button type="button" onclick="addChatEmoji('😘')">😘</button><button type="button" onclick="addChatEmoji('😊')">😊</button><button type="button" onclick="addChatEmoji('😭')">😭</button><button type="button" onclick="addChatEmoji('🤗')">🤗</button><button type="button" onclick="addChatEmoji('❤️')">❤️</button><button type="button" onclick="addChatEmoji('💕')">💕</button><button type="button" onclick="addChatEmoji('💗')">💗</button><button type="button" onclick="addChatEmoji('👍')">👍</button><button type="button" onclick="addChatEmoji('🙏')">🙏</button><button type="button" onclick="addChatEmoji('🎉')">🎉</button><button type="button" onclick="addChatEmoji('🌸')">🌸</button><button type="button" onclick="addChatEmoji('✨')">✨</button></div><div class="chat-picker sticker-picker" id="stickerPicker" hidden><button type="button" onclick="sendChatSticker('🥰','Love')">🥰<small>Love</small></button><button type="button" onclick="sendChatSticker('🤗','Hug')">🤗<small>Hug</small></button><button type="button" onclick="sendChatSticker('😘','Kisses')">😘<small>Kisses</small></button><button type="button" onclick="sendChatSticker('🌸','Flower')">🌸<small>Flower</small></button><button type="button" onclick="sendChatSticker('💖','Heart')">💖<small>Heart</small></button><button type="button" onclick="sendChatSticker('🐻','Bear')">🐻<small>Bear</small></button><button type="button" onclick="sendChatSticker('🎉','Party')">🎉<small>Party</small></button><button type="button" onclick="sendChatSticker('🥳','Yay')">🥳<small>Yay</small></button></div></div><form class="sendbar" onsubmit="sendMessage(event)"><input id="messageInput" maxlength="2000" placeholder="Write a message..." autocomplete="off" disabled><button class="primary" id="sendButton" disabled>Send</button></form></div></div></section>
 <section class="view" id="callsView">
-<div class="calls-heading"><div class="section-kicker">STAY CLOSE</div><h2>Calls <span>💗</span></h2><p>Talk face-to-face or say hello with a voice call.</p></div>
+<div class="calls-heading"><div><div class="section-kicker">STAY CLOSE · HEARTTALK</div><h2>Calls <span>💗</span></h2><p>Talk face-to-face or say hello with a voice call.</p></div><button class="calls-recent-btn" type="button" onclick="showView('recents')">🕘 Recent calls <span>→</span></button></div>
 <div class="call-layout">
  <div class="call-start-card">
   <div class="call-start-icon">☎️</div>
-  <div class="toolbar" style="margin:0 0 14px"><button class="secondary" type="button" onclick="showView('recents')">🕘 Recent calls</button></div><h3>Start a conversation</h3><p id="callTargetLabel">Choose someone from Connect to start a call.</p>
+<h3>Start a conversation</h3><p id="callTargetLabel">Choose someone from Connect to start a call.</p>
   <div class="call-start-actions"><button class="primary" onclick="startOutgoingCall('voice')">📞 Voice call</button><button class="video-call-btn" onclick="startOutgoingCall('video')">🎥 Video call</button><button class="secondary" onclick="showView('discover')">Find people</button></div>
   <div class="call-alert-row"><span>🔔 Get notified when someone calls</span><button class="secondary" onclick="enableCallAlerts()">Enable notifications</button></div>
   <p id="callStatus" class="call-status">No active call</p>
