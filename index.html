@@ -571,7 +571,7 @@ p{color:#77747e}
 <header class="ig-edit-header"><button type="button" onclick="showView('profile')" aria-label="Back">‹</button><h1>Edit profile</h1><span></span></header>
 <div class="ig-edit-photo-area"><div class="ig-edit-photo" id="editProfileAvatar">🙂</div><label for="profilePhotoInput" class="ig-edit-photo-link">📷 Upload your own photo</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div>
 <div class="avatar-picker" id="avatarPicker">
- <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Colourful 2D cartoon characters · choose your favourite</small></div><span>2D CARTOON</span></div>
+ <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Cute illustrated 2D cartoon characters · choose your favourite</small></div><span>2D CARTOON</span></div>
  <div class="avatar-gender-tabs"><button type="button" class="active" data-avatar-gender="female" onclick="setAvatarGender('female',this)">👩 Female</button><button type="button" data-avatar-gender="male" onclick="setAvatarGender('male',this)">👨 Male</button><button type="button" data-avatar-gender="other" onclick="setAvatarGender('other',this)">🧑 Other</button></div>
  <div class="avatar-options" id="avatarOptions"></div>
  <p class="avatar-picker-note">Choose a character, then tap Save changes.</p>
@@ -789,11 +789,11 @@ function heartTalkAvatarUrl(seed){
  const params=new URLSearchParams({
   seed:seed,
   backgroundColor:palette[index],
-  radius:"18",
-  size:"240"
+  radius:"24",
+  size:"320"
  });
- // DiceBear Adventurer creates expressive, colourful 2D cartoon portraits.
- return "https://api.dicebear.com/9.x/adventurer/svg?"+params.toString();
+ // Lorelei is a flat, colourful 2D illustrated cartoon style (not 3D).
+ return "https://api.dicebear.com/9.x/lorelei/svg?"+params.toString();
 }
 function setAvatarGender(gender,button){selectedHeartTalkGender=gender;document.getElementById("profileGender").value=gender;document.querySelectorAll(".avatar-gender-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.avatarGender===gender));renderHeartTalkAvatarChoices();}
 function renderHeartTalkAvatarChoices(){const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";(heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{const url=heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);const b=document.createElement("button");b.type="button";b.className="avatar-option"+(selectedHeartTalkAvatar===url?" selected":"");b.title=seed+" avatar";const img=document.createElement("img");img.src=url;img.alt=seed+" cartoon avatar";img.loading="lazy";b.appendChild(img);b.onclick=()=>{selectedHeartTalkAvatar=url;renderHeartTalkAvatarChoices();renderProfileAvatar(url);const edit=document.getElementById("editProfileAvatar");if(edit){edit.replaceChildren();const preview=document.createElement("img");preview.src=url;preview.alt="Selected cartoon avatar";edit.appendChild(preview)}};box.appendChild(b)})}
