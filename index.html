@@ -265,6 +265,8 @@ p{color:#77747e}
 .home-roadmap-note{margin:20px 0 10px;padding:16px 18px;border-radius:17px;background:#f5effb;border:1px solid #e9dcf4;color:#5f4b6b;font-size:13px;line-height:1.55}.home-roadmap-note b{color:#392348}
 @media(max-width:720px){.home-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-feature-group{padding:14px}.home-feature-card{min-height:165px;padding:12px}.home-feature-heading{align-items:flex-start;flex-direction:column}}
 @media(max-width:420px){.home-feature-grid{grid-template-columns:1fr}.home-feature-card{min-height:130px}}
+
+.profile-more-menu{max-width:680px;margin:-2px auto 14px;padding:8px;border:1px solid #343841;border-radius:14px;background:#171a21;box-shadow:0 12px 28px #0005;gap:4px}.profile-more-menu button{width:100%;border:0;border-radius:9px;background:transparent;color:inherit;text-align:left;padding:13px 14px;font-size:14px;font-weight:650;cursor:pointer}.profile-more-menu button:active{background:#303542}.instagram-profile .profile-menu{font-size:34px;line-height:1;color:inherit;cursor:pointer}
 </style>
 </head>
 <body>
@@ -361,14 +363,15 @@ p{color:#77747e}
 </section>
 <section class="view" id="profileView">
 <div class="profile-page instagram-profile">
- <div class="ig-profile-top"><button class="profile-back" onclick="showView('home')" aria-label="Back">‹</button><strong id="profileHandle">hearttalk_member</strong><button class="profile-menu" onclick="openProfileSettings()" aria-label="Profile settings">☰</button></div>
+ <div class="ig-profile-top"><button class="profile-back" onclick="showView('home')" aria-label="Back">‹</button><strong id="profileHandle">hearttalk_member</strong><button class="profile-menu" type="button" onclick="toggleProfileMenu()" aria-label="More profile options" aria-expanded="false">⋯</button></div>
+ <div id="profileMoreMenu" class="profile-more-menu" style="display:none"><button type="button" onclick="openProfileSettings();toggleProfileMenu(false)">⚙️ Settings and privacy</button><button type="button" onclick="openProfileEditor();toggleProfileMenu(false)">✏️ Edit profile</button><button type="button" onclick="showView('wallet');toggleProfileMenu(false)">🪙 Wallet</button></div>
  <div class="ig-profile-identity"><div class="profile-avatar-wrap"><div class="profile-big-avatar" id="profileAvatar">🙂</div><button class="profile-edit-dot" type="button" onclick="openProfileEditor()" title="Edit profile">＋</button></div><div class="profile-follow-stats"><div><strong id="profilePostCount">0</strong><span>posts</span></div><div><strong id="profileFollowers">0</strong><span>followers</span></div><div><strong id="profileFollowing">0</strong><span>following</span></div></div></div>
  <div class="ig-profile-bio"><h1 id="profileDisplayName">Your name</h1><p id="profileDisplayBio">Add a little about yourself so people can get to know you.</p><div class="ig-profile-meta"><span id="profileDisplayCountry">Add your country</span><span id="profileDisplayAge">18+</span></div></div>
  <div class="ig-profile-actions"><button onclick="openProfileEditor()">Edit profile</button><button onclick="GenUIShareProfile()">Share profile</button><button class="ig-add-person" onclick="showView('discover')" aria-label="Discover people">＋</button></div>
  <div class="ig-highlights"><button class="ig-highlight" onclick="showView('forums')"><span>＋</span><small>New</small></button><button class="ig-highlight" onclick="showView('forums')"><span>💗</span><small>Moments</small></button><button class="ig-highlight" onclick="showView('forums')"><span>🌿</span><small>Community</small></button><button class="ig-highlight" onclick="showView('live')"><span>🔴</span><small>Live</small></button></div>
  <div class="ig-profile-tabs"><button class="active" onclick="setProfileTab(this,'posts')" aria-label="Posts grid">▦</button><button onclick="setProfileTab(this,'groups')" aria-label="Groups">▶</button><button onclick="setProfileTab(this,'comments')" aria-label="Comments">♡</button></div>
  <div id="profileTabContent" class="ig-profile-grid" data-active-tab="posts"><div class="profile-empty"><span>♡</span><b>Share your first post</b><small>Your photos and moments will appear here.</small><button onclick="showView('forums')">Create post</button></div></div>
- <section class="profile-settings ig-settings" id="profileSettingsSection"><div class="profile-settings-heading"><div><span class="section-kicker">YOUR ACCOUNT</span><h2>Profile settings</h2><p>Manage your profile and personal preferences.</p></div><span class="profile-settings-mark">⚙️</span></div><div class="profile-settings-grid"><button class="profile-setting-card" onclick="openProfileEditor()"><span>✏️</span><b>Edit personal details</b><small>Name, age, country and bio</small></button><button class="profile-setting-card" onclick="openLanguageSettings()"><span>🌐</span><b>App language</b><small id="profileLanguageLabel">Choose your language</small></button><button class="profile-setting-card" onclick="loadBlockedUsers()"><span>🚫</span><b>Blocked members</b><small>View or unblock people</small></button><button class="profile-setting-card" onclick="notify('Privacy controls are being prepared. Your location is not shared automatically.')"><span>🔒</span><b>Privacy & safety</b><small>Control your comfort and visibility</small></button><button class="profile-setting-card" onclick="showView('wallet')"><span>🪙</span><b>Wallet & rewards</b><small>View your coin balance</small></button><button class="profile-setting-card" onclick="logout()"><span>↪️</span><b>Log out</b><small>Sign out of this device</small></button></div></section>
+ <section class="profile-settings ig-settings" id="profileSettingsSection" style="display:none"><div class="profile-settings-heading"><div><span class="section-kicker">YOUR ACCOUNT</span><h2>Profile settings</h2><p>Manage your profile and personal preferences.</p></div><span class="profile-settings-mark">⚙️</span></div><div class="profile-settings-grid"><button class="profile-setting-card" onclick="openProfileEditor()"><span>✏️</span><b>Edit personal details</b><small>Name, age, country and bio</small></button><button class="profile-setting-card" onclick="openLanguageSettings()"><span>🌐</span><b>App language</b><small id="profileLanguageLabel">Choose your language</small></button><button class="profile-setting-card" onclick="loadBlockedUsers()"><span>🚫</span><b>Blocked members</b><small>View or unblock people</small></button><button class="profile-setting-card" onclick="notify('Privacy controls are being prepared. Your location is not shared automatically.')"><span>🔒</span><b>Privacy & safety</b><small>Control your comfort and visibility</small></button><button class="profile-setting-card" onclick="showView('wallet')"><span>🪙</span><b>Wallet & rewards</b><small>View your coin balance</small></button><button class="profile-setting-card" onclick="logout()"><span>↪️</span><b>Log out</b><small>Sign out of this device</small></button></div></section>
  <div id="blockedUsersPanel" style="display:none;margin:0 0 16px"></div>
 
 </div></section>
@@ -528,7 +531,17 @@ function setProfileTab(button,tab){
  else box.innerHTML='<div class="profile-promo-card"><div class="profile-promo-orb">💬</div><h3>No comments yet</h3><p>Your comments will appear here.</p></div>';
 }
 function GenUIShareProfile(){const url=location.href.split("?")[0]+"#profile";if(navigator.share){navigator.share({title:"My HeartTalk profile",url}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(url).then(()=>notify("Profile link copied."));}else notify("Share is not available in this browser.");}
-function openProfileSettings(){showView("profile");setTimeout(()=>document.getElementById("profileSettingsSection")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}
+function toggleProfileMenu(force){
+ const menu=document.getElementById("profileMoreMenu");if(!menu)return;
+ const open=typeof force==="boolean"?force:menu.style.display==="none";
+ menu.style.display=open?"grid":"none";
+ document.querySelector(".profile-menu")?.setAttribute("aria-expanded",String(open));
+}
+function openProfileSettings(){
+ showView("profile");
+ const panel=document.getElementById("profileSettingsSection");
+ if(panel){panel.style.display="block";setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),80);}
+}
 function openProfileEditor(){showView("editProfile");document.getElementById("profileName")?.focus({preventScroll:true})}
 function openLanguageSettings(){document.getElementById("languageModal")?.classList.add("show")}
 function renderProfileAvatar(url){
