@@ -789,7 +789,7 @@ function openProfileSettings(){
  if(panel){panel.style.display="block";setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),80);}
 }
 
-const heartTalkAvatarSeeds={female:["Vijaya","Ananya","Diya","Meera","Isha","Kavya","Sana","Aadhya","Nisha","Tara","Mira","Riya"],male:["Arjun","Ayaan","Kabir","Rohan","Dev","Ishaan","Reyansh","Advik","Vihaan","Kian","Neil","Aarav"],other:["Sky","River","Ari","Robin","Sam","Alex","Kai","Sunny","Jules","Noor","Ash","Sage"]};
+const heartTalkAvatarSeeds={female:["Ananya jasmine braid","Diya pink saree bindi","Meera headphones hoodie","Isha round glasses","Kavya flower hair","Sana pink cap","Aadhya traditional gold jhumka","Nisha bob haircut yellow kurti","Tara white floral dress","Mira winter beanie","Riya pink hoodie heart","Noor flower crown","Avani purple headphones","Ira yellow sweater glasses","Vijaya silk saree jasmine"],male:["Arjun","Ayaan","Kabir","Rohan","Dev","Ishaan","Reyansh","Advik","Vihaan","Kian","Neil","Aarav"],other:["Sky","River","Ari","Robin","Sam","Alex","Kai","Sunny","Jules","Noor","Ash","Sage"]};
 let selectedHeartTalkAvatar="";let selectedHeartTalkGender="female";
 function heartTalkAvatarUrl(seed){
  // Locally generated glossy 3D-style avatar artwork; no external image service required.
@@ -834,7 +834,20 @@ function heartTalkAvatarUrl(seed){
  return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
 }
 function setAvatarGender(gender,button){selectedHeartTalkGender=gender;document.getElementById("profileGender").value=gender;document.querySelectorAll(".avatar-gender-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.avatarGender===gender));renderHeartTalkAvatarChoices();}
-function renderHeartTalkAvatarChoices(){const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";(heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{const url=heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);const b=document.createElement("button");b.type="button";b.className="avatar-option"+(selectedHeartTalkAvatar===url?" selected":"");b.title=seed+" avatar";const img=document.createElement("img");img.src=url;img.alt=seed+" cartoon avatar";img.loading="lazy";b.appendChild(img);b.onclick=()=>{selectedHeartTalkAvatar=url;renderHeartTalkAvatarChoices();if(window.updateHeartTalk3DAvatar)window.updateHeartTalk3DAvatar(seed,selectedHeartTalkGender);else renderProfileAvatar(url);const edit=document.getElementById("editProfileAvatar");if(edit&&!window.updateHeartTalk3DAvatar){edit.replaceChildren();const preview=document.createElement("img");preview.src=url;preview.alt="Selected cartoon avatar";edit.appendChild(preview)}};box.appendChild(b)});if(window.updateHeartTalk3DAvatar){const current=(heartTalkAvatarSeeds[selectedHeartTalkGender]||[])[0]||"HeartTalk";window.updateHeartTalk3DAvatar(current,selectedHeartTalkGender)}}
+function renderHeartTalkAvatarChoices(){
+ const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";
+ (heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{
+  const url=heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);
+  const b=document.createElement("button");b.type="button";b.className="avatar-option"+(selectedHeartTalkAvatar===url?" selected":"");b.title=seed+" avatar";
+  const img=document.createElement("img");img.src=url;img.alt=seed+" Indian-style cartoon avatar";img.loading="lazy";b.appendChild(img);
+  b.onclick=()=>{
+   selectedHeartTalkAvatar=url;
+   box.querySelectorAll(".avatar-option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");
+   renderProfileAvatar(url);
+  };
+  box.appendChild(b);
+ });
+}
 function openProfileEditor(){showView("editProfile");renderHeartTalkAvatarChoices();document.getElementById("profileName")?.focus({preventScroll:true})}
 function openLanguageSettings(){document.getElementById("languageModal")?.classList.add("show")}
 function renderProfileAvatar(url){
