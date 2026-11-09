@@ -323,14 +323,6 @@ p{color:#77747e}
  </div>
 </section>
 <section class="home-feature-group">
- <div class="home-group-title"><span>🛡️</span><div><h3>Safety & privacy</h3><p>Your comfort comes first. Aadhaar verification is not required.</p></div></div>
- <div class="home-feature-grid">
-  <button class="home-feature-card" onclick="showView('discover')"><span>🚫</span><b>Block & unblock</b><small>Control who can contact you and remove a block later.</small><em class="feature-state partial">Database setup / testing</em></button>
-  <button class="home-feature-card" onclick="showView('discover')"><span>🚩</span><b>Report abuse</b><small>Report suspicious profiles or inappropriate behaviour.</small><em class="feature-state partial">Database setup / testing</em></button>
-  <button class="home-feature-card" onclick="showView('profile')"><span>🌙</span><b>Privacy controls</b><small>Visibility, blocked list and account controls.</small><em class="feature-state planned">More controls planned</em></button>
- </div>
-</section>
-<section class="home-feature-group">
  <div class="home-group-title"><span>🪙</span><div><h3>Rewards & membership</h3><p>Wallet first; payments only after secure gateway setup.</p></div></div>
  <div class="home-feature-grid">
   <button class="home-feature-card" onclick="showView('wallet')"><span>🪙</span><b>Coins & wallet</b><small>View your current coin balance.</small><em class="feature-state partial">Wallet UI available · rewards pending</em></button>
@@ -407,8 +399,12 @@ p{color:#77747e}
   <div class="profile-drawer-group"><small>PROFILE</small>
    <button type="button" onclick="toggleProfileMenu(false);openProfileEditor()"><span>👤</span><span><b>Edit Profile</b><small>Photo, name, username and bio</small></span></button>
   </div>
+  <div class="profile-drawer-group"><small>SAFETY & PRIVACY</small>
+   <button type="button" onclick="toggleProfileMenu(false);loadBlockedUsers()"><span>🚫</span><span><b>Block & unblock</b><small>View or unblock members</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);showView('discover');notify('Choose a member and tap Report on their profile.')"><span>🚩</span><span><b>Report abuse</b><small>Report suspicious profiles or behaviour</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);openProfileSettings();notify('Privacy options are being added. Your location is not shared automatically.')"><span>🌙</span><span><b>Privacy controls</b><small>Account visibility and safety</small></span></button>
+  </div>
   <div class="profile-drawer-group"><small>OTHER</small>
-   <button type="button" onclick="toggleProfileMenu(false);loadBlockedUsers()"><span>🚫</span><span><b>Blocked Chats</b><small>View or unblock members</small></span></button>
    <button type="button" onclick="toggleProfileMenu(false);notify('Thank you! Send feedback to hearttalk.support@gmail.com')"><span>💬</span><span><b>Feedback</b><small>Share your suggestions</small></span></button>
    <button type="button" onclick="toggleProfileMenu(false);notify('Privacy Policy page will be added here.')"><span>🛡️</span><span><b>Privacy Policy</b></span></button>
    <button type="button" onclick="toggleProfileMenu(false);notify('Terms of Use page will be added here.')"><span>📄</span><span><b>Terms of Use</b></span></button>
@@ -423,7 +419,7 @@ p{color:#77747e}
  <div class="ig-highlights"><button class="ig-highlight" onclick="showView('forums')"><span>＋</span><small>New</small></button><button class="ig-highlight" onclick="showView('forums')"><span>💗</span><small>Moments</small></button><button class="ig-highlight" onclick="showView('forums')"><span>🌿</span><small>Community</small></button><button class="ig-highlight" onclick="showView('live')"><span>🔴</span><small>Live</small></button></div>
  <div class="ig-profile-tabs"><button class="active" onclick="setProfileTab(this,'posts')" aria-label="Posts grid">▦</button><button onclick="setProfileTab(this,'groups')" aria-label="Groups">▶</button><button onclick="setProfileTab(this,'comments')" aria-label="Comments">♡</button></div>
  <div id="profileTabContent" class="ig-profile-grid" data-active-tab="posts"><div class="profile-empty"><span>♡</span><b>Share your first post</b><small>Your photos and moments will appear here.</small><button onclick="showView('forums')">Create post</button></div></div>
- <section class="profile-settings ig-settings" id="profileSettingsSection" style="display:none"><div class="profile-settings-heading"><div><span class="section-kicker">YOUR ACCOUNT</span><h2>Profile settings</h2><p>Manage your profile and personal preferences.</p></div><span class="profile-settings-mark">⚙️</span></div><div class="profile-settings-grid"><button class="profile-setting-card" onclick="openProfileEditor()"><span>✏️</span><b>Edit personal details</b><small>Name, age, country and bio</small></button><button class="profile-setting-card" onclick="openLanguageSettings()"><span>🌐</span><b>App language</b><small id="profileLanguageLabel">Choose your language</small></button><button class="profile-setting-card" onclick="loadBlockedUsers()"><span>🚫</span><b>Blocked members</b><small>View or unblock people</small></button><button class="profile-setting-card" onclick="notify('Privacy controls are being prepared. Your location is not shared automatically.')"><span>🔒</span><b>Privacy & safety</b><small>Control your comfort and visibility</small></button><button class="profile-setting-card" onclick="showView('wallet')"><span>🪙</span><b>Wallet & rewards</b><small>View your coin balance</small></button><button class="profile-setting-card" onclick="logout()"><span>↪️</span><b>Log out</b><small>Sign out of this device</small></button></div></section>
+ <section class="profile-settings ig-settings" id="profileSettingsSection" style="display:none"><div class="profile-settings-heading"><div><span class="section-kicker">YOUR ACCOUNT</span><h2>Profile settings</h2><p>Manage your profile and personal preferences.</p></div><span class="profile-settings-mark">⚙️</span></div><div class="profile-settings-grid"><button class="profile-setting-card" onclick="openProfileEditor()"><span>✏️</span><b>Edit personal details</b><small>Name, age, country and bio</small></button><button class="profile-setting-card" onclick="openLanguageSettings()"><span>🌐</span><b>App language</b><small id="profileLanguageLabel">Choose your language</small></button><button class="profile-setting-card" onclick="showView('wallet')"><span>🪙</span><b>Wallet & rewards</b><small>View your coin balance</small></button><button class="profile-setting-card" onclick="logout()"><span>↪️</span><b>Log out</b><small>Sign out of this device</small></button></div></section>
  <div id="blockedUsersPanel" style="display:none;margin:0 0 16px"></div>
 
 </div></section>
