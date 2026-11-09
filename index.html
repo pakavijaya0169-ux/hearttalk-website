@@ -561,7 +561,7 @@ async function uploadProfilePhoto(event){
  }catch(error){console.error("Profile photo upload failed",error);notify(error.message||"Photo upload failed. Check profile-avatars storage setup.");}
  finally{if(button){button.style.pointerEvents="";button.textContent="✎";}}
 }
-async async function saveProfile(){
+async function saveProfile(){
  if(!currentUser){notify("Please log in first.");openAuth();return}
  const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim();
  const username=document.getElementById("profileUsername").value.trim().toLowerCase().replace(/^@/,"");
