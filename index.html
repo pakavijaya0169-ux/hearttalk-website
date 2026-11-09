@@ -571,7 +571,7 @@ p{color:#77747e}
 <header class="ig-edit-header"><button type="button" onclick="showView('profile')" aria-label="Back">‹</button><h1>Edit profile</h1><span></span></header>
 <div class="ig-edit-photo-area"><div class="ig-edit-photo" id="editProfileAvatar">🙂</div><label for="profilePhotoInput" class="ig-edit-photo-link">📷 Upload your own photo</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div>
 <div class="avatar-picker" id="avatarPicker">
- <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Cute illustrated 2D cartoon characters · choose your favourite</small></div><span>2D CARTOON</span></div>
+ <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Glossy 3D-look cartoon characters · choose your favourite</small></div><span>3D CARTOON</span></div>
  <div class="avatar-gender-tabs"><button type="button" class="active" data-avatar-gender="female" onclick="setAvatarGender('female',this)">👩 Female</button><button type="button" data-avatar-gender="male" onclick="setAvatarGender('male',this)">👨 Male</button><button type="button" data-avatar-gender="other" onclick="setAvatarGender('other',this)">🧑 Other</button></div>
  <div class="avatar-options" id="avatarOptions"></div>
  <p class="avatar-picker-note">Choose a character, then tap Save changes.</p>
@@ -1447,10 +1447,7 @@ input,textarea,.toolbar input,.field input{background:#32102f!important;color:#F
 .chat-list button{color:#FCE4EC!important;border-color:#71365f!important}.chat-head,.sendbar{color:#FCE4EC!important;border-color:#71365f!important}.messages{background:#351033!important}.bubble{background:#642653!important;color:#FCE4EC!important}.bubble.mine{background:linear-gradient(120deg,#FF5E7E,#a83b83)!important;color:#fff!important}
 .ht-connect-brand,.ht-section-heading h2{color:#FCE4EC!important}.ht-connect-banner{background:linear-gradient(110deg,#FF5E7E,#a83b83 55%,#3A1038)!important}.ht-filter.active,.ht-connect-tabs .connect-tab.active{background:linear-gradient(100deg,#FF5E7E,#a83b83)!important;color:#fff!important}.connect-view .connect-member{background:linear-gradient(160deg,#57204d,#3A1038)!important;border-color:#8f3e70!important;color:#FCE4EC!important}.ht-room-card{border-color:#FF5E7E!important}.ht-antak,.ht-dum,.ht-chatroom,.ht-games,.ht-music{background:linear-gradient(155deg,#FF5E7E,#76265f)!important}
 #toast{background:#57204d!important;border-color:#FF5E7E!important;color:#FCE4EC!important}.dialog{color:#FCE4EC!important}.incoming-card{background:linear-gradient(145deg,#57204d,#3A1038)!important;color:#FCE4EC!important;border-color:#FF5E7E!important}.incoming-card h2,.incoming-card p{color:#FCE4EC!important}
-</style>
-
-
-/* Refined profile editor layout: profile details beside the 2D cartoon picker */
+/* Refined profile editor layout: profile details beside the 3D-look cartoon picker */
 @media(min-width:760px){
  #editProfileView .ig-edit-screen{max-width:1120px;display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);column-gap:22px;align-content:start;padding:14px 22px 36px}
  #editProfileView .ig-edit-header{grid-column:1/-1}
@@ -1467,5 +1464,6 @@ input,textarea,.toolbar input,.field input{background:#32102f!important;color:#F
 #editProfileView .ig-edit-photo{border-color:#FF5E7E;box-shadow:0 0 0 5px #FF5E7E22}
 #editProfileView .ig-edit-photo-link{color:#ff9bb0}
 @media(max-width:759px){#editProfileView .ig-edit-screen{max-width:680px;display:block}}
+</style>
 
 </body></html>
