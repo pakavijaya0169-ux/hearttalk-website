@@ -268,6 +268,13 @@ p{color:#77747e}
 
 .profile-more-menu{max-width:680px;margin:-2px auto 14px;padding:8px;border:1px solid #343841;border-radius:14px;background:#171a21;box-shadow:0 12px 28px #0005;gap:4px}.profile-more-menu button{width:100%;border:0;border-radius:9px;background:transparent;color:inherit;text-align:left;padding:13px 14px;font-size:14px;font-weight:650;cursor:pointer}.profile-more-menu button:active{background:#303542}.instagram-profile .profile-menu{font-size:34px;line-height:1;color:inherit;cursor:pointer}
 </style>
+
+<style>
+#gamesView .panel,#chitchatView .panel,#activitiesView .panel{cursor:pointer;text-align:left;transition:transform .15s,box-shadow .15s}
+#gamesView .panel:active,#chitchatView .panel:active,#activitiesView .panel:active{transform:scale(.985)}
+#gamesView .panel h3,#chitchatView .panel h3,#activitiesView .panel h3{margin:8px 0}
+#gamesView .panel p,#chitchatView .panel p,#activitiesView .panel p{font-size:14px}
+</style>
 </head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" id="installAppBtn" type="button" style="display:none;padding:8px 12px">⬇ Install</button><button class="secondary" id="homeCoinButton" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
@@ -325,6 +332,15 @@ p{color:#77747e}
   <button class="home-feature-card" onclick="openAuth()"><span>🔐</span><b>Email / phone sign-in</b><small>Email sign-in; SMS OTP needs an SMS provider.</small><em class="feature-state partial">Email ready · SMS setup required</em></button>
   <button class="home-feature-card" onclick="showView('profile')"><span>✓</span><b>Optional verified badge</b><small>Future optional profile verification; no Aadhaar collection.</small><em class="feature-state planned">Planned</em></button>
   <button class="home-feature-card" onclick="showView('recents')"><span>🕘</span><b>Recent calls</b><small>Review your recent call activity.</small><em class="feature-state partial">Available where call history exists</em></button>
+ </div>
+</section>
+
+<section class="home-feature-group">
+ <div class="home-group-title"><span>🎮</span><div><h3>Games, chit chat & fun</h3><p>Play together, laugh and share moments.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="showView('games')"><span>🎮</span><b>Games zone</b><small>Antakshari, movie quiz, Truth or Dare and more.</small><em class="feature-state ready">Open games</em></button>
+  <button class="home-feature-card" onclick="showView('chitchat')"><span>💬</span><b>Chit Chat rooms</b><small>Choose a topic and meet people in conversations.</small><em class="feature-state ready">Explore topics</em></button>
+  <button class="home-feature-card" onclick="showView('activities')"><span>🎁</span><b>Extra activities</b><small>Daily prompts, mood check-ins and fun challenges.</small><em class="feature-state ready">Explore activities</em></button>
  </div>
 </section>
 <div class="home-roadmap-note"><b>Our recommendation:</b> finish and test the core experience first — sign-in, profile, chat, calls and safety. Then add nearby discovery and photo gallery. Add coins, VIP and UPI only after payment and fraud protection are ready.</div>
@@ -390,6 +406,39 @@ p{color:#77747e}
 <div class="profile-tabs"><button class="active" id="forumFeedTab" onclick="setForumTab('feed')">Feed</button><button id="forumGroupsTab" onclick="setForumTab('groups')">Groups</button></div>
 <div id="forumFeedPanel"><div id="forumComposer" class="panel" style="display:none;margin-bottom:14px"><h3>Create a post</h3><textarea id="newPostText" rows="3" maxlength="3000" placeholder="What's on your mind?"></textarea><label for="forumImageInput" class="secondary" style="display:inline-block;margin-top:10px;cursor:pointer">📷 Add photo</label><input id="forumImageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewForumImage()" style="display:none"><div id="forumImagePreviewWrap" style="display:none;margin-top:12px"><img id="forumImagePreview" alt="Selected photo preview" style="max-width:100%;max-height:260px;border-radius:16px;object-fit:contain"><button class="secondary" type="button" onclick="removeForumImage()">Remove photo</button></div><div class="muted" style="margin-top:8px">JPG, PNG, WEBP or GIF · Max 5 MB</div><div class="toolbar"><button class="primary" onclick="createForumPost()">Publish post</button><button class="secondary" onclick="closePostComposer()">Cancel</button></div></div><div id="forumFeedList" class="grid"></div></div>
 <div id="forumGroupsPanel" style="display:none"><div class="panel"><h3>Create a group</h3><input id="newGroupName" maxlength="60" placeholder="Group name"><textarea id="newGroupDescription" rows="2" maxlength="300" placeholder="Group description"></textarea><button class="primary" onclick="createForumGroup()">＋ Create group</button></div><div id="forumGroupsList" class="grid"></div></div>
+</section>
+
+<section class="view" id="gamesView">
+ <div class="section-kicker">PLAY TOGETHER</div><h2>🎮 Games zone</h2><p>Choose a quick game. These mini activities work inside HeartTalk.</p>
+ <div class="grid">
+  <div class="panel"><div style="font-size:34px">🎤</div><h3>Antakshari</h3><p>Sing a song starting with the last letter of the previous song.</p><button class="primary" onclick="startHeartGame('antakshari')">Start Antakshari</button></div>
+  <div class="panel"><div style="font-size:34px">🎬</div><h3>Guess the movie</h3><p>Get a movie clue and guess the title.</p><button class="primary" onclick="startHeartGame('movie')">Play movie quiz</button></div>
+  <div class="panel"><div style="font-size:34px">😇</div><h3>Truth or Dare</h3><p>Get a friendly, safe question or challenge.</p><button class="primary" onclick="startHeartGame('truth')">Truth or Dare</button></div>
+  <div class="panel"><div style="font-size:34px">🧠</div><h3>Quick Quiz</h3><p>Try a fun general knowledge question.</p><button class="primary" onclick="startHeartGame('quiz')">Start quiz</button></div>
+ </div>
+ <div class="panel" style="margin-top:16px"><h3 id="heartGameTitle">Your game will appear here</h3><p id="heartGamePrompt">Choose any game above to begin.</p><div class="toolbar"><input id="heartGameAnswer" placeholder="Type your answer (optional)"><button class="secondary" onclick="nextHeartGame()">Next round</button><button class="secondary" onclick="showView('chat')">Invite a friend in chat</button></div></div>
+</section>
+<section class="view" id="chitchatView">
+ <div class="section-kicker">MEET & TALK</div><h2>💬 Chit Chat</h2><p>Pick a conversation topic and connect with HeartTalk members.</p>
+ <div class="grid">
+  <button class="panel" onclick="openTopicChat('Introduce yourself')"><div style="font-size:30px">👋</div><h3>Introductions</h3><p>Say hello and make new friends.</p></button>
+  <button class="panel" onclick="openTopicChat('Music & Antakshari')"><div style="font-size:30px">🎵</div><h3>Music & songs</h3><p>Share favourite songs and play Antakshari.</p></button>
+  <button class="panel" onclick="openTopicChat('Movies & series')"><div style="font-size:30px">🍿</div><h3>Movies & series</h3><p>Talk about films and shows.</p></button>
+  <button class="panel" onclick="openTopicChat('Daily life')"><div style="font-size:30px">☕</div><h3>Daily life</h3><p>Share everyday stories and thoughts.</p></button>
+  <button class="panel" onclick="openTopicChat('Telugu friends')"><div style="font-size:30px">తెలుగు</div><h3>Telugu chat</h3><p>Connect with Telugu speakers.</p></button>
+  <button class="panel" onclick="showView('forums')"><div style="font-size:30px">👥</div><h3>Community discussions</h3><p>Join public discussions in Forums.</p></button>
+ </div>
+ <div class="notice">Topic rooms are discovery shortcuts for now. Public live group-chat rooms need a dedicated room-message backend; private chat and Forums remain available.</div>
+ <button class="primary" onclick="showView('chat')">Open my private chats</button>
+</section>
+<section class="view" id="activitiesView">
+ <div class="section-kicker">LITTLE MOMENTS</div><h2>✨ Extra activities</h2><p>Small activities to make every visit fun.</p>
+ <div class="grid">
+  <div class="panel"><div style="font-size:32px">🌈</div><h3>Mood check-in</h3><p>How are you feeling today?</p><div class="toolbar"><button class="secondary" onclick="notify('Mood saved: Happy 😊')">😊 Happy</button><button class="secondary" onclick="notify('Mood saved: Okay 🙂')">🙂 Okay</button><button class="secondary" onclick="notify('Mood saved: Low 💗')">💗 Low</button></div></div>
+  <div class="panel"><div style="font-size:32px">📝</div><h3>Daily question</h3><p id="dailyHeartPrompt">If you could travel anywhere today, where would you go?</p><button class="secondary" onclick="nextDailyHeartPrompt()">Another question</button></div>
+  <div class="panel"><div style="font-size:32px">🎞️</div><h3>GIF & stickers</h3><p>Send a GIF, emoji, sticker or photo in a private chat.</p><button class="primary" onclick="showView('chat')">Open chat GIFs</button></div>
+  <div class="panel"><div style="font-size:32px">📸</div><h3>Share a moment</h3><p>Post a photo or a thought for the community.</p><button class="primary" onclick="showView('forums')">Create a post</button></div>
+ </div>
 </section>
 <section class="view" id="recentsView"><div class="section-kicker">Your activity</div><h2>Recent calls</h2><div class="panel"><div style="font-size:38px;text-align:center">📞</div><h3 style="text-align:center">Your call history</h3><p style="text-align:center">Incoming, outgoing and missed calls will appear here.</p><div class="toolbar" style="justify-content:center"><button class="secondary" onclick="showView('calls')">Go to calls</button></div></div></section>
 <section class="view" id="walletView"><div class="section-kicker">HeartTalk rewards</div><h2>My wallet 🪙</h2><div class="panel" style="background:linear-gradient(120deg,#fff0d1,#ffe5f0)"><div class="muted">Available coins</div><div style="font-size:42px;font-weight:850;color:#33202b">🪙 <span id="walletCoins">0</span></div><p id="walletStatus">Log in to view your wallet.</p></div><div class="grid"><div class="panel"><h3>🎁 Daily reward</h3><p>Daily rewards are not enabled yet.</p><button class="secondary" disabled>Coming soon</button></div><div class="panel"><h3>💳 Transactions</h3><div id="walletTransactions"><p class="muted">Your transactions will appear here.</p></div></div></div><div class="notice">This wallet currently displays ledger entries only. Coin purchases, rewards and payments are not enabled; no money is charged.</div></section>
@@ -1087,5 +1136,20 @@ const heartTalkInstallButton=document.getElementById("installAppBtn");
 window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();heartTalkInstallPrompt=event;if(heartTalkInstallButton)heartTalkInstallButton.style.display="inline-flex"});
 heartTalkInstallButton?.addEventListener("click",async()=>{if(!heartTalkInstallPrompt){notify("Chrome menu ⋮ → Install app / Add to Home screen");return}heartTalkInstallPrompt.prompt();await heartTalkInstallPrompt.userChoice;heartTalkInstallPrompt=null;heartTalkInstallButton.style.display="none"});
 window.addEventListener("appinstalled",()=>{if(heartTalkInstallButton)heartTalkInstallButton.style.display="none";notify("HeartTalk installed successfully 💗")});
+
+const heartGamePrompts={
+ antakshari:["Start with a song beginning with అ (A).","Your turn: sing a song beginning with మ (Ma).","Try a song beginning with స (Sa)."],
+ movie:["Clue: A young man follows his dreams in a college of engineering. Guess a popular Indian film.","Clue: A group of friends go on a memorable road trip. Guess the film.","Clue: A family comedy with a famous strict father character. Guess the movie."],
+ truth:["Truth: What is one small thing that makes you happy?","Dare: Send your friend your happiest emoji.","Truth: Which song can you listen to all day?","Dare: Say one kind thing about someone here."],
+ quiz:["Which planet is known as the Red Planet? Answer: Mars.","How many days are there in a leap year? Answer: 366.","Which animal is called the king of the jungle? Answer: Lion."]
+};
+let activeHeartGame="truth",heartGameIndex=0;
+function startHeartGame(type){activeHeartGame=type;heartGameIndex=0;nextHeartGame();document.getElementById("heartGameAnswer").value=""}
+function nextHeartGame(){const arr=heartGamePrompts[activeHeartGame]||heartGamePrompts.truth;const prompt=arr[heartGameIndex%arr.length];heartGameIndex++;document.getElementById("heartGameTitle").textContent=({antakshari:"🎤 Antakshari",movie:"🎬 Guess the movie",truth:"😇 Truth or Dare",quiz:"🧠 Quick Quiz"})[activeHeartGame];document.getElementById("heartGamePrompt").textContent=prompt}
+function openTopicChat(topic){notify("Topic selected: "+topic+". Choose a member in Connect to start a private chat.");showView("discover")}
+const dailyHeartPrompts=["If you could travel anywhere today, where would you go?","Which song always makes you smile?","What is one skill you would love to learn?","Tea or coffee — and why?","What is your favourite childhood memory?"];
+let dailyHeartIndex=0;
+function nextDailyHeartPrompt(){dailyHeartIndex=(dailyHeartIndex+1)%dailyHeartPrompts.length;document.getElementById("dailyHeartPrompt").textContent=dailyHeartPrompts[dailyHeartIndex]}
+
 </script>
 </body></html>
