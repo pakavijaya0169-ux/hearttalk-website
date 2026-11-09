@@ -270,7 +270,7 @@ p{color:#77747e}
 </style>
 </head>
 <body>
-<header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" id="installAppBtn" type="button" style="display:none;padding:8px 12px">⬇ Install</button><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
+<header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" id="installAppBtn" type="button" style="display:none;padding:8px 12px">⬇ Install</button><button class="secondary" id="homeCoinButton" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
 <main>
 <section class="view active" id="homeView">
 <div class="hero"><div class="section-kicker">Your world. Your people.</div><h1>Find your people.<br><span style="color:#e52d83">Feel connected.</span></h1><p>Meet new friends, share your moments and join conversations in languages you love.</p><div class="toolbar"><button class="primary" onclick="showView('discover')">💗 Find people</button><button class="secondary" onclick="showView('forums')">Explore forums</button><button class="secondary" onclick="showView('recents')">Recent calls</button><button class="secondary" onclick="showView('wallet')">My wallet</button></div></div>
@@ -364,7 +364,7 @@ p{color:#77747e}
 <section class="view" id="profileView">
 <div class="profile-page instagram-profile">
  <div class="ig-profile-top"><button class="profile-back" onclick="showView('home')" aria-label="Back">‹</button><strong id="profileHandle">hearttalk_member</strong><button class="profile-menu" type="button" onclick="toggleProfileMenu()" aria-label="More profile options" aria-expanded="false">⋯</button></div>
- <div id="profileMoreMenu" class="profile-more-menu" style="display:none"><button type="button" onclick="openProfileSettings();toggleProfileMenu(false)">⚙️ Settings and privacy</button><button type="button" onclick="openProfileEditor();toggleProfileMenu(false)">✏️ Edit profile</button><button type="button" onclick="showView('wallet');toggleProfileMenu(false)">🪙 Wallet</button></div>
+ <div id="profileMoreMenu" class="profile-more-menu" style="display:none"><button type="button" onclick="openProfileSettings();toggleProfileMenu(false)">⚙️ Settings and privacy</button><button type="button" onclick="openProfileEditor();toggleProfileMenu(false)">✏️ Edit profile</button></div>
  <div class="ig-profile-identity"><div class="profile-avatar-wrap"><div class="profile-big-avatar" id="profileAvatar">🙂</div><button class="profile-edit-dot" type="button" onclick="openProfileEditor()" title="Edit profile">＋</button></div><div class="profile-follow-stats"><div><strong id="profilePostCount">0</strong><span>posts</span></div><div><strong id="profileFollowers">0</strong><span>followers</span></div><div><strong id="profileFollowing">0</strong><span>following</span></div></div></div>
  <div class="ig-profile-bio"><h1 id="profileDisplayName">Your name</h1><p id="profileDisplayBio">Add a little about yourself so people can get to know you.</p><div class="ig-profile-meta"><span id="profileDisplayCountry">Add your country</span><span id="profileDisplayAge">18+</span></div></div>
  <div class="ig-profile-actions"><button onclick="openProfileEditor()">Edit profile</button><button onclick="GenUIShareProfile()">Share profile</button><button class="ig-add-person" onclick="showView('discover')" aria-label="Discover people">＋</button></div>
@@ -409,6 +409,7 @@ function showView(name){
  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
  const target=document.getElementById(name+"View");if(target)target.classList.add("active");
  document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+ const coinButton=document.getElementById("homeCoinButton");if(coinButton)coinButton.style.display=name==="home"?"inline-flex":"none";
  window.scrollTo({top:0,behavior:"smooth"});
  if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();}if(name==="wallet")loadWallet();
  if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
