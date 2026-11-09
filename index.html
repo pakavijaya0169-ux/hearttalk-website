@@ -202,6 +202,14 @@ p{color:#77747e}
 .instagram-profile .ig-profile-top{height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff}.ig-profile-top strong{font-size:19px;letter-spacing:.1px}.instagram-profile .profile-back,.instagram-profile .profile-menu{color:#fff;font-size:27px}
 .ig-profile-identity{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 18px}.instagram-profile .profile-big-avatar{width:104px;height:104px;background:#22252d;border:3px solid #08090d;box-shadow:0 0 0 2px #424650;color:#fff}.instagram-profile .profile-edit-dot{width:30px;height:30px;right:-2px;bottom:0;background:#1689ee;border:2px solid #08090d;font-size:21px;color:white;cursor:pointer}.instagram-profile .profile-follow-stats{flex:1;justify-content:space-around;gap:8px;padding:0}.instagram-profile .profile-follow-stats div{gap:3px}.instagram-profile .profile-follow-stats strong{font-size:21px;color:#fff}.instagram-profile .profile-follow-stats span{font-size:13px;color:#e1e1e6}.ig-profile-bio h1{font-size:15px;margin:0 0 5px;color:#fff}.ig-profile-bio p{font-size:14px;line-height:1.45;margin:0 0 6px;color:#f0f0f3;white-space:pre-wrap}.ig-profile-meta{display:flex;gap:14px;color:#aaa;font-size:12px}.ig-profile-actions{display:grid;grid-template-columns:1fr 1fr 44px;gap:8px;margin:16px 0 22px}.ig-profile-actions button{height:36px;border:0;border-radius:8px;background:#292c33;color:#fff;font-weight:700;font-size:13px}.ig-profile-actions .ig-add-person{font-size:22px}.ig-highlights{display:flex;gap:18px;overflow:auto;padding:0 0 18px}.ig-highlight{border:0;background:transparent;color:#fff;display:grid;justify-items:center;gap:6px;min-width:66px}.ig-highlight span{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:#171a21;border:1px solid #555b65;font-size:25px;box-shadow:0 0 0 3px #252831}.ig-highlight small{font-size:11px;color:#eee}.ig-profile-tabs{height:48px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #272a31;border-bottom:1px solid #272a31}.ig-profile-tabs button{background:transparent;border:0;color:#8d929c;font-size:24px}.ig-profile-tabs button.active{color:#fff;border-bottom:2px solid #fff}.ig-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;margin:2px -18px 0}.ig-post-tile{aspect-ratio:1/1;background:#171a21;position:relative;overflow:hidden;border:0;padding:0;color:#fff}.ig-post-tile img{width:100%;height:100%;object-fit:cover;display:block}.ig-post-tile .ig-post-text{padding:10px;font-size:12px;line-height:1.35;text-align:left;overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical}.ig-post-tile .ig-post-multi{position:absolute;right:8px;top:7px;text-shadow:0 1px 5px #000}.profile-empty{grid-column:1/-1;min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;color:#fff;text-align:center}.profile-empty>span{font-size:35px;border:1px solid #fff;border-radius:50%;width:62px;height:62px;display:grid;place-items:center}.profile-empty small{color:#aaa}.profile-empty button{border:0;background:transparent;color:#65b8ff;font-weight:700}.instagram-profile .ig-settings{margin-top:28px;background:#11141a;border-color:#2c3039;color:#fff}.instagram-profile .profile-settings-heading h2,.instagram-profile .profile-settings-heading p{color:#fff}.instagram-profile .profile-setting-card{background:#1c2028;color:#fff;border-color:#343945}.instagram-profile .profile-setting-card small{color:#aeb4bf}.instagram-profile .profile-edit-panel{background:#11141a;border-color:#343945;color:#fff}.instagram-profile .profile-edit-panel input,.instagram-profile .profile-edit-panel textarea{background:#20232b;color:#fff;border-color:#3b404c}
 @media(max-width:520px){.instagram-profile{padding:8px 12px 24px!important}.instagram-profile .profile-big-avatar{width:88px;height:88px}.instagram-profile .profile-follow-stats strong{font-size:19px}.ig-profile-grid{margin-left:-12px;margin-right:-12px}.ig-highlight span{width:60px;height:60px}}
+
+/* Dedicated full-screen Edit Profile */
+#editProfileView{background:#08090d!important;color:#f7f7fa!important;min-height:calc(100vh - 76px)}
+.ig-edit-screen{max-width:680px;min-height:calc(100vh - 76px);margin:0 auto;padding:14px 22px 36px;background:#08090d;color:#f7f7fa}
+.ig-edit-header{height:54px;display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin-bottom:24px}.ig-edit-header button{border:0;background:none;color:#fff;font-size:36px;text-align:left;padding:0}.ig-edit-header h1{font-size:23px;margin:0;font-weight:750;color:#fff}
+.ig-edit-photo-area{display:flex;align-items:center;flex-direction:column;gap:13px;padding:10px 0 30px}.ig-edit-photo{width:116px;height:116px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#1e2230;border:2px solid #555d70;font-size:46px;color:#fff}.ig-edit-photo img{width:100%;height:100%;object-fit:cover}.ig-edit-photo-link{color:#8fa8ff;font-size:16px;font-weight:650;cursor:pointer}
+.ig-edit-fields{display:flex;flex-direction:column;gap:12px}.ig-edit-field{display:flex;flex-direction:column;gap:5px;border:1px solid #343841;border-radius:17px;padding:11px 16px;background:#0d1015;min-height:68px}.ig-edit-field span{font-size:13px;color:#aeb4c0}.ig-edit-field input,.ig-edit-field textarea{width:100%;border:0!important;outline:0;background:transparent!important;color:#fff!important;font-size:17px;padding:0!important;box-shadow:none!important;resize:vertical}.ig-edit-field textarea{min-height:65px}.ig-edit-save{height:48px;border:0;border-radius:12px;background:linear-gradient(100deg,#ed2990,#8b42db);color:white;font-size:16px;font-weight:750;margin-top:8px}.ig-edit-screen #profileMessage{color:#bfc5d0}
+@media(max-width:520px){.ig-edit-screen{padding:10px 16px 30px}.ig-edit-header{margin-bottom:16px}.ig-edit-photo-area{padding-bottom:24px}.ig-edit-field{min-height:64px}}
 </style>
 
 <style>
@@ -354,7 +362,7 @@ p{color:#77747e}
 <section class="view" id="profileView">
 <div class="profile-page instagram-profile">
  <div class="ig-profile-top"><button class="profile-back" onclick="showView('home')" aria-label="Back">‹</button><strong id="profileHandle">hearttalk_member</strong><button class="profile-menu" onclick="openProfileSettings()" aria-label="Profile settings">☰</button></div>
- <div class="ig-profile-identity"><div class="profile-avatar-wrap"><div class="profile-big-avatar" id="profileAvatar">🙂</div><label class="profile-edit-dot" for="profilePhotoInput" title="Change profile photo">＋</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div><div class="profile-follow-stats"><div><strong id="profilePostCount">0</strong><span>posts</span></div><div><strong id="profileFollowers">0</strong><span>followers</span></div><div><strong id="profileFollowing">0</strong><span>following</span></div></div></div>
+ <div class="ig-profile-identity"><div class="profile-avatar-wrap"><div class="profile-big-avatar" id="profileAvatar">🙂</div><button class="profile-edit-dot" type="button" onclick="openProfileEditor()" title="Edit profile">＋</button></div><div class="profile-follow-stats"><div><strong id="profilePostCount">0</strong><span>posts</span></div><div><strong id="profileFollowers">0</strong><span>followers</span></div><div><strong id="profileFollowing">0</strong><span>following</span></div></div></div>
  <div class="ig-profile-bio"><h1 id="profileDisplayName">Your name</h1><p id="profileDisplayBio">Add a little about yourself so people can get to know you.</p><div class="ig-profile-meta"><span id="profileDisplayCountry">Add your country</span><span id="profileDisplayAge">18+</span></div></div>
  <div class="ig-profile-actions"><button onclick="openProfileEditor()">Edit profile</button><button onclick="GenUIShareProfile()">Share profile</button><button class="ig-add-person" onclick="showView('discover')" aria-label="Discover people">＋</button></div>
  <div class="ig-highlights"><button class="ig-highlight" onclick="showView('forums')"><span>＋</span><small>New</small></button><button class="ig-highlight" onclick="showView('forums')"><span>💗</span><small>Moments</small></button><button class="ig-highlight" onclick="showView('forums')"><span>🌿</span><small>Community</small></button><button class="ig-highlight" onclick="showView('live')"><span>🔴</span><small>Live</small></button></div>
@@ -362,9 +370,18 @@ p{color:#77747e}
  <div id="profileTabContent" class="ig-profile-grid" data-active-tab="posts"><div class="profile-empty"><span>♡</span><b>Share your first post</b><small>Your photos and moments will appear here.</small><button onclick="showView('forums')">Create post</button></div></div>
  <section class="profile-settings ig-settings" id="profileSettingsSection"><div class="profile-settings-heading"><div><span class="section-kicker">YOUR ACCOUNT</span><h2>Profile settings</h2><p>Manage your profile and personal preferences.</p></div><span class="profile-settings-mark">⚙️</span></div><div class="profile-settings-grid"><button class="profile-setting-card" onclick="openProfileEditor()"><span>✏️</span><b>Edit personal details</b><small>Name, age, country and bio</small></button><button class="profile-setting-card" onclick="openLanguageSettings()"><span>🌐</span><b>App language</b><small id="profileLanguageLabel">Choose your language</small></button><button class="profile-setting-card" onclick="loadBlockedUsers()"><span>🚫</span><b>Blocked members</b><small>View or unblock people</small></button><button class="profile-setting-card" onclick="notify('Privacy controls are being prepared. Your location is not shared automatically.')"><span>🔒</span><b>Privacy & safety</b><small>Control your comfort and visibility</small></button><button class="profile-setting-card" onclick="showView('wallet')"><span>🪙</span><b>Wallet & rewards</b><small>View your coin balance</small></button><button class="profile-setting-card" onclick="logout()"><span>↪️</span><b>Log out</b><small>Sign out of this device</small></button></div></section>
  <div id="blockedUsersPanel" style="display:none;margin:0 0 16px"></div>
- <details class="profile-edit-panel" id="profileEditPanel"><summary>Edit your profile</summary><div class="field"><label>Your name</label><input id="profileName" placeholder="Enter your name"></div><div class="field"><label>Your age (18+)</label><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></div><div class="field"><label>Country / State</label><input id="profileCountry" placeholder="e.g. India, Telangana"></div><div class="field"><label>About you</label><textarea id="profileBio" rows="4" maxlength="500" placeholder="Tell people about yourself"></textarea></div><button class="primary" onclick="saveProfile()">Save Profile 💗</button><p id="profileMessage" class="muted"></p></details>
+
 </div></section>
-<section class="view" id="forumsView">
+<section class="view" id="editProfileView"><div class="ig-edit-screen">
+<header class="ig-edit-header"><button type="button" onclick="showView('profile')" aria-label="Back">‹</button><h1>Edit profile</h1><span></span></header>
+<div class="ig-edit-photo-area"><div class="ig-edit-photo" id="editProfileAvatar">🙂</div><label for="profilePhotoInput" class="ig-edit-photo-link">Edit picture or avatar</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div>
+<div class="ig-edit-fields">
+<label class="ig-edit-field"><span>Name</span><input id="profileName" maxlength="80" placeholder="Your name"></label>
+<label class="ig-edit-field"><span>Username</span><input id="profileUsername" maxlength="24" placeholder="your_username" autocapitalize="none"></label>
+<label class="ig-edit-field"><span>Age (18+)</span><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></label>
+<label class="ig-edit-field"><span>Country / State</span><input id="profileCountry" maxlength="80" placeholder="India, Telangana"></label>
+<label class="ig-edit-field"><span>Bio</span><textarea id="profileBio" rows="3" maxlength="500" placeholder="Tell people about yourself"></textarea></label>
+<button class="ig-edit-save" onclick="saveProfile()">Save changes</button><p id="profileMessage" class="muted"></p></div></div></section><section class="view" id="forumsView">
 <div class="section-head"><div><div class="section-kicker">HeartTalk community</div><h2>Forums & feed</h2><p>Share thoughts, join groups and meet your community.</p></div><button class="primary" onclick="openPostComposer()">＋ Create post</button></div>
 <div class="toolbar"><input id="forumSearch" placeholder="Search posts and groups..." oninput="renderForumSearch()"></div>
 <div class="profile-tabs"><button class="active" id="forumFeedTab" onclick="setForumTab('feed')">Feed</button><button id="forumGroupsTab" onclick="setForumTab('groups')">Groups</button></div>
@@ -465,7 +482,7 @@ async function loadProfile(){
  const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url").eq("id",currentUser.id).maybeSingle();
  if(error){console.error(error);notify("Profile load failed: "+error.message);return}
  if(data){
-  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";
+  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";
   document.getElementById("profileDisplayName").textContent=data.display_name||"Your name";
   document.getElementById("profileHandle").textContent=(data.username||"hearttalk_member");
   document.getElementById("profileDisplayAge").textContent=data.age?data.age+" years":"18+";
@@ -512,13 +529,14 @@ function setProfileTab(button,tab){
 }
 function GenUIShareProfile(){const url=location.href.split("?")[0]+"#profile";if(navigator.share){navigator.share({title:"My HeartTalk profile",url}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(url).then(()=>notify("Profile link copied."));}else notify("Share is not available in this browser.");}
 function openProfileSettings(){showView("profile");setTimeout(()=>document.getElementById("profileSettingsSection")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}
-function openProfileEditor(){const panel=document.getElementById("profileEditPanel");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});document.getElementById("profileName")?.focus()}}
+function openProfileEditor(){showView("editProfile");document.getElementById("profileName")?.focus({preventScroll:true})}
 function openLanguageSettings(){document.getElementById("languageModal")?.classList.add("show")}
 function renderProfileAvatar(url){
  const av=document.getElementById("profileAvatar");if(!av)return;
  av.replaceChildren();
  if(url){const img=document.createElement("img");img.src=url;img.alt="Profile photo";img.loading="lazy";av.appendChild(img);}
  else av.textContent="🙂";
+ const edit=document.getElementById("editProfileAvatar");if(edit){edit.replaceChildren();if(url){const img=document.createElement("img");img.src=url;img.alt="Profile photo";edit.appendChild(img);}else edit.textContent="🙂";}
 }
 async function uploadProfilePhoto(event){
  const file=event.target.files?.[0];event.target.value="";
@@ -543,14 +561,15 @@ async function uploadProfilePhoto(event){
  }catch(error){console.error("Profile photo upload failed",error);notify(error.message||"Photo upload failed. Check profile-avatars storage setup.");}
  finally{if(button){button.style.pointerEvents="";button.textContent="✎";}}
 }
-async function saveProfile(){
+async async function saveProfile(){
  if(!currentUser){notify("Please log in first.");openAuth();return}
  const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim();
+ const username=document.getElementById("profileUsername").value.trim().toLowerCase().replace(/^@/,"");
  if(!name||!country||!Number.isInteger(age)||age<18||age>100){notify("Enter your name, country and a valid age (18–100).");return}
- const username=(name.toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,18)||"member")+"_"+currentUser.id.slice(0,6);
+ if(!/^[a-z0-9._]{3,24}$/.test(username)){notify("Username must be 3–24 characters: letters, numbers, dot or underscore.");return}
  const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio},{onConflict:"id"});
  if(error){notify(error.message);return}
- document.getElementById("profileMessage").textContent="Profile saved to your HeartTalk account. 💗";notify("Profile saved successfully.");await loadProfile();await loadDiscover();document.querySelector(".profile-edit-panel")?.removeAttribute("open")
+ notify("Profile saved successfully. 💗");await loadProfile();await loadDiscover();showView("profile");
 }
 async function loadDiscover(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
