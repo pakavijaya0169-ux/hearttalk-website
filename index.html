@@ -784,20 +784,22 @@ function openProfileSettings(){
 const heartTalkAvatarSeeds={female:["Vijaya","Ananya","Diya","Meera","Isha","Kavya","Sana","Aadhya","Nisha","Tara","Mira","Riya"],male:["Arjun","Ayaan","Kabir","Rohan","Dev","Ishaan","Reyansh","Advik","Vihaan","Kian","Neil","Aarav"],other:["Sky","River","Ari","Robin","Sam","Alex","Kai","Sunny","Jules","Noor","Ash","Sage"]};
 let selectedHeartTalkAvatar="";let selectedHeartTalkGender="female";
 function heartTalkAvatarUrl(seed){
- if(selectedHeartTalkGender==="female"){
-  const hash=[...seed].reduce((n,c)=>n+c.charCodeAt(0),0),i=hash%12;
-  const hair=["#30202b","#4a2922","#241b28","#6a3928","#34223d","#50352b"][i%6];
-  const skin=["#f6c9a9","#d99570","#efb58f","#f2c6a0","#b97855","#f0c3a0"][i%6];
-  const shirt=["#ff5e7e","#a84bd1","#f0a13b","#e65c9b","#6c70d9","#26a6a1"][i%6];
-  const bg=["#ffd5e5","#f3c9ff","#ffe0ec","#ffc2d6"][i%4];
-  const fringe=["M25 43 Q24 8 51 12 Q78 7 77 44 L70 34 Q57 43 49 31 Q39 45 25 43Z","M23 45 Q19 10 50 10 Q82 10 78 47 Q70 25 58 27 Q43 15 31 35Z","M24 47 Q21 13 50 11 Q81 13 76 48 L68 31 Q52 39 43 29 Q34 39 24 47Z"][i%3];
-  const bun=i%4===1?'<circle cx="28" cy="20" r="10" fill="'+hair+'"/><circle cx="72" cy="20" r="10" fill="'+hair+'"/>':"";
-  const bow=i%4===2?'<path d="M69 18 Q58 8 58 19 Q58 28 69 23 Q80 28 80 18 Q79 9 69 18Z" fill="#ff5e9a"/>':"";
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="'+bg+'"/><path d="M13 100 Q16 70 50 70 Q84 70 87 100" fill="'+shirt+'"/><path d="M23 48 Q18 15 50 12 Q83 13 78 55 L76 77 Q67 90 50 89 Q31 88 24 75Z" fill="'+hair+'"/>'+bun+'<path d="M29 42 Q29 24 50 23 Q72 24 72 43 L69 65 Q65 80 50 81 Q35 80 31 65Z" fill="'+skin+'"/><path d="'+fringe+'" fill="'+hair+'"/><path d="M37 50 Q42 46 46 50 M55 50 Q60 46 64 50" fill="none" stroke="'+hair+'" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="42" cy="55" rx="3" ry="4" fill="#30202b"/><ellipse cx="59" cy="55" rx="3" ry="4" fill="#30202b"/><circle cx="43" cy="54" r="1" fill="#fff"/><circle cx="60" cy="54" r="1" fill="#fff"/><path d="M47 67 Q52 72 58 66" fill="none" stroke="#a8445b" stroke-width="2.4" stroke-linecap="round"/><circle cx="34" cy="64" r="4" fill="#f28c9e" opacity=".55"/><circle cx="66" cy="64" r="4" fill="#f28c9e" opacity=".55"/><path d="M29 76 Q18 65 22 48 M71 48 Q83 65 77 78" fill="none" stroke="'+hair+'" stroke-width="7" stroke-linecap="round"/>'+bow+'<path d="M39 84 L50 94 L61 84" fill="none" stroke="#fce4ec" stroke-width="2"/></svg>';
-  return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
- }
- const style=selectedHeartTalkGender==="male"?"notionists":"micah";
- return "https://api.dicebear.com/9.x/"+style+"/svg?seed="+encodeURIComponent(seed)+"&backgroundColor=ffd5e5,ffe0ec,e9c5ff,fce4ec,ffb3c6&radius=50&scale=92";
+ const hash=[...seed].reduce((n,c)=>n+c.charCodeAt(0),0),i=hash%12;
+ const skins=["#f6c6a5","#d99470","#efb38d","#f1c9a7","#b97958","#e7a987"];
+ const hairs=["#30202b","#4a2922","#241b28","#6a3928","#34223d","#50352b"];
+ const clothes=["#ff5e7e","#a84bd1","#f0a13b","#e65c9b","#6c70d9","#26a6a1"];
+ const bgs=["#ffd5e5","#f3c9ff","#ffe0ec","#ffc2d6"];
+ const skin=skins[i%skins.length],hair=hairs[(i*3)%hairs.length],shirt=clothes[(i*5)%clothes.length],bg=bgs[i%4];
+ const male=selectedHeartTalkGender==="male",neutral=selectedHeartTalkGender==="other";
+ const longHair=!male&&(i%3!==0),hairShape=male
+  ? '<path d="M22 49 Q15 13 50 11 Q84 12 79 49 L70 35 Q55 43 44 29 Q34 42 22 49Z" fill="'+hair+'"/>'
+  : longHair
+   ? '<path d="M20 52 Q14 12 50 10 Q86 12 80 53 L78 88 Q68 96 68 70 L31 70 Q31 94 21 88Z" fill="'+hair+'"/><path d="M22 47 Q24 12 51 13 Q76 12 78 47 Q64 33 54 30 Q39 43 22 47Z" fill="'+hair+'"/>'
+   : '<path d="M21 50 Q16 12 50 11 Q84 12 79 50 L72 39 Q56 42 48 29 Q36 43 21 50Z" fill="'+hair+'"/>';
+ const accessory=i%4===1?'<path d="M68 18 Q58 8 58 19 Q58 28 69 23 Q80 28 80 18 Q79 9 68 18Z" fill="#ff5e9a"/>':i%4===2?'<circle cx="50" cy="19" r="5" fill="#ffd166"/>':"";
+ const glasses=i%5===3?'<g fill="none" stroke="#34223d" stroke-width="2.4"><circle cx="41" cy="54" r="8"/><circle cx="60" cy="54" r="8"/><path d="M49 54h3"/></g>':'<g fill="#30202b"><ellipse cx="41" cy="54" rx="3.2" ry="4.2"/><ellipse cx="60" cy="54" rx="3.2" ry="4.2"/></g>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="'+bg+'"/><path d="M10 104 Q14 70 50 70 Q86 70 90 104" fill="'+shirt+'"/><path d="M29 76 Q18 61 23 43 Q25 19 50 17 Q76 18 77 45 L73 74 Q65 87 50 87 Q35 87 29 76Z" fill="'+skin+'"/>'+hairShape+'<path d="M33 47 Q39 43 45 47 M56 47 Q62 43 68 47" fill="none" stroke="'+hair+'" stroke-width="2.5" stroke-linecap="round"/>'+glasses+'<path d="M47 66 Q52 71 58 65" fill="none" stroke="#a8445b" stroke-width="2.5" stroke-linecap="round"/><circle cx="33" cy="63" r="4" fill="#f28c9e" opacity=".55"/><circle cx="68" cy="63" r="4" fill="#f28c9e" opacity=".55"/>'+accessory+(neutral?'<path d="M39 85 L50 95 L61 85" fill="none" stroke="#fce4ec" stroke-width="3"/>':'')+'</svg>';
+ return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
 }
 function setAvatarGender(gender,button){selectedHeartTalkGender=gender;document.getElementById("profileGender").value=gender;document.querySelectorAll(".avatar-gender-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.avatarGender===gender));renderHeartTalkAvatarChoices();}
 function renderHeartTalkAvatarChoices(){const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";(heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{const url=heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);const b=document.createElement("button");b.type="button";b.className="avatar-option"+(selectedHeartTalkAvatar===url?" selected":"");b.title=seed+" avatar";const img=document.createElement("img");img.src=url;img.alt=seed+" cartoon avatar";img.loading="lazy";b.appendChild(img);b.onclick=()=>{selectedHeartTalkAvatar=url;renderHeartTalkAvatarChoices();renderProfileAvatar(url);const edit=document.getElementById("editProfileAvatar");if(edit){edit.replaceChildren();const preview=document.createElement("img");preview.src=url;preview.alt="Selected cartoon avatar";edit.appendChild(preview)}};box.appendChild(b)})}
@@ -1446,5 +1448,24 @@ input,textarea,.toolbar input,.field input{background:#32102f!important;color:#F
 .ht-connect-brand,.ht-section-heading h2{color:#FCE4EC!important}.ht-connect-banner{background:linear-gradient(110deg,#FF5E7E,#a83b83 55%,#3A1038)!important}.ht-filter.active,.ht-connect-tabs .connect-tab.active{background:linear-gradient(100deg,#FF5E7E,#a83b83)!important;color:#fff!important}.connect-view .connect-member{background:linear-gradient(160deg,#57204d,#3A1038)!important;border-color:#8f3e70!important;color:#FCE4EC!important}.ht-room-card{border-color:#FF5E7E!important}.ht-antak,.ht-dum,.ht-chatroom,.ht-games,.ht-music{background:linear-gradient(155deg,#FF5E7E,#76265f)!important}
 #toast{background:#57204d!important;border-color:#FF5E7E!important;color:#FCE4EC!important}.dialog{color:#FCE4EC!important}.incoming-card{background:linear-gradient(145deg,#57204d,#3A1038)!important;color:#FCE4EC!important;border-color:#FF5E7E!important}.incoming-card h2,.incoming-card p{color:#FCE4EC!important}
 </style>
+
+
+/* Refined profile editor layout: profile details beside the 2D cartoon picker */
+@media(min-width:760px){
+ #editProfileView .ig-edit-screen{max-width:1120px;display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);column-gap:22px;align-content:start;padding:14px 22px 36px}
+ #editProfileView .ig-edit-header{grid-column:1/-1}
+ #editProfileView .ig-edit-photo-area{grid-column:1;grid-row:2;padding:8px 0 14px;align-self:start}
+ #editProfileView .avatar-picker{grid-column:2;grid-row:2/span 2;margin:0;align-self:start}
+ #editProfileView .ig-edit-fields{grid-column:1;grid-row:3;align-self:start}
+ #editProfileView .avatar-options{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+ #editProfileView .avatar-option{border-radius:18px;padding:5px}
+}
+#editProfileView .avatar-picker{background:linear-gradient(145deg,#4b1745,#3A1038);border-color:#a34c78}
+#editProfileView .avatar-option{background:#57204d;border-color:#985078}
+#editProfileView .avatar-option img{background:#ffd5e5}
+#editProfileView .avatar-option.selected{border-color:#FF5E7E;box-shadow:0 0 0 3px #FF5E7E55,0 8px 22px #18081766}
+#editProfileView .ig-edit-photo{border-color:#FF5E7E;box-shadow:0 0 0 5px #FF5E7E22}
+#editProfileView .ig-edit-photo-link{color:#ff9bb0}
+@media(max-width:759px){#editProfileView .ig-edit-screen{max-width:680px;display:block}}
 
 </body></html>
