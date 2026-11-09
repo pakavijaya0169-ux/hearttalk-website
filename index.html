@@ -232,6 +232,9 @@ p{color:#77747e}
 .ig-edit-photo-area{display:flex;align-items:center;flex-direction:column;gap:13px;padding:10px 0 30px}.ig-edit-photo{width:116px;height:116px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#1e2230;border:2px solid #555d70;font-size:46px;color:#fff}.ig-edit-photo img{width:100%;height:100%;object-fit:cover}.ig-edit-photo-link{color:#8fa8ff;font-size:16px;font-weight:650;cursor:pointer}
 .ig-edit-fields{display:flex;flex-direction:column;gap:12px}.ig-edit-field{display:flex;flex-direction:column;gap:5px;border:1px solid #343841;border-radius:17px;padding:11px 16px;background:#0d1015;min-height:68px}.ig-edit-field span{font-size:13px;color:#aeb4c0}.ig-edit-field input,.ig-edit-field textarea{width:100%;border:0!important;outline:0;background:transparent!important;color:#fff!important;font-size:17px;padding:0!important;box-shadow:none!important;resize:vertical}.ig-edit-field textarea{min-height:65px}.ig-edit-save{height:48px;border:0;border-radius:12px;background:linear-gradient(100deg,#ed2990,#8b42db);color:white;font-size:16px;font-weight:750;margin-top:8px}.ig-edit-screen #profileMessage{color:#bfc5d0}
 @media(max-width:520px){.ig-edit-screen{padding:10px 16px 30px}.ig-edit-header{margin-bottom:16px}.ig-edit-photo-area{padding-bottom:24px}.ig-edit-field{min-height:64px}}
+
+/* Bitmoji-style cartoon avatar picker */
+.avatar-picker{margin:0 0 22px;padding:18px;border:1px solid #78345f;border-radius:22px;background:linear-gradient(145deg,#241027,#42133f);box-shadow:0 12px 35px #17081755}.avatar-picker-head{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#fce4ec}.avatar-picker-head b{display:block;font-size:17px}.avatar-picker-head small{display:block;color:#e5b5d0;margin-top:4px}.avatar-picker-head>span{font-size:10px;letter-spacing:1px;color:#ffd5e5;border:1px solid #b64c86;padding:6px 9px;border-radius:20px}.avatar-gender-tabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}.avatar-gender-tabs button{flex:1;min-width:90px;border:1px solid #82436e;background:#321333;color:#fce4ec;border-radius:30px;padding:10px;font-weight:700}.avatar-gender-tabs button.active{background:linear-gradient(100deg,#ff5e7e,#c02b91);border-color:#ff9fbe}.avatar-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.avatar-option{border:2px solid #704064;border-radius:16px;background:#351537;padding:5px;cursor:pointer;overflow:hidden;aspect-ratio:1}.avatar-option img{width:100%;height:100%;object-fit:cover;border-radius:11px;background:#f6c7d9}.avatar-option.selected{border-color:#ff5e9a;box-shadow:0 0 0 2px #ff5e7e66}.avatar-picker-note{font-size:12px;color:#e6bcd3;margin:12px 0 0}@media(max-width:520px){.avatar-picker{padding:13px}.avatar-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 
 <style>
@@ -566,12 +569,18 @@ p{color:#77747e}
 </div></section>
 <section class="view" id="editProfileView"><div class="ig-edit-screen">
 <header class="ig-edit-header"><button type="button" onclick="showView('profile')" aria-label="Back">‹</button><h1>Edit profile</h1><span></span></header>
-<div class="ig-edit-photo-area"><div class="ig-edit-photo" id="editProfileAvatar">🙂</div><label for="profilePhotoInput" class="ig-edit-photo-link">Edit picture or avatar</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div>
+<div class="ig-edit-photo-area"><div class="ig-edit-photo" id="editProfileAvatar">🙂</div><label for="profilePhotoInput" class="ig-edit-photo-link">📷 Upload your own photo</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div>
+<div class="avatar-picker" id="avatarPicker">
+ <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Bitmoji-style profile characters</small></div><span>3D STYLE</span></div>
+ <div class="avatar-gender-tabs"><button type="button" class="active" data-avatar-gender="female" onclick="setAvatarGender('female',this)">👩 Female</button><button type="button" data-avatar-gender="male" onclick="setAvatarGender('male',this)">👨 Male</button><button type="button" data-avatar-gender="other" onclick="setAvatarGender('other',this)">🧑 Other</button></div>
+ <div class="avatar-options" id="avatarOptions"></div>
+ <p class="avatar-picker-note">Choose a character, then tap Save changes.</p>
+</div>
 <div class="ig-edit-fields">
 <label class="ig-edit-field"><span>Name</span><input id="profileName" maxlength="80" placeholder="Your name"></label>
 <label class="ig-edit-field"><span>Username</span><input id="profileUsername" maxlength="24" placeholder="your_username" autocapitalize="none"></label>
 <label class="ig-edit-field"><span>Age (18+)</span><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></label>
-<label class="ig-edit-field"><span>Avatar style</span><select id="profileGender" class="field"><option value="">Choose avatar emoji</option><option value="female">👩 Female</option><option value="male">👨 Male</option><option value="other">🧑 Other</option></select></label>
+<input id="profileGender" type="hidden" value="female">
 <label class="ig-edit-field"><span>Country / State</span><input id="profileCountry" maxlength="80" placeholder="India, Telangana"></label>
 <label class="ig-edit-field"><span>Bio</span><textarea id="profileBio" rows="3" maxlength="500" placeholder="Tell people about yourself"></textarea></label>
 <button class="ig-edit-save" onclick="saveProfile()">Save changes</button><p id="profileMessage" class="muted"></p></div></div></section><section class="view" id="forumsView">
@@ -709,7 +718,7 @@ async function loadProfile(){
  const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender").eq("id",currentUser.id).maybeSingle();
  if(error){console.error(error);notify("Profile load failed: "+error.message);return}
  if(data){
-  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";document.getElementById("profileGender").value=data.gender||"";
+  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";document.getElementById("profileGender").value=data.gender||"female";selectedHeartTalkGender=data.gender||"female";selectedHeartTalkAvatar=data.avatar_url||"";
   document.getElementById("profileDisplayName").textContent=data.display_name||"Your name";
   document.getElementById("profileHandle").textContent=(data.username||"hearttalk_member");
   document.getElementById("profileDisplayAge").textContent=data.age?data.age+" years":"18+";
@@ -771,7 +780,13 @@ function openProfileSettings(){
  const panel=document.getElementById("profileSettingsSection");
  if(panel){panel.style.display="block";setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),80);}
 }
-function openProfileEditor(){showView("editProfile");document.getElementById("profileName")?.focus({preventScroll:true})}
+
+const heartTalkAvatarSeeds={female:["Vijaya","Ananya","Diya","Meera","Isha","Kavya","Sana","Aadhya","Nisha","Tara","Mira","Riya"],male:["Arjun","Ayaan","Kabir","Rohan","Dev","Ishaan","Reyansh","Advik","Vihaan","Kian","Neil","Aarav"],other:["Sky","River","Ari","Robin","Sam","Alex","Kai","Sunny","Jules","Noor","Ash","Sage"]};
+let selectedHeartTalkAvatar="";let selectedHeartTalkGender="female";
+function heartTalkAvatarUrl(seed){return "https://api.dicebear.com/9.x/avataaars/svg?seed="+encodeURIComponent(seed)+"&backgroundColor=ffb6c9,ffd5df,e9c5ff&radius=50";}
+function setAvatarGender(gender,button){selectedHeartTalkGender=gender;document.getElementById("profileGender").value=gender;document.querySelectorAll(".avatar-gender-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.avatarGender===gender));renderHeartTalkAvatarChoices();}
+function renderHeartTalkAvatarChoices(){const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";(heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{const url=heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);const b=document.createElement("button");b.type="button";b.className="avatar-option"+(selectedHeartTalkAvatar===url?" selected":"");b.title=seed+" avatar";const img=document.createElement("img");img.src=url;img.alt=seed+" cartoon avatar";img.loading="lazy";b.appendChild(img);b.onclick=()=>{selectedHeartTalkAvatar=url;renderHeartTalkAvatarChoices();renderProfileAvatar(url);const edit=document.getElementById("editProfileAvatar");if(edit){edit.replaceChildren();const preview=document.createElement("img");preview.src=url;preview.alt="Selected cartoon avatar";edit.appendChild(preview)}};box.appendChild(b)})}
+function openProfileEditor(){showView("editProfile");renderHeartTalkAvatarChoices();document.getElementById("profileName")?.focus({preventScroll:true})}
 function openLanguageSettings(){document.getElementById("languageModal")?.classList.add("show")}
 function renderProfileAvatar(url){
  const av=document.getElementById("profileAvatar");if(!av)return;
@@ -805,11 +820,11 @@ async function uploadProfilePhoto(event){
 }
 async function saveProfile(){
  if(!currentUser){notify("Please log in first.");openAuth();return}
- const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim(),gender=document.getElementById("profileGender").value;
+ const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim(),gender=document.getElementById("profileGender").value,avatar_url=selectedHeartTalkAvatar||document.getElementById("editProfileAvatar")?.querySelector("img")?.src||null;
  const username=document.getElementById("profileUsername").value.trim().toLowerCase().replace(/^@/,"");
  if(!name||!country||!Number.isInteger(age)||age<18||age>100){notify("Enter your name, country and a valid age (18–100).");return}
  if(!/^[a-z0-9._]{3,24}$/.test(username)){notify("Username must be 3–24 characters: letters, numbers, dot or underscore.");return}
- const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio,gender},{onConflict:"id"});
+ const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio,gender,...(avatar_url?{avatar_url}:{})},{onConflict:"id"});
  if(error){notify(error.message);return}
  notify("Profile saved successfully. 💗");await loadProfile();await loadDiscover();showView("profile");
 }
