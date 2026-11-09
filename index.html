@@ -310,15 +310,6 @@ p{color:#77747e}
  </div>
 </section>
 <section class="home-feature-group">
- <div class="home-group-title"><span>🔐</span><div><h3>Account & verification</h3><p>Simple sign-in with privacy-conscious verification.</p></div></div>
- <div class="home-feature-grid">
-  <button class="home-feature-card" onclick="openAuth()"><span>🔐</span><b>Email / phone sign-in</b><small>Email sign-in; SMS OTP needs an SMS provider.</small><em class="feature-state partial">Email ready · SMS setup required</em></button>
-  <button class="home-feature-card" onclick="showView('profile')"><span>✓</span><b>Optional verified badge</b><small>Future optional profile verification; no Aadhaar collection.</small><em class="feature-state planned">Planned</em></button>
-  <button class="home-feature-card" onclick="showView('recents')"><span>🕘</span><b>Recent calls</b><small>Review your recent call activity.</small><em class="feature-state partial">Available where call history exists</em></button>
- </div>
-</section>
-
-<section class="home-feature-group">
  <div class="home-group-title"><span>🎮</span><div><h3>Games, chit chat & fun</h3><p>Play together, laugh and share moments.</p></div></div>
  <div class="home-feature-grid">
   <button class="home-feature-card" onclick="showView('games')"><span>🎮</span><b>Games zone</b><small>Antakshari, movie quiz, Truth or Dare and more.</small><em class="feature-state ready">Open games</em></button>
@@ -341,7 +332,8 @@ p{color:#77747e}
 <div class="calls-heading"><div class="section-kicker">STAY CLOSE</div><h2>Calls <span>💗</span></h2><p>Talk face-to-face or say hello with a voice call.</p></div>
 <div class="call-layout">
  <div class="call-start-card">
-  <div class="call-start-icon">☎️</div><h3>Start a conversation</h3><p id="callTargetLabel">Choose someone from Connect to start a call.</p>
+  <div class="call-start-icon">☎️</div>
+  <div class="toolbar" style="margin:0 0 14px"><button class="secondary" type="button" onclick="showView('recents')">🕘 Recent calls</button></div><h3>Start a conversation</h3><p id="callTargetLabel">Choose someone from Connect to start a call.</p>
   <div class="call-start-actions"><button class="primary" onclick="startOutgoingCall('voice')">📞 Voice call</button><button class="video-call-btn" onclick="startOutgoingCall('video')">🎥 Video call</button><button class="secondary" onclick="showView('discover')">Find people</button></div>
   <div class="call-alert-row"><span>🔔 Get notified when someone calls</span><button class="secondary" onclick="enableCallAlerts()">Enable notifications</button></div>
   <p id="callStatus" class="call-status">No active call</p>
@@ -377,6 +369,10 @@ p{color:#77747e}
   </div>
   <div class="profile-drawer-group"><small>PROFILE</small>
    <button type="button" onclick="toggleProfileMenu(false);openProfileEditor()"><span>👤</span><span><b>Edit Profile</b><small>Photo, name, username and bio</small></span></button>
+  </div>
+  <div class="profile-drawer-group"><small>ACCOUNT & VERIFICATION</small>
+   <button type="button" onclick="toggleProfileMenu(false);openAuth()"><span>🔐</span><span><b>Email / phone sign-in</b><small>Email sign-in · SMS OTP setup required</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);notify('Optional profile verification is planned. No Aadhaar details are collected.')"><span>✓</span><span><b>Optional verified badge</b><small>Optional verification · Coming soon</small></span></button>
   </div>
   <div class="profile-drawer-group"><small>SAFETY & PRIVACY</small>
    <button type="button" onclick="toggleProfileMenu(false);loadBlockedUsers()"><span>🚫</span><span><b>Block & unblock</b><small>View or unblock members</small></span></button>
