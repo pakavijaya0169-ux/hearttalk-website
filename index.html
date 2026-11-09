@@ -280,6 +280,7 @@ p{color:#77747e}
  <div class="profile-meta-line"><span>🎂 <span id="profileDisplayAge">18+</span></span><span>📍 <span id="profileDisplayCountry">Add your country</span></span></div>
  <p id="profileDisplayBio" class="profile-bio">Add a little about yourself so people can get to know you.</p>
  <div class="profile-activity-title"><h2>My activity</h2><span class="profile-activity-note">Your HeartTalk space</span></div>
+ <button class="secondary" style="width:100%;margin:12px 0" onclick="loadBlockedUsers()">🚫 Manage blocked members</button><div id="blockedUsersPanel" style="display:none;margin:0 0 16px"></div>
  <button class="profile-forum-banner" onclick="showView('forums')"><span class="profile-forum-icon">💬</span><span><strong>Forums</strong><small>0 posts · 0 comments · 0 groups</small></span><b>Open Forum ›</b></button>
  <div class="profile-tabs"><button class="active" onclick="setProfileTab(this,'posts')">Posts (0)</button><button onclick="setProfileTab(this,'groups')">Groups (0)</button><button onclick="setProfileTab(this,'comments')">Comments (0)</button></div>
  <div id="profileTabContent" class="profile-tab-content"><div class="profile-achievement-card"><div class="profile-script">HeartTalk</div><h3>Welcome to your profile</h3><div class="profile-medal">💗</div><strong>Build your community</strong><p>Connect with people, join forums and share your moments.</p><button class="primary" onclick="showView('discover')">Find people</button></div><div class="profile-promo-card"><div class="profile-promo-orb">✨</div><h3>Your next chapter starts here</h3><p>Make new connections on HeartTalk.</p></div></div>
@@ -467,6 +468,21 @@ function heartTalkConfirm(message){
   document.addEventListener("keydown",onKey);
   document.body.appendChild(overlay);
  });
+}
+async function loadBlockedUsers(){
+ const panel=document.getElementById('blockedUsersPanel');if(!currentUser){openAuth();return}
+ panel.style.display='block';panel.innerHTML='<div class="notice">Loading blocked members...</div>';
+ const {data,error}=await supabaseClient.from('blocked_users').select('blocked_user_id').eq('blocker_id',currentUser.id);
+ if(error){panel.innerHTML='<div class="notice">Could not load blocked members: '+escapeHtml(error.message)+'</div>';return}
+ const ids=(data||[]).map(x=>x.blocked_user_id);if(!ids.length){panel.innerHTML='<div class="notice">You have not blocked anyone.</div>';return}
+ const {data:people,error:pe}=await supabaseClient.from('profiles').select('id,display_name').in('id',ids);
+ if(pe){panel.innerHTML='<div class="notice">Could not load member names.</div>';return}
+ panel.innerHTML='<h3>Blocked members</h3>'+(people||[]).map(p=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #eee;border-radius:14px;margin:8px 0"><strong>'+escapeHtml(p.display_name||'HeartTalk member')+'</strong><button class="secondary" onclick="unblockMember(\''+p.id+'\')">Unblock</button></div>').join('');
+}
+async function unblockMember(userId){
+ if(!currentUser)return;if(!await heartTalkConfirm('Unblock this member? They may appear in Discover again.'))return;
+ const {error}=await supabaseClient.from('blocked_users').delete().eq('blocker_id',currentUser.id).eq('blocked_user_id',userId);
+ if(error){notify('Unblock failed: '+error.message);return}notify('Member unblocked.');await loadBlockedUsers();await loadDiscover();
 }
 async function blockMember(userId){
  if(!currentUser){openAuth();return}
