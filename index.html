@@ -405,7 +405,14 @@ p{color:#77747e}
 #callsView .call-controls .end-call-btn{background:linear-gradient(110deg,#ff4b9b,#d92579);border:0;color:#fff;box-shadow:0 7px 18px #e32c8b55}
 @media(max-width:700px){#callsView{padding:16px;border-radius:20px}#callsView .calls-heading{align-items:flex-start;flex-direction:column}#callsView .calls-heading h2{font-size:27px}#callsView .call-layout{grid-template-columns:1fr}#callsView .video-tile{height:155px}.calls-recent-btn{padding:10px 15px}}
 </style>
-</head>
+
+<style>
+/* Interactive real-time 3D cartoon avatar viewer */
+.ht-3d-stage{position:relative;height:310px;margin:0 0 16px;border:1px solid #b64c86;border-radius:20px;overflow:hidden;background:radial-gradient(circle at 50% 25%,#8d3c78,#351337 72%);box-shadow:inset 0 0 35px #17081788}
+#hearttalk3DCanvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+#hearttalk3DCanvas:active{cursor:grabbing}.ht-3d-hint{position:absolute;bottom:9px;left:0;right:0;text-align:center;color:#ffe4ef;font-size:11px;pointer-events:none;text-shadow:0 1px 4px #32102b}
+@media(max-width:520px){.ht-3d-stage{height:270px}}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" id="installAppBtn" type="button" style="display:none;padding:8px 12px">⬇ Install</button><button class="secondary" id="homeCoinButton" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
 <main>
@@ -573,6 +580,7 @@ p{color:#77747e}
 <div class="avatar-picker" id="avatarPicker">
  <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Glossy 3D-look cartoon characters · choose your favourite</small></div><span>3D CARTOON</span></div>
  <div class="avatar-gender-tabs"><button type="button" class="active" data-avatar-gender="female" onclick="setAvatarGender('female',this)">👩 Female</button><button type="button" data-avatar-gender="male" onclick="setAvatarGender('male',this)">👨 Male</button><button type="button" data-avatar-gender="other" onclick="setAvatarGender('other',this)">🧑 Other</button></div>
+ <div class="ht-3d-stage"><canvas id="hearttalk3DCanvas" aria-label="Interactive 3D cartoon avatar"></canvas><div class="ht-3d-hint">Drag to rotate · Select a character below</div></div>
  <div class="avatar-options" id="avatarOptions"></div>
  <p class="avatar-picker-note">Choose a character, then tap Save changes.</p>
 </div>
@@ -1490,4 +1498,53 @@ input,textarea,.toolbar input,.field input{background:#32102f!important;color:#F
 @media(max-width:759px){#editProfileView .ig-edit-screen{max-width:680px;display:block}}
 </style>
 
-</body></html>
+
+<script>
+(function(){
+ let renderer,scene,camera,avatar,dragging=false,lastX=0,raf=0;
+ const canvasId="hearttalk3DCanvas";
+ const palette={skin:["#f3c6a5","#d99a72","#9a6048","#edb895","#704735"],hair:["#24151d","#3a211b","#171923","#7a4229","#5b315e","#b87842"],shirt:["#ff5e7e","#a83b83","#7046bd","#e58b43","#278f91","#4779c8"]};
+ function mat(color,roughness=.72){return new THREE.MeshStandardMaterial({color,roughness,metalness:.02});}
+ function sphere(parent,name,scale,pos,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);m.name=name;m.scale.set(...scale);m.position.set(...pos);parent.add(m);return m;}
+ function makeAvatar(seed,gender){
+  const h=[...seed].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,13),pick=(a,n)=>a[(h>>>n)%a.length];
+  const root=new THREE.Group(),skin=mat(pick(palette.skin,0)),hair=mat(pick(palette.hair,4)),shirt=mat(pick(palette.shirt,8)),dark=mat("#30202a"),white=mat("#ffffff"),blush=mat("#f58ca8");
+  sphere(root,"torso",[.78,.78,.42],[0,-1.05,0],shirt);
+  sphere(root,"neck",[.22,.28,.22],[0,-.34,0],skin);
+  sphere(root,"head",[.68,.82,.58],[0,.48,0],skin);
+  sphere(root,"hair-cap",[.70,.38,.60],[0,1.02,-.02],hair);
+  sphere(root,"fringe",[.58,.19,.17],[-.05,.88,.51],hair);
+  if(gender==="female"){sphere(root,"hair-back",[.73,.85,.24],[0,.28,-.43],hair);sphere(root,"side-hair-left",[.18,.65,.22],[-.59,.25,.05],hair);sphere(root,"side-hair-right",[.18,.65,.22],[.59,.25,.05],hair);}
+  else {sphere(root,"side-hair-left",[.15,.36,.18],[-.58,.43,.02],hair);sphere(root,"side-hair-right",[.15,.36,.18],[.58,.43,.02],hair);}
+  for(const x of [-.25,.25]){sphere(root,"eye-white",[.105,.13,.055],[x,.48,.53],white);sphere(root,"eye",[.055,.085,.035],[x,.47,.58],dark);sphere(root,"eye-glint",[.022,.027,.015],[x-.018,.51,.608],white);}
+  sphere(root,"cheek-left",[.14,.07,.025],[-.42,.18,.52],blush);sphere(root,"cheek-right",[.14,.07,.025],[.42,.18,.52],blush);
+  const smile=new THREE.Mesh(new THREE.TorusGeometry(.13,.018,8,24,Math.PI),mat("#87394c"));smile.position.set(0,.12,.565);smile.rotation.z=Math.PI;root.add(smile);
+  for(const x of [-.84,.84])sphere(root,"ear",[.16,.22,.13],[x,.43,0],skin);
+  root.rotation.y=-.12;return root;
+ }
+ function init(){
+  const canvas=document.getElementById(canvasId);if(!canvas||!window.THREE)return;
+  try{
+   renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,preserveDrawingBuffer:true});
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(canvas.clientWidth||500,canvas.clientHeight||310,false);renderer.setClearColor(0x000000,0);
+   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(32,(canvas.clientWidth||500)/(canvas.clientHeight||310),.1,100);camera.position.set(0,.18,6.4);
+   scene.add(new THREE.HemisphereLight(0xffffff,0x8c3974,2));
+   const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(-3,5,5);scene.add(key);
+   const rim=new THREE.PointLight(0xff6ea8,1.6,12);rim.position.set(3,2,-2);scene.add(rim);
+   avatar=makeAvatar("Vijaya","female");scene.add(avatar);
+   canvas.addEventListener("pointerdown",e=>{dragging=true;lastX=e.clientX;canvas.setPointerCapture(e.pointerId)});
+   canvas.addEventListener("pointermove",e=>{if(!dragging||!avatar)return;avatar.rotation.y+=(e.clientX-lastX)*.012;lastX=e.clientX});
+   ["pointerup","pointercancel","lostpointercapture"].forEach(n=>canvas.addEventListener(n,()=>dragging=false));
+   const resize=()=>{if(!renderer)return;const w=canvas.clientWidth||500,hh=canvas.clientHeight||310;renderer.setSize(w,hh,false);camera.aspect=w/hh;camera.updateProjectionMatrix()};new ResizeObserver(resize).observe(canvas);
+   const animate=()=>{raf=requestAnimationFrame(animate);if(avatar&&!dragging)avatar.rotation.y+=.002;renderer.render(scene,camera)};animate();
+  }catch(e){console.warn("3D avatar viewer could not start",e)}
+ }
+ window.updateHeartTalk3DAvatar=function(seed,gender){
+  if(!scene||!renderer){init();if(!scene)return}
+  if(avatar)scene.remove(avatar);avatar=makeAvatar(seed||"HeartTalk",gender||"female");scene.add(avatar);avatar.rotation.y=-.12;
+  renderer.render(scene,camera);
+  try{const image=renderer.domElement.toDataURL("image/jpeg",.88);if(typeof selectedHeartTalkAvatar!=="undefined")selectedHeartTalkAvatar=image;const preview=document.getElementById("editProfileAvatar");if(preview){preview.replaceChildren();const img=document.createElement("img");img.src=image;img.alt="3D cartoon avatar";preview.appendChild(img)}renderProfileAvatar(image)}catch(e){console.warn("3D avatar preview export unavailable",e)}
+ };
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else setTimeout(init,0);
+})();
+</script></body></html>
