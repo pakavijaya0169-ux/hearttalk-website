@@ -240,7 +240,19 @@ p{color:#77747e}
 </style><style>
 #chatView .chat-media{display:block;max-width:min(260px,65vw);max-height:260px;border-radius:13px;object-fit:cover}
 #chatView .chat-audio{display:block;width:min(260px,65vw);height:42px}
-</style></head>
+</style>
+<style>
+.home-feature-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin:32px 0 16px}.home-feature-heading h2{margin:5px 0;color:#211724}.home-feature-heading p{margin:0;font-size:14px;color:#807486}
+.home-feature-group{margin:18px 0 22px;padding:18px;background:#fff;border:1px solid #f0e5ed;border-radius:22px;box-shadow:0 5px 18px #24102f08}
+.home-group-title{display:flex;align-items:center;gap:12px;margin-bottom:14px}.home-group-title>span{width:43px;height:43px;display:grid;place-items:center;border-radius:14px;background:#ffe7f1;font-size:23px}.home-group-title h3{margin:0 0 3px;font-size:17px;color:#2b1d2d}.home-group-title p{margin:0;font-size:12px;color:#887b8b}
+.home-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.home-feature-card{appearance:none;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;min-height:154px;padding:15px;border:1px solid #f0dce8;border-radius:17px;background:linear-gradient(145deg,#fff,#fff8fb);color:#2b1d2d;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.home-feature-card:hover{transform:translateY(-2px);box-shadow:0 7px 18px #d94c9918}.home-feature-card>span{font-size:24px}.home-feature-card b{font-size:14px}.home-feature-card small{font-size:12px;line-height:1.45;color:#827587;flex:1}.feature-state{font-style:normal;font-size:10px;font-weight:750;padding:5px 9px;border-radius:20px}.feature-state.ready{background:#e7f8ef;color:#16834e}.feature-state.partial{background:#fff1d9;color:#94600f}.feature-state.planned{background:#f0ebf7;color:#76558e}
+.home-roadmap-note{margin:20px 0 10px;padding:16px 18px;border-radius:17px;background:#f5effb;border:1px solid #e9dcf4;color:#5f4b6b;font-size:13px;line-height:1.55}.home-roadmap-note b{color:#392348}
+@media(max-width:720px){.home-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-feature-group{padding:14px}.home-feature-card{min-height:165px;padding:12px}.home-feature-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:420px){.home-feature-grid{grid-template-columns:1fr}.home-feature-card{min-height:130px}}
+</style>
+</head>
 <body>
 <header><div class="brand"><span class="heart">♥</span>HeartTalk</div><div style="display:flex;align-items:center;gap:9px"><button class="secondary" id="installAppBtn" type="button" style="display:none;padding:8px 12px">⬇ Install</button><button class="secondary" onclick="showView('wallet')" style="padding:8px 12px">🪙 <span id="coinBalance">0</span></button><button class="secondary" id="authTop" onclick="openAuth()">Login / Sign Up</button></div></header>
 <main>
@@ -249,8 +261,57 @@ p{color:#77747e}
 <div class="feature-strip"><div class="feature-tile" onclick="showView('discover')"><div class="tile-icon">💞</div><strong>Connect</strong><span class="muted">Meet members</span></div><div class="feature-tile" onclick="showView('chat')"><div class="tile-icon">💬</div><strong>Chats</strong><span class="muted">Private messages</span></div><div class="feature-tile" onclick="showView('wallet')"><div class="tile-icon">🪙</div><strong>My coins</strong><span class="muted">Wallet & rewards</span></div></div>
 <div class="section-head"><h2>HeartTalk spaces</h2><span class="pill">Made to connect</span></div><div class="grid"><div class="room-card"><div><div class="section-kicker" style="color:#ffd8ed">🎙️ Voice hangout</div><h3 style="color:white;margin:8px 0">Live rooms</h3><p style="color:#f8dff0">Talk together in a room</p></div><button class="primary" onclick="showView('live')" style="background:white;color:#9a2875;box-shadow:none">Explore rooms</button></div><div class="room-card"><div><div class="section-kicker" style="color:#eadbff">📞 Stay close</div><h3 style="color:white;margin:8px 0">Voice & video</h3><p style="color:#eee1ff">Call your connections</p></div><button class="primary" onclick="showView('calls')" style="background:white;color:#7542b8;box-shadow:none">Open calls</button></div><div class="room-card"><div><div class="section-kicker" style="color:#fff0d9">✨ Community</div><h3 style="color:white;margin:8px 0">Forums</h3><p style="color:#fff0e9">Share thoughts and photos</p></div><button class="primary" onclick="showView('forums')" style="background:white;color:#d34c61;box-shadow:none">View feed</button></div></div>
 <div class="section-head"><h2>Discover members</h2><button class="secondary" onclick="showView('discover')">See all</button></div><div id="homeDiscover" class="grid"><div class="notice">Sign in and discover HeartTalk members.</div></div>
-<div class="blueprint-head"><div><h2>HeartTalk A–Z</h2><p>Made for Indian friendships — Telugu, Hindi, Tamil, English & more</p></div><span class="pill">18+ community</span></div>
-<div class="blueprint-grid"><div class="blueprint-card"><div class="bp-icon">👤</div><strong>Profile & interests</strong><p>Name, age, bio and personal profile details.</p><span class="bp-status ">Available</span></div><div class="blueprint-card"><div class="bp-icon">💬</div><strong>Private messaging</strong><p>Chat with members and continue conversations.</p><span class="bp-status ">Available</span></div><div class="blueprint-card"><div class="bp-icon">📞</div><strong>Voice & video calls</strong><p>Call your connections from HeartTalk.</p><span class="bp-status ">Available</span></div><div class="blueprint-card"><div class="bp-icon">📰</div><strong>Feed & posts</strong><p>Share updates and join community discussions.</p><span class="bp-status ">Available</span></div><div class="blueprint-card"><div class="bp-icon">👥</div><strong>Groups & forums</strong><p>Find people with similar interests.</p><span class="bp-status ">Available</span></div><div class="blueprint-card"><div class="bp-icon">🛡️</div><strong>Block & report</strong><p>Control who can contact you and report abuse.</p><span class="bp-status soon">Setup required</span></div><div class="blueprint-card"><div class="bp-icon">🌍</div><strong>City & language filters</strong><p>Find people by city, language and interests.</p><span class="bp-status soon">In progress</span></div><div class="blueprint-card"><div class="bp-icon">📷</div><strong>Photo gallery</strong><p>Multiple photos, cropping and profile gallery.</p><span class="bp-status soon">In progress</span></div><div class="blueprint-card"><div class="bp-icon">📍</div><strong>Explore nearby</strong><p>Discover members around your city.</p><span class="bp-status soon">In progress</span></div><div class="blueprint-card"><div class="bp-icon">🎙️</div><strong>Live rooms</strong><p>Community voice and video hangouts.</p><span class="bp-status soon">In progress</span></div><div class="blueprint-card"><div class="bp-icon">🪙</div><strong>Coins & rewards</strong><p>Daily check-ins, gifts and reward history.</p><span class="bp-status soon">Not active</span></div><div class="blueprint-card"><div class="bp-icon">💳</div><strong>UPI & VIP plans</strong><p>Indian payment options and subscriptions.</p><span class="bp-status soon">Not active</span></div><div class="blueprint-card"><div class="bp-icon">🔐</div><strong>Secure sign-in</strong><p>Email works; SMS provider setup is pending.</p><span class="bp-status soon">Partly ready</span></div><div class="blueprint-card"><div class="bp-icon">🔳</div><strong>QR friend connect</strong><p>Add friends by scanning a profile QR code.</p><span class="bp-status soon">Coming soon</span></div><div class="blueprint-card"><div class="bp-icon">✓</div><strong>Verified badge</strong><p>Optional selfie-based profile verification.</p><span class="bp-status soon">Coming soon</span></div><div class="blueprint-card"><div class="bp-icon">🌙</div><strong>Privacy & ghost mode</strong><p>More visibility and privacy controls.</p><span class="bp-status soon">Coming soon</span></div></div>
+
+<div class="home-feature-heading"><div><span class="section-kicker">HEARTTALK A–Z</span><h2>Everything in its place</h2><p>Find people, talk safely, build communities and enjoy your rewards.</p></div><span class="pill">18+ community</span></div>
+<section class="home-feature-group">
+ <div class="home-group-title"><span>💗</span><div><h3>Meet people</h3><p>Discover friends by profile, city and shared interests.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="showView('discover')"><span>💞</span><b>Discover & connect</b><small>Browse members and start a friendship.</small><em class="feature-state ready">Available</em></button>
+  <button class="home-feature-card" onclick="showView('discover')"><span>📍</span><b>Nearby & city filters</b><small>City, language and interest discovery. Location sharing should stay optional.</small><em class="feature-state planned">Planned</em></button>
+  <button class="home-feature-card" onclick="showView('profile')"><span>👤</span><b>Profile & photo gallery</b><small>Manage your bio, interests and profile details.</small><em class="feature-state partial">Profile available · Gallery planned</em></button>
+ </div>
+</section>
+<section class="home-feature-group">
+ <div class="home-group-title"><span>💬</span><div><h3>Talk & spend time together</h3><p>Private conversations and real-time connections.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="showView('chat')"><span>💬</span><b>Private chats</b><small>Continue one-to-one conversations.</small><em class="feature-state ready">Available</em></button>
+  <button class="home-feature-card" onclick="showView('calls')"><span>📞</span><b>Voice & video calls</b><small>Call members; allow microphone and camera access.</small><em class="feature-state partial">Requires browser permissions</em></button>
+  <button class="home-feature-card" onclick="showView('live')"><span>🎙️</span><b>Live rooms</b><small>Host or join community voice/video rooms.</small><em class="feature-state partial">LiveKit setup required</em></button>
+ </div>
+</section>
+<section class="home-feature-group">
+ <div class="home-group-title"><span>👥</span><div><h3>Community</h3><p>Share updates and meet people with similar interests.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="showView('forums')"><span>📰</span><b>Feed & posts</b><small>Share text and photos, and comment on posts.</small><em class="feature-state ready">Available</em></button>
+  <button class="home-feature-card" onclick="showView('forums')"><span>👥</span><b>Groups & forums</b><small>Create or join interest-based groups.</small><em class="feature-state ready">Available</em></button>
+  <button class="home-feature-card" onclick="showView('discover')"><span>🔳</span><b>QR friend connect</b><small>Quickly add a friend by scanning their profile QR.</small><em class="feature-state planned">Planned</em></button>
+ </div>
+</section>
+<section class="home-feature-group">
+ <div class="home-group-title"><span>🛡️</span><div><h3>Safety & privacy</h3><p>Your comfort comes first. Aadhaar verification is not required.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="showView('discover')"><span>🚫</span><b>Block & unblock</b><small>Control who can contact you and remove a block later.</small><em class="feature-state partial">Database setup / testing</em></button>
+  <button class="home-feature-card" onclick="showView('discover')"><span>🚩</span><b>Report abuse</b><small>Report suspicious profiles or inappropriate behaviour.</small><em class="feature-state partial">Database setup / testing</em></button>
+  <button class="home-feature-card" onclick="showView('profile')"><span>🌙</span><b>Privacy controls</b><small>Visibility, blocked list and account controls.</small><em class="feature-state planned">More controls planned</em></button>
+ </div>
+</section>
+<section class="home-feature-group">
+ <div class="home-group-title"><span>🪙</span><div><h3>Rewards & membership</h3><p>Wallet first; payments only after secure gateway setup.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="showView('wallet')"><span>🪙</span><b>Coins & wallet</b><small>View your current coin balance.</small><em class="feature-state partial">Wallet UI available · rewards pending</em></button>
+  <button class="home-feature-card" onclick="showView('wallet')"><span>🎁</span><b>Daily rewards & gifts</b><small>Check-ins, virtual gifts and reward history.</small><em class="feature-state planned">Planned</em></button>
+  <button class="home-feature-card" onclick="showView('wallet')"><span>🇮🇳</span><b>UPI & VIP plans</b><small>Indian payment options and subscriptions.</small><em class="feature-state planned">Payment gateway setup required</em></button>
+ </div>
+</section>
+<section class="home-feature-group">
+ <div class="home-group-title"><span>🔐</span><div><h3>Account & verification</h3><p>Simple sign-in with privacy-conscious verification.</p></div></div>
+ <div class="home-feature-grid">
+  <button class="home-feature-card" onclick="openAuth()"><span>🔐</span><b>Email / phone sign-in</b><small>Email sign-in; SMS OTP needs an SMS provider.</small><em class="feature-state partial">Email ready · SMS setup required</em></button>
+  <button class="home-feature-card" onclick="showView('profile')"><span>✓</span><b>Optional verified badge</b><small>Future optional profile verification; no Aadhaar collection.</small><em class="feature-state planned">Planned</em></button>
+  <button class="home-feature-card" onclick="showView('recents')"><span>🕘</span><b>Recent calls</b><small>Review your recent call activity.</small><em class="feature-state partial">Available where call history exists</em></button>
+ </div>
+</section>
+<div class="home-roadmap-note"><b>Our recommendation:</b> finish and test the core experience first — sign-in, profile, chat, calls and safety. Then add nearby discovery and photo gallery. Add coins, VIP and UPI only after payment and fraud protection are ready.</div>
 </section>
 <section class="view connect-view" id="discoverView">
  <div class="connect-banner"><div><div class="section-kicker">MEET YOUR KIND OF PEOPLE</div><h1>HeartTalk <span>Connect</span></h1><p>Find friends, start a conversation and make meaningful connections.</p></div><div class="connect-heart">💗</div></div>
