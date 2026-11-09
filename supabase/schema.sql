@@ -527,3 +527,7 @@ begin
       references public.profiles(id) on delete cascade;
   end if;
 end $$;
+
+-- Explicit table privileges for the wallet UI. RLS still limits each user to their own rows.
+grant usage on schema public to authenticated;
+grant select on table public.wallet_ledger to authenticated;
