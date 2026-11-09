@@ -491,3 +491,18 @@ drop policy if exists "Users can delete their own forum images" on storage.objec
 create policy "Users can delete their own forum images" on storage.objects
 for delete to authenticated
 using (bucket_id = 'forum-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+
+-- Secure wallet balance: users can only read the sum of their own ledger entries.
+create or replace function public.get_wallet_balance()
+returns bigint
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select coalesce(sum(amount), 0)::bigint
+  from public.wallet_ledger
+  where user_id = auth.uid();
+$$;
+grant execute on function public.get_wallet_balance() to authenticated;
