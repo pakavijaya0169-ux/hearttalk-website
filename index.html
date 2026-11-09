@@ -455,9 +455,22 @@ async function reportMember(userId){
  if(error){notify("Report could not be sent. Run supabase/safety.sql first.");return}
  notify("Report submitted. Thank you for helping keep HeartTalk safe.");
 }
+function heartTalkConfirm(message){
+ return new Promise(resolve=>{
+  const overlay=document.createElement("div");
+  overlay.className="modal show";
+  overlay.style.zIndex="100";
+  overlay.innerHTML='<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="heartTalkConfirmTitle"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="heart">♥</span><strong id="heartTalkConfirmTitle" style="font-size:19px">HeartTalk</strong></div><p style="margin:0 0 20px">'+escapeHtml(message)+'</p><div style="display:flex;justify-content:flex-end;gap:10px"><button type="button" class="secondary" data-choice="no">Cancel</button><button type="button" class="primary" data-choice="yes">Block member</button></div></div>';
+  const finish=value=>{overlay.remove();resolve(value)};
+  overlay.addEventListener("click",e=>{if(e.target===overlay)finish(false);const choice=e.target.closest("[data-choice]")?.dataset.choice;if(choice)finish(choice==="yes")});
+  const onKey=e=>{if(e.key==="Escape"){document.removeEventListener("keydown",onKey);finish(false)}};
+  document.addEventListener("keydown",onKey);
+  document.body.appendChild(overlay);
+ });
+}
 async function blockMember(userId){
  if(!currentUser){openAuth();return}
- if(!confirm("Block this member? They will disappear from Discover."))return;
+ if(!await heartTalkConfirm("Block this member? They will no longer appear in Discover."))return;
  const {error}=await supabaseClient.from("blocked_users").upsert({blocker_id:currentUser.id,blocked_user_id:userId},{onConflict:"blocker_id,blocked_user_id"});
  if(error){notify("Block could not be saved. Run supabase/safety.sql first.");return}
  discoverUsers=discoverUsers.filter(u=>u.id!==userId);renderDiscover();notify("Member blocked.");
