@@ -19,6 +19,7 @@ alter table public.profiles add column if not exists age integer;
 alter table public.profiles add column if not exists country text not null default '';
 alter table public.profiles add column if not exists bio text not null default '';
 alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists gender text check (gender is null or gender in ('female','male','other'));
 alter table public.profiles add column if not exists created_at timestamptz not null default now();
 alter table public.profiles add column if not exists updated_at timestamptz not null default now();
 
