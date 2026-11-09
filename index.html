@@ -466,7 +466,7 @@ async function logout(){await supabaseClient.auth.signOut();currentUser=null;act
 async function loadProfile(){
  if(!currentUser){const r=await supabaseClient.auth.getUser();currentUser=r.data.user}
  if(!currentUser)return;
- const {data,error}=await supabaseClient.from("profiles").select("display_name,age,country,bio,avatar_url").eq("id",currentUser.id).maybeSingle();
+ const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url").eq("id",currentUser.id).maybeSingle();
  if(error){console.error(error);notify("Profile load failed: "+error.message);return}
  if(data){
   document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";
