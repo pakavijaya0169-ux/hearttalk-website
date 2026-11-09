@@ -393,10 +393,13 @@ async function loadWallet(){
  if(!balance||!status||!list)return;
  if(!currentUser){balance.textContent="0";status.textContent="Please log in to view your wallet.";list.innerHTML='<p class="muted">Log in to view transactions.</p>';return}
  status.textContent="Loading wallet…";list.innerHTML='<p class="muted">Loading transactions…</p>';
- const {data,error}=await supabaseClient.from("wallet_ledger").select("amount,entry_type,reference_id,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50);
- if(error){status.textContent="Wallet history is not available. Run the latest supabase/schema.sql in Supabase SQL Editor.";list.innerHTML='<p class="muted">'+escapeHtml(error.message)+'</p>';return}
- const rows=data||[],total=rows.reduce((sum,row)=>sum+Number(row.amount||0),0);
- balance.textContent=String(total);status.textContent=rows.length+" ledger entr"+(rows.length===1?"y":"ies")+" · balance is calculated from saved entries";
+ const [balanceResult,ledgerResult]=await Promise.all([
+  supabaseClient.rpc("get_wallet_balance"),
+  supabaseClient.from("wallet_ledger").select("amount,entry_type,reference_id,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50)
+ ]);
+ if(balanceResult.error||ledgerResult.error){const problem=balanceResult.error||ledgerResult.error;status.textContent="Wallet history is not available. Run the latest supabase/schema.sql in Supabase SQL Editor.";list.innerHTML='<p class="muted">'+escapeHtml(problem.message)+'</p>';return}
+ const rows=ledgerResult.data||[],total=Number(balanceResult.data||0);
+ balance.textContent=String(total);status.textContent=rows.length+" recent ledger entr"+(rows.length===1?"y":"ies")+" · balance from the complete ledger";
  const coin=document.getElementById("coinBalance");if(coin)coin.textContent=String(total);
  const profileCoin=document.getElementById("profileCoinBalance");if(profileCoin)profileCoin.textContent=String(total);
  if(!rows.length){list.innerHTML='<p class="muted">No wallet transactions yet.</p>';return}
