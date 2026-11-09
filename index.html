@@ -471,8 +471,8 @@ function heartTalkConfirm(message){
 async function blockMember(userId){
  if(!currentUser){openAuth();return}
  if(!await heartTalkConfirm("Block this member? They will no longer appear in Discover."))return;
- const {error}=await supabaseClient.from("blocked_users").upsert({blocker_id:currentUser.id,blocked_user_id:userId},{onConflict:"blocker_id,blocked_user_id"});
- if(error){notify("Block could not be saved. Run supabase/safety.sql first.");return}
+ const {error}=await supabaseClient.from("blocked_users").insert({blocker_id:currentUser.id,blocked_user_id:userId});
+ if(error && error.code!=="23505"){console.error("HeartTalk block error:",error);notify("Block failed: "+(error.message||error.code));return}
  discoverUsers=discoverUsers.filter(u=>u.id!==userId);renderDiscover();notify("Member blocked.");
 }
 function setConnectTab(tab){
