@@ -89,7 +89,7 @@ p{color:#77747e}
 /* FRND-inspired Connect experience */
 .connect-banner{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:28px 30px;border-radius:25px;background:linear-gradient(115deg,#ffdaec,#f3e4ff 65%,#fff);margin-bottom:20px;overflow:hidden}
 .connect-banner h1{font-size:clamp(28px,4vw,42px);line-height:1.1;margin:8px 0;color:#211724}.connect-banner h1 span{color:#ec318d}.connect-banner p{color:#765f73;margin:0;max-width:480px}.connect-heart{font-size:76px;filter:drop-shadow(0 8px 12px #e83b9130)}
-.connect-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0 16px;border-bottom:1px solid #ece8ef;margin-bottom:20px}
+ .nearby-city-filter{min-width:190px;max-width:240px;flex:1;border:1px solid #f2c9df;border-radius:14px;padding:11px 13px;background:#fff;color:#302334;font:inherit;outline:none}.nearby-city-filter:focus{border-color:#d9469a;box-shadow:0 0 0 3px #fce4f1}.connect-toolbar{flex-wrap:wrap}.connect-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0 16px;border-bottom:1px solid #ece8ef;margin-bottom:20px}
 .connect-tabs{display:flex;gap:8px}.connect-tab{border:0;background:#f0eef3;color:#817987;padding:12px 24px;border-radius:30px;font-weight:750;cursor:pointer}.connect-tab.active{background:#24172c;color:white}
 .random-match{border:0;border-radius:30px;padding:12px 22px;background:linear-gradient(100deg,#21b6df,#168bd2);color:white;font-weight:800;cursor:pointer}
 .connect-section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 14px}.connect-section-title h2{margin:0;font-size:23px}.connect-section-title p{margin:3px 0 0;color:#8a8290;font-size:13px}
@@ -351,7 +351,7 @@ p{color:#77747e}
 </section>
 <section class="view connect-view" id="discoverView">
  <div class="connect-banner"><div><div class="section-kicker">MEET YOUR KIND OF PEOPLE</div><h1>HeartTalk <span>Connect</span></h1><p>Find friends, start a conversation and make meaningful connections.</p></div><div class="connect-heart">💗</div></div>
- <div class="connect-toolbar"><div class="connect-tabs"><button class="connect-tab active" id="connectTab" onclick="setConnectTab('connect')">Connect</button><button class="connect-tab" id="chatsTab" onclick="setConnectTab('chats')">Chats</button></div><button class="random-match" onclick="randomHeartTalkMatch()">↗ Random</button></div>
+ <div class="connect-toolbar"><div class="connect-tabs"><button class="connect-tab active" id="connectTab" onclick="setConnectTab('connect')">Connect</button><button class="connect-tab" id="chatsTab" onclick="setConnectTab('chats')">Chats</button></div><input id="nearbyCityFilter" class="nearby-city-filter" type="search" placeholder="📍 Nearby city / location" aria-label="Filter members by city or location" oninput="renderDiscover()"><button class="random-match" onclick="randomHeartTalkMatch()">↗ Random</button></div>
  <div id="connectMembersPanel"><div class="connect-section-title"><div><h2>Discover members</h2><p>Explore people who joined HeartTalk</p></div><button class="secondary" onclick="loadDiscover()">↻ Refresh</button></div>
  <div class="connect-search"><span>⌕</span><input id="discoverSearch" placeholder="Search members by name or country..." oninput="renderDiscover()"></div>
  <div id="discoverGrid" class="connect-grid"><div class="notice">Login to discover community members.</div></div></div>
@@ -682,8 +682,8 @@ async function loadDiscover(){
  discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id));renderDiscover()
 }
 function renderDiscover(){
- const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),q=(search?.value||"").toLowerCase();
- const rows=discoverUsers.filter(u=>(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase().includes(q));
+ const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),city=document.getElementById("nearbyCityFilter"),q=(search?.value||"").toLowerCase(),place=(city?.value||"").trim().toLowerCase();
+ const rows=discoverUsers.filter(u=>{const text=(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase();return text.includes(q)&&(!place||text.includes(place));});
  if(!rows.length){grid.innerHTML='<div class="notice">No members found yet. Invite friends to join HeartTalk!</div>';return}
  grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">💗</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
 }
