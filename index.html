@@ -102,7 +102,7 @@ p{color:#77747e}
 .connect-actions .connect-message{background:#fce3ef;color:#d92c82}
 .connect-actions .connect-call{background:#20b6d7;color:white}
 .connect-actions button.secondary{background:#fff;border:1px solid #f1c4da;color:#d72c78}
-.connect-avatar{width:78px;height:78px;border-radius:50%;margin:2px auto 12px;display:grid;place-items:center;background:linear-gradient(140deg,#ffd3e8,#d9c7ff);font-size:35px;border:4px solid white;box-shadow:0 0 0 2px #f0d5e7}
+.connect-avatar{width:82px;height:82px;border-radius:50%;margin:2px auto 12px;display:grid;place-items:center;position:relative;background:linear-gradient(140deg,#ffd3e8,#d9c7ff);font-size:35px;border:4px solid white;box-shadow:0 0 0 2px #f0d5e7;overflow:visible}.connect-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}.gender-avatar-badge{position:absolute;right:-7px;bottom:-4px;width:31px;height:31px;border:3px solid white;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff5aa5,#8b42e8);font-size:17px;box-shadow:0 2px 8px #6b246b35}
 .connect-member h3{margin:0 0 5px;font-size:18px;overflow-wrap:anywhere}.connect-member .member-meta{font-size:13px;color:#8a8290}.connect-member .member-bio{font-size:13px;color:#655c69;min-height:38px;margin:12px 0}
 .connect-actions{display:flex;gap:8px}.connect-actions button{flex:1;padding:10px 8px;border-radius:24px;font-weight:750;cursor:pointer;border:0}.connect-message{background:#fce3ef;color:#d92c82}.connect-call{background:#20b6d7;color:white}
 .connect-chat-list{display:grid;gap:10px}.connect-chat-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #eee;border-radius:16px;padding:13px;text-align:left;width:100%;cursor:pointer}.connect-chat-row .chat-avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#f8dced;font-size:23px}
@@ -571,6 +571,7 @@ p{color:#77747e}
 <label class="ig-edit-field"><span>Name</span><input id="profileName" maxlength="80" placeholder="Your name"></label>
 <label class="ig-edit-field"><span>Username</span><input id="profileUsername" maxlength="24" placeholder="your_username" autocapitalize="none"></label>
 <label class="ig-edit-field"><span>Age (18+)</span><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></label>
+<label class="ig-edit-field"><span>Avatar style</span><select id="profileGender" class="field"><option value="">Choose avatar emoji</option><option value="female">👩 Female</option><option value="male">👨 Male</option><option value="other">🧑 Other</option></select></label>
 <label class="ig-edit-field"><span>Country / State</span><input id="profileCountry" maxlength="80" placeholder="India, Telangana"></label>
 <label class="ig-edit-field"><span>Bio</span><textarea id="profileBio" rows="3" maxlength="500" placeholder="Tell people about yourself"></textarea></label>
 <button class="ig-edit-save" onclick="saveProfile()">Save changes</button><p id="profileMessage" class="muted"></p></div></div></section><section class="view" id="forumsView">
@@ -705,10 +706,10 @@ async function logout(){await supabaseClient.auth.signOut();currentUser=null;act
 async function loadProfile(){
  if(!currentUser){const r=await supabaseClient.auth.getUser();currentUser=r.data.user}
  if(!currentUser)return;
- const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url").eq("id",currentUser.id).maybeSingle();
+ const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender").eq("id",currentUser.id).maybeSingle();
  if(error){console.error(error);notify("Profile load failed: "+error.message);return}
  if(data){
-  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";
+  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";document.getElementById("profileGender").value=data.gender||"";
   document.getElementById("profileDisplayName").textContent=data.display_name||"Your name";
   document.getElementById("profileHandle").textContent=(data.username||"hearttalk_member");
   document.getElementById("profileDisplayAge").textContent=data.age?data.age+" years":"18+";
@@ -804,18 +805,18 @@ async function uploadProfilePhoto(event){
 }
 async function saveProfile(){
  if(!currentUser){notify("Please log in first.");openAuth();return}
- const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim();
+ const name=document.getElementById("profileName").value.trim(),age=Number(document.getElementById("profileAge").value),country=document.getElementById("profileCountry").value.trim(),bio=document.getElementById("profileBio").value.trim(),gender=document.getElementById("profileGender").value;
  const username=document.getElementById("profileUsername").value.trim().toLowerCase().replace(/^@/,"");
  if(!name||!country||!Number.isInteger(age)||age<18||age>100){notify("Enter your name, country and a valid age (18–100).");return}
  if(!/^[a-z0-9._]{3,24}$/.test(username)){notify("Username must be 3–24 characters: letters, numbers, dot or underscore.");return}
- const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio},{onConflict:"id"});
+ const {error}=await supabaseClient.from("profiles").upsert({id:currentUser.id,display_name:name,username,age,country,bio,gender},{onConflict:"id"});
  if(error){notify(error.message);return}
  notify("Profile saved successfully. 💗");await loadProfile();await loadDiscover();showView("profile");
 }
 async function loadDiscover(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
  grid.innerHTML='<div class="notice">Loading community members...</div>';
- const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
  const [mine,theirs]=await Promise.all([supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id)]);
  if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
@@ -826,7 +827,7 @@ function renderDiscover(){
  const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),city=document.getElementById("nearbyCityFilter"),q=(search?.value||"").toLowerCase(),place=(city?.value||"").trim().toLowerCase();
  const rows=discoverUsers.filter(u=>{const text=(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase();return text.includes(q)&&(!place||text.includes(place));});
  if(!rows.length){grid.innerHTML='<div class="notice">No members found yet. Invite friends to join HeartTalk!</div>';return}
- grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">💗</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
+ grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">'+(u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":u.gender==="male"?"👨":u.gender==="other"?"🧑":"💗"))+(u.gender?'<span class="gender-avatar-badge">'+(u.gender==="female"?"♀":u.gender==="male"?"♂":"✦")+'</span>':'')+'</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
 }
 
 async function isHeartTalkBlocked(userId){
