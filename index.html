@@ -179,14 +179,13 @@ p{color:#77747e}
 
 .live-create-card{margin:14px 0;padding:18px}.live-create-card .field{margin:12px 0}.live-list-title{margin:22px 0 10px}.live-rooms-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.live-room-card{background:#fff;border:1px solid #f5c5dc;border-radius:16px;padding:16px}.live-room-card h3{margin:8px 0}.live-room-card p{color:#777;font-size:13px}.live-room-card .live-room-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 4px #fee2e2}.live-stage{margin:16px 0;padding:16px}.live-stage-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.live-video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0}.live-video-grid video{width:100%;aspect-ratio:16/9;object-fit:cover;background:#17121b;border-radius:14px}.live-video-placeholder{padding:60px 12px;text-align:center;background:#211827;color:white;border-radius:14px}.live-stage-actions{display:flex;gap:8px;flex-wrap:wrap}.live-chat-wrap{margin-top:18px;border-top:1px solid #f4d5e3;padding-top:12px}.live-chat-messages{max-height:180px;overflow:auto;background:#fff8fb;border-radius:12px;padding:10px;min-height:45px}.live-chat-messages p{margin:6px 0;font-size:13px}.live-provider-note{margin-top:14px;font-size:12px}@media(max-width:600px){.live-stage-head{align-items:flex-start;flex-direction:column}}
 
-/* Final Connect card layout override */
-#discoverGrid{display:flex!important;flex-wrap:wrap!important;align-items:stretch!important;gap:18px!important;width:100%!important}
-#discoverGrid .connect-member{box-sizing:border-box!important;flex:0 1 340px!important;width:min(100%,340px)!important;max-width:100%!important;min-width:0!important;padding:20px!important;display:flex!important;flex-direction:column!important;align-items:center!important}
+/* Connect member cards: compact responsive grid */
+#discoverGrid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),340px))!important;justify-content:start!important;align-items:stretch!important;gap:18px!important;width:100%!important}
+#discoverGrid .connect-member{box-sizing:border-box!important;width:100%!important;max-width:340px!important;min-width:0!important;padding:20px!important;display:flex!important;flex-direction:column!important;align-items:center!important}
 #discoverGrid .connect-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;width:100%!important;margin-top:auto!important}
-#discoverGrid .connect-actions button{box-sizing:border-box!important;width:100%!important;min-width:0!important;min-height:44px!important;flex:none!important;border-radius:14px!important;padding:10px 6px!important;font-size:13px!important}
+#discoverGrid .connect-actions button{box-sizing:border-box!important;width:100%!important;min-width:0!important;min-height:44px!important;border-radius:14px!important;padding:10px 6px!important;font-size:13px!important}
 #discoverGrid .connect-actions button.secondary{background:#fff!important;border:1px solid #f1c4da!important;color:#d72c78!important}
-@media(max-width:650px){#discoverGrid .connect-member{flex-basis:100%!important;width:100%!important;padding:17px 14px!important}}
-
+@media(max-width:650px){#discoverGrid{grid-template-columns:minmax(0,1fr)!important}#discoverGrid .connect-member{max-width:none!important;width:100%!important;padding:17px 14px!important}}
 </style>
 
 <style>
