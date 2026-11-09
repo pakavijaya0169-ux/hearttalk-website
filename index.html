@@ -784,21 +784,45 @@ function openProfileSettings(){
 const heartTalkAvatarSeeds={female:["Vijaya","Ananya","Diya","Meera","Isha","Kavya","Sana","Aadhya","Nisha","Tara","Mira","Riya"],male:["Arjun","Ayaan","Kabir","Rohan","Dev","Ishaan","Reyansh","Advik","Vihaan","Kian","Neil","Aarav"],other:["Sky","River","Ari","Robin","Sam","Alex","Kai","Sunny","Jules","Noor","Ash","Sage"]};
 let selectedHeartTalkAvatar="";let selectedHeartTalkGender="female";
 function heartTalkAvatarUrl(seed){
- // HeartTalk glossy 3D-look cartoon avatar, generated locally as an SVG image.
+ // Locally generated glossy 3D-style avatar artwork; no external image service required.
  const hash=[...seed].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);
- const skins=["#f5c6a5","#d99a72","#9a6048","#f0b995","#704735","#e8ad8d"];
- const hairs=["#24151d","#3a211b","#171923","#7a4229","#5b315e","#b87842"];
- const shirts=["#ff5e7e","#a83b83","#7046bd","#e58b43","#278f91","#4779c8"];
+ const skins=["#f5c6a5","#d99a72","#9a6048","#f0b995","#704735","#e8ad8d","#c98268","#f3c9a8"];
+ const hairs=["#24151d","#3a211b","#171923","#7a4229","#5b315e","#b87842","#242b43","#6c3445"];
+ const shirts=["#ff5e7e","#a83b83","#7046bd","#e58b43","#278f91","#4779c8","#d34f79","#4f6eae"];
  const skin=skins[hash%skins.length],hair=hairs[(hash>>>3)%hairs.length],shirt=shirts[(hash>>>6)%shirts.length];
- const styles=(hash>>>9)%4,eye=(hash>>>12)%3;
+ const style=(hash>>>9)%4,eye=(hash>>>12)%3;
  const hairShape=[
-  '<path d="M38 91C31 48 53 19 100 18c43-1 66 29 61 72l-8 35-16-17-5-40c-17 14-48 17-78 8l-3 48-15 9z" fill="'+hair+'" />',
-  '<path d="M35 93C30 42 59 15 101 18c42 2 62 34 57 77l-9 31-13-18-2-49c-23 17-49 18-78 10l-5 51-13 7z" fill="'+hair+'" />',
-  '<path d="M37 96C29 53 48 20 96 17c46-3 70 31 63 77l-13 31-13-21-1-43c-19 12-50 17-78 7l-2 53-13 7z" fill="'+hair+'" />',
-  '<path d="M36 91C33 44 58 17 101 18c42 0 65 28 61 73l-12 39-14-20-2-45c-22 15-48 18-79 8l-4 49-13 8z" fill="'+hair+'" />'
- ][styles];
- const eyes=eye===0?'<ellipse cx="76" cy="91" rx="5" ry="7" fill="#30202a"/><ellipse cx="124" cy="91" rx="5" ry="7" fill="#30202a"/>':'<ellipse cx="76" cy="91" rx="6" ry="8" fill="#30202a"/><ellipse cx="124" cy="91" rx="6" ry="8" fill="#30202a"/>';
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><radialGradient id="bg" cx="30%" cy="20%"><stop stop-color="#fff7fb"/><stop offset="1" stop-color="#f7b9d4"/></radialGradient><linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0df"/><stop offset=".38" stop-color="'+skin+'"/><stop offset="1" stop-color="#9b5b4d"/></linearGradient><linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#806071"/><stop offset=".3" stop-color="'+hair+'"/><stop offset="1" stop-color="#100d17"/></linearGradient><linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".18" stop-color="'+shirt+'"/><stop offset="1" stop-color="#542047"/></linearGradient><filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="5"/></filter></defs><circle cx="100" cy="100" r="96" fill="url(#bg)"/><ellipse cx="101" cy="177" rx="58" ry="12" fill="#6b3150" opacity=".22" filter="url(#shadow)"/><path d="M37 200c4-39 26-55 63-55s59 16 63 55" fill="url(#shirt)"/><path d="M88 137h24v25c-7 10-17 10-24 0z" fill="url(#skin)"/><ellipse cx="53" cy="103" rx="12" ry="18" fill="url(#skin)"/><ellipse cx="147" cy="103" rx="12" ry="18" fill="url(#skin)"/><path d="M52 82c0-34 20-53 49-53s49 19 49 53v35c0 34-22 53-49 53s-49-19-49-53z" fill="url(#skin)"/>'+hairShape+'<path d="M65 79q11-9 23-1M112 78q12-8 23 1" fill="none" stroke="#39202a" stroke-width="5" stroke-linecap="round"/>'+eyes+'<ellipse cx="63" cy="111" rx="10" ry="6" fill="#f58a91" opacity=".5"/><ellipse cx="137" cy="111" rx="10" ry="6" fill="#f58a91" opacity=".5"/><path d="M87 122q13 13 26 0" fill="none" stroke="#87394c" stroke-width="4" stroke-linecap="round"/><path d="M57 69q17-31 43-31" fill="none" stroke="#fff" stroke-width="7" opacity=".18" stroke-linecap="round"/><circle cx="66" cy="62" r="5" fill="#fff" opacity=".32"/></svg>';
+  '<path d="M39 91C28 46 54 14 101 17c47 1 70 33 59 82l-10 32-15-23-2-47c-22 17-52 18-79 9l-2 54-14 8z" fill="url(#hair)"/>',
+  '<path d="M35 91C28 42 57 14 101 18c42 2 64 31 58 77l-13 36-13-20-2-49c-19 15-48 19-79 10l-4 53-13 8z" fill="url(#hair)"/>',
+  '<path d="M37 95C29 54 48 19 96 16c47-3 72 31 64 79l-14 37-13-22-1-44c-22 15-49 18-78 8l-3 53-13 8z" fill="url(#hair)"/>',
+  '<path d="M35 93C34 43 59 16 101 18c44 0 67 29 60 77l-12 37-14-22-2-47c-23 16-51 19-79 9l-4 54-13 7z" fill="url(#hair)"/>'
+ ][style];
+ const eyes=eye===0
+  ? '<ellipse cx="76" cy="91" rx="6" ry="8" fill="#30202a"/><ellipse cx="124" cy="91" rx="6" ry="8" fill="#30202a"/>'
+  : '<ellipse cx="76" cy="91" rx="7" ry="9" fill="#30202a"/><ellipse cx="124" cy="91" rx="7" ry="9" fill="#30202a"/>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs>'+
+ '<radialGradient id="bg" cx="28%" cy="18%"><stop stop-color="#fff" /><stop offset=".55" stop-color="#ffe8f2"/><stop offset="1" stop-color="#e9a5c8"/></radialGradient>'+
+ '<linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0df"/><stop offset=".35" stop-color="'+skin+'"/><stop offset=".72" stop-color="'+skin+'"/><stop offset="1" stop-color="#9b5b4d"/></linearGradient>'+
+ '<linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9b7b8e"/><stop offset=".28" stop-color="'+hair+'"/><stop offset=".72" stop-color="'+hair+'"/><stop offset="1" stop-color="#100d17"/></linearGradient>'+
+ '<linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".18" stop-color="'+shirt+'"/><stop offset="1" stop-color="#3d244f"/></linearGradient>'+
+ '<radialGradient id="cheek"><stop stop-color="#ff8fa7" stop-opacity=".65"/><stop offset="1" stop-color="#ff8fa7" stop-opacity="0"/></radialGradient>'+
+ '<filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="5"/></filter>'+
+ '<filter id="soft"><feGaussianBlur stdDeviation="1.5"/></filter></defs>'+
+ '<circle cx="100" cy="100" r="97" fill="url(#bg)"/><circle cx="100" cy="100" r="91" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="3"/>'+
+ '<ellipse cx="101" cy="180" rx="58" ry="12" fill="#6b3150" opacity=".22" filter="url(#shadow)"/>'+
+ '<path d="M31 200c5-39 29-56 69-56s64 17 69 56" fill="url(#shirt)"/><path d="M83 151q17 12 34 0v18q-17 13-34 0z" fill="url(#skin)"/>'+
+ '<ellipse cx="53" cy="104" rx="12" ry="18" fill="url(#skin)"/><ellipse cx="147" cy="104" rx="12" ry="18" fill="url(#skin)"/>'+
+ '<path d="M51 82c0-35 20-54 49-54s49 19 49 54v35c0 34-22 53-49 53s-49-19-49-53z" fill="url(#skin)"/>'+
+ hairShape+
+ '<path d="M65 79q11-9 23-1M112 78q12-8 23 1" fill="none" stroke="#39202a" stroke-width="4.5" stroke-linecap="round"/>'+eyes+
+ '<circle cx="78" cy="88" r="2.5" fill="#fff"/><circle cx="126" cy="88" r="2.5" fill="#fff"/>'+
+ '<ellipse cx="63" cy="112" rx="13" ry="9" fill="url(#cheek)"/><ellipse cx="137" cy="112" rx="13" ry="9" fill="url(#cheek)"/>'+
+ '<path d="M98 98q-5 13 2 15" fill="none" stroke="#b87969" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>'+
+ '<path d="M87 124q13 13 26 0" fill="none" stroke="#87394c" stroke-width="4" stroke-linecap="round"/>'+
+ '<path d="M58 68q16-30 45-31" fill="none" stroke="#fff" stroke-width="8" opacity=".22" stroke-linecap="round"/>'+
+ '<ellipse cx="73" cy="54" rx="17" ry="6" fill="#fff" opacity=".12" filter="url(#soft)"/>'+
+ '<path d="M42 147q10-12 23-13M158 147q-10-12-23-13" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="4" stroke-linecap="round"/>'+
+ '</svg>';
  return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
 }
 function setAvatarGender(gender,button){selectedHeartTalkGender=gender;document.getElementById("profileGender").value=gender;document.querySelectorAll(".avatar-gender-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.avatarGender===gender));renderHeartTalkAvatarChoices();}
