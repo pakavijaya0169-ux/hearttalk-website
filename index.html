@@ -834,12 +834,31 @@ function heartTalkAvatarUrl(seed){
  return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
 }
 function setAvatarGender(gender,button){selectedHeartTalkGender=gender;document.getElementById("profileGender").value=gender;document.querySelectorAll(".avatar-gender-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.avatarGender===gender));renderHeartTalkAvatarChoices();}
+const heartTalkFemaleAvatarFiles=[
+ "01-traditional-pink.webp",
+ "02-headphones-hoodie.webp",
+ "03-glasses-black-outfit.webp",
+ "04-pink-cap-peace.webp",
+ "05-flower-hair.webp",
+ "06-jasmine-braid.webp",
+ "07-bob-yellow-top.webp",
+ "08-sunglasses-white-top.webp",
+ "09-winter-beanie.webp",
+ "10-round-glasses-yellow.webp",
+ "11-pink-hood-heart.webp",
+ "12-bucket-hat.webp",
+ "13-flower-crown.webp",
+ "14-pink-sari.webp",
+ "15-purple-headphones.webp"
+];
 function renderHeartTalkAvatarChoices(){
  const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";
  (heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{
-  const url=heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);
-  const b=document.createElement("button");b.type="button";b.className="avatar-option"+(selectedHeartTalkAvatar===url?" selected":"");b.title=seed+" avatar";
-  const img=document.createElement("img");img.src=url;img.alt=seed+" Indian-style cartoon avatar";img.loading="lazy";b.appendChild(img);
+  const filename=selectedHeartTalkGender==="female"?heartTalkFemaleAvatarFiles[index]:null;
+  const url=filename?"./"+filename:heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);
+  const isSelected=selectedHeartTalkAvatar===url||(filename&&selectedHeartTalkAvatar.endsWith("/"+filename));
+  const b=document.createElement("button");b.type="button";b.className="avatar-option"+(isSelected?" selected":"");b.title=seed+" avatar";
+  const img=document.createElement("img");img.src=url;img.alt=seed+" HeartTalk avatar";img.loading="lazy";b.appendChild(img);
   b.onclick=()=>{
    selectedHeartTalkAvatar=url;
    box.querySelectorAll(".avatar-option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");
