@@ -21,9 +21,27 @@
  <article class="card"><div class="muted small">Blocked users</div><div class="metric" id="blockedUsers">—</div></article>
  <article class="card"><div class="muted small">Open reports</div><div class="metric" id="openReports">—</div></article>
 </div>
-<div class="tabs"><button class="tab active" data-tab="users" onclick="switchTab('users')">👥 Users</button><button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 Reports</button></div>
+<div class="tabs"><button class="tab active" data-tab="users" onclick="switchTab('users')">👥 Users</button><button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 Reports</button><button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊 Analytics & Revenue</button></div>
 <section id="usersTab" class="card"><div class="section-head"><div><h2>User Management</h2><div class="muted small">Search profiles and manage account access</div></div><span class="muted small" id="userCount">—</span></div><div class="toolbar"><input class="control search" id="userSearch" placeholder="Search name or username…" oninput="renderUsers()"><select class="control" id="statusFilter" onchange="renderUsers()"><option value="all">All users</option><option value="active">Active</option><option value="blocked">Blocked</option></select></div><div id="usersList"><div class="empty">Users will appear here.</div></div></section>
 <section id="reportsTab" class="card hidden"><div class="section-head"><div><h2>User Reports</h2><div class="muted small">Review, resolve and audit community reports</div></div><span class="muted small" id="reportCount">—</span></div><div class="toolbar"><select class="control" id="reportStatusFilter" onchange="renderReports()"><option value="all">All reports</option><option value="open">Pending</option><option value="reviewing">Under review</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select><button class="btn" onclick="loadReports()">↻ Refresh reports</button></div><div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px"><article class="card"><div class="muted small">Pending</div><div class="metric" id="pendingReports">0</div></article><article class="card"><div class="muted small">Reviewing</div><div class="metric" id="reviewingReports">0</div></article><article class="card"><div class="muted small">Resolved</div><div class="metric" id="resolvedReports">0</div></article><article class="card"><div class="muted small">Dismissed</div><div class="metric" id="dismissedReports">0</div></article></div><div id="reportsList"><div class="empty">Reports will appear here.</div></div><div class="section-head" style="margin-top:25px"><div><h2>Admin Action History</h2><div class="muted small">Recent report moderation actions</div></div><button class="btn" onclick="loadAuditLog()">↻ Refresh history</button></div><div id="auditList"><div class="empty">Audit history will appear here.</div></div></section>
+<section id="analyticsTab" class="hidden">
+ <div class="card">
+  <div class="section-head"><div><h2>📊 Platform Analytics</h2><div class="muted small">Aggregate activity from your HeartTalk database</div></div><div class="toolbar"><select class="control" id="analyticsPeriod" onchange="loadAnalytics()"><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select><button class="btn" onclick="loadAnalytics()">↻ Refresh analytics</button></div></div>
+  <div id="analyticsError" class="hidden notice"></div>
+  <div class="grid">
+   <article class="card"><div class="muted small">Total profiles</div><div class="metric" id="aUsers">—</div><div class="muted small" id="aNewUsers">—</div></article>
+   <article class="card"><div class="muted small">Messages</div><div class="metric" id="aMessages">—</div><div class="muted small" id="aNewMessages">—</div></article>
+   <article class="card"><div class="muted small">Calls</div><div class="metric" id="aCalls">—</div><div class="muted small" id="aNewCalls">—</div></article>
+   <article class="card"><div class="muted small">Forum posts</div><div class="metric" id="aPosts">—</div><div class="muted small" id="aNewPosts">—</div></article>
+   <article class="card"><div class="muted small">Live rooms now</div><div class="metric" id="aLive">—</div><div class="muted small" id="aRooms">—</div></article>
+   <article class="card"><div class="muted small">Active subscriptions</div><div class="metric" id="aSubscriptions">—</div><div class="muted small" id="aSubsTotal">—</div></article>
+   <article class="card"><div class="muted small">Open reports</div><div class="metric" id="aReports">—</div><div class="muted small" id="aReviewing">—</div></article>
+   <article class="card"><div class="muted small">Wallet purchase credits</div><div class="metric" id="aCredits">—</div><div class="muted small" id="aSpent">—</div></article>
+  </div>
+ </div>
+ <div class="card" style="margin-top:16px"><div class="section-head"><div><h2>Daily activity</h2><div class="muted small">New profiles and sent messages per day</div></div></div><div id="dailyActivity" class="empty">Loading activity…</div></div>
+ <div class="card" style="margin-top:16px"><div class="section-head"><div><h2>Revenue & wallet</h2><div class="muted small">Financial reporting based on recorded database fields</div></div></div><div class="grid"><article class="card"><div class="muted small">Wallet purchase credits</div><div class="metric" id="walletPurchases">—</div></article><article class="card"><div class="muted small">Wallet spent credits</div><div class="metric" id="walletSpending">—</div></article><article class="card"><div class="muted small">Wallet refund credits</div><div class="metric" id="walletRefunds">—</div></article><article class="card"><div class="muted small">Payment revenue (INR)</div><div class="metric" style="font-size:20px">Not tracked</div><div class="muted small">No INR transaction amount is stored yet</div></article></div><div class="notice" style="margin-top:14px">Important: Wallet credits are not rupees. Subscription records do not contain paid amounts. Connect a verified payment provider and store successful INR transactions before showing actual revenue.</div></div>
+</section>
 <p class="foot">HeartTalk Admin · Private access · Never share admin credentials or Supabase secret keys.</p>
 </section>
 </main>
@@ -38,7 +56,7 @@ let sessionUser=null,usersCache=[],reportsCache=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
-function switchTab(tab){$("usersTab").classList.toggle("hidden",tab!=="users");$("reportsTab").classList.toggle("hidden",tab!=="reports");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab))}
+function switchTab(tab){$("usersTab").classList.toggle("hidden",tab!=="users");$("reportsTab").classList.toggle("hidden",tab!=="reports");$("analyticsTab").classList.toggle("hidden",tab!=="analytics");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics")loadAnalytics()}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -68,7 +86,7 @@ async function login(){
 window.login=login;
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
 async function logout(){await db.auth.signOut();sessionUser=null;usersCache=[];reportsCache=[];$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
-async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports()])}
+async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics()])}
 async function loadUsers(){const {data,error,count}=await db.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,created_at,updated_at,account_status", {count:"exact"}).order("created_at",{ascending:false}).limit(500);if(error){$("usersList").innerHTML='<div class="notice">Could not load users: '+esc(error.message)+'</div>';return}usersCache=data||[];$("totalUsers").textContent=count??usersCache.length;$("activeUsers").textContent=usersCache.filter(u=>u.account_status!=="blocked").length;$("blockedUsers").textContent=usersCache.filter(u=>u.account_status==="blocked").length;$("userCount").textContent=usersCache.length+" loaded";renderUsers()}
 function renderUsers(){const q=$("userSearch").value.trim().toLowerCase(),f=$("statusFilter").value;const rows=usersCache.filter(u=>(f==="all"||(u.account_status==="blocked"?"blocked":"active")===f)&&((u.display_name||"").toLowerCase().includes(q)||(u.username||"").toLowerCase().includes(q)));if(!rows.length){$("usersList").innerHTML='<div class="empty">No users match this search.</div>';return}$("usersList").innerHTML=rows.map(u=>{const blocked=u.account_status==="blocked",state=blocked?"Blocked":"Active",action=u.id===sessionUser.id?'<span class="muted small">Your admin account</span>':'<button class="btn '+(blocked?'':'danger')+'" onclick="changeStatus(\''+u.id+'\',\''+(blocked?'active':'blocked')+'\')">'+(blocked?'Unblock':'Block user')+'</button>';return '<article class="user-row"><div class="user-main"><div class="user-name">'+esc(u.display_name||"Unnamed user")+'</div><div class="user-meta">@'+esc(u.username||"no username")+' · '+esc(u.age||"—")+' · '+esc(u.country||"")+'</div><div class="user-meta">Joined '+(u.created_at?new Date(u.created_at).toLocaleDateString():"—")+' · '+esc(u.id)+'</div><div class="state '+(blocked?'blocked':'')+'">● '+state+'</div></div><button class="btn" onclick="viewUser(\''+u.id+'\')">View details</button>'+action+'</article>'}).join("")}
 async function viewUser(id){
@@ -84,6 +102,25 @@ async function viewUser(id){
 }
 function closeUser(){$("userModal").classList.remove("show")}
 async function changeStatus(id,status){if(!sessionUser||id===sessionUser.id)return;const verb=status==="blocked"?"block":"unblock";if(!confirm("Are you sure you want to "+verb+" this account?"))return;const {error}=await db.rpc("admin_set_user_status",{target_user_id:id,new_status:status});if(error){toast("Action failed: "+error.message);return}toast("User "+(status==="blocked"?"blocked":"unblocked"));await loadUsers()}
+async function loadAnalytics(){
+ const errorBox=$("analyticsError");if(!errorBox||!sessionUser)return;
+ errorBox.classList.add("hidden");
+ const days=Number($("analyticsPeriod")?.value||7);
+ const {data,error}=await db.rpc("admin_get_analytics",{days_back:days});
+ if(error){errorBox.textContent="Analytics setup required. Run supabase/admin_analytics.sql in Supabase SQL Editor. "+error.message;errorBox.classList.remove("hidden");return}
+ const n=v=>Number(v||0).toLocaleString();
+ $("aUsers").textContent=n(data.users_total);$("aNewUsers").textContent="+"+n(data.users_new_period)+" in selected period";
+ $("aMessages").textContent=n(data.messages_total);$("aNewMessages").textContent=n(data.messages_period)+" in selected period";
+ $("aCalls").textContent=n(data.calls_total);$("aNewCalls").textContent=n(data.calls_period)+" in selected period";
+ $("aPosts").textContent=n(data.forum_posts_total);$("aNewPosts").textContent=n(data.forum_posts_period)+" in selected period";
+ $("aLive").textContent=n(data.live_rooms_active);$("aRooms").textContent=n(data.live_rooms_total)+" rooms created total";
+ $("aSubscriptions").textContent=n(data.subscriptions_active);$("aSubsTotal").textContent=n(data.subscriptions_total)+" total records";
+ $("aReports").textContent=n(data.reports_open);$("aReviewing").textContent=n(data.reports_reviewing)+" under review";
+ $("aCredits").textContent=n(data.wallet_purchase_credits);$("aSpent").textContent=n(data.wallet_spent_credits)+" credits spent";
+ $("walletPurchases").textContent=n(data.wallet_purchase_credits);$("walletSpending").textContent=n(data.wallet_spent_credits);$("walletRefunds").textContent=n(data.wallet_refund_credits);
+ const rows=data.daily||[],max=Math.max(1,...rows.flatMap(x=>[Number(x.signups||0),Number(x.messages||0)]));
+ $("dailyActivity").innerHTML=rows.length?'<div style="display:flex;align-items:flex-end;gap:8px;min-height:190px;overflow-x:auto;padding:12px 4px">'+rows.map(x=>{const date=new Date(x.date+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});const su=Number(x.signups||0),me=Number(x.messages||0);return '<div style="min-width:48px;flex:1;text-align:center"><div class="small muted">'+n(su)+' / '+n(me)+'</div><div style="height:125px;display:flex;align-items:flex-end;justify-content:center;gap:4px"><div title="Signups: '+su+'" style="width:13px;height:'+Math.max(3,su/max*115)+'px;background:#ff5e91;border-radius:5px 5px 0 0"></div><div title="Messages: '+me+'" style="width:13px;height:'+Math.max(3,me/max*115)+'px;background:#a855f7;border-radius:5px 5px 0 0"></div></div><div class="small muted" style="margin-top:7px">'+esc(date)+'</div></div>'}).join("")+'</div><div class="muted small">Pink = new signups · Purple = messages · Values above bars show signups / messages</div>':'<div class="empty">No daily activity data yet.</div>';
+}
 async function loadReports(){
  const {data,error}=await db.rpc("admin_list_user_reports");
  if(error){$("reportsList").innerHTML='<div class="notice">Reports could not load. Run supabase/admin_reports_management.sql in Supabase SQL Editor. '+esc(error.message)+'</div>';return}
