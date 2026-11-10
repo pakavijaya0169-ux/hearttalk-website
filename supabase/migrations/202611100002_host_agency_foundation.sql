@@ -305,7 +305,7 @@ returns boolean
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_user_id uuid;
   v_document_type text;
@@ -336,8 +336,7 @@ begin
 
   return true;
 end;
-$;
-
+$$;
 revoke all on function public.admin_review_host_kyc_document(uuid,text,text) from public;
 grant execute on function public.admin_review_host_kyc_document(uuid,text,text) to authenticated;
 
