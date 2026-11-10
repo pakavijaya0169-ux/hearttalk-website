@@ -40,7 +40,20 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
 function switchTab(tab){$("usersTab").classList.toggle("hidden",tab!=="users");$("reportsTab").classList.toggle("hidden",tab!=="reports");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab))}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
-async function login(){const email=$("email").value.trim(),password=$("password").value;const b=$("loginBtn");$("loginError").textContent="";b.disabled=true;b.textContent="Checking access…";try{const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;if(!await verifyAdmin(data.user)){await db.auth.signOut();throw new Error("This account does not have HeartTalk admin access.")}sessionUser=data.user;showApp();await refreshAll()}catch(e){$("loginError").textContent=e.message||"Sign in failed"}finally{b.disabled=false;b.textContent="Sign in securely"}}
+async function login(){
+ const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn");
+ $("loginError").textContent="";b.disabled=true;b.textContent="Checking access…";
+ try{
+  const {data,error}=await db.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  const allowed=await verifyAdmin(data.user);
+  if(!allowed){await db.auth.signOut();throw new Error("This account does not have HeartTalk admin access.")}
+  sessionUser=data.user;await showApp();await refreshAll();
+ }catch(e){
+  $("loginError").textContent=e?.message||"Sign in failed. Please try again.";
+  console.error("HeartTalk admin sign-in failed:",e);
+ }finally{b.disabled=false;b.textContent="Sign in securely"}
+}
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
 async function logout(){await db.auth.signOut();sessionUser=null;usersCache=[];reportsCache=[];$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
 async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports()])}
@@ -96,7 +109,18 @@ async function loadAuditLog(){
  if(!data?.length){target.innerHTML='<div class="empty">No admin actions recorded yet.</div>';return}
  target.innerHTML=data.map(x=>'<article class="report-row"><div class="user-main"><b>'+esc(x.action.replaceAll("_"," "))+'</b><div class="user-meta">'+esc(x.target_type)+' #'+esc(x.target_id)+' · '+(x.created_at?new Date(x.created_at).toLocaleString():"")+'</div><div class="user-meta">Admin ID: '+esc(x.admin_user_id)+'</div><div class="user-meta">Change: '+esc(JSON.stringify(x.details||{}))+'</div></div></article>').join("");
 }
-db.auth.onAuthStateChange(async(_event,session)=>{if(!session?.user){sessionUser=null;return}if(await verifyAdmin(session.user)){sessionUser=session.user;showApp();refreshAll()}else{await db.auth.signOut();$("loginError").textContent="This account does not have admin access."}});
+// Keep the auth event callback synchronous. Do not make Supabase requests
+// from inside onAuthStateChange: doing so can deadlock the auth lock during sign-in.
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_OUT"){
+  sessionUser=null;
+  $("appView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  $("logoutBtn").classList.add("hidden");
+  return;
+ }
+ if(session?.user) sessionUser=session.user;
+});
 db.auth.getSession().then(async({data})=>{if(data.session?.user){if(await verifyAdmin(data.session.user)){sessionUser=data.session.user;showApp();refreshAll()}else{await db.auth.signOut()}}});
 </script>
 </body></html>
