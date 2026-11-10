@@ -640,6 +640,11 @@ p{color:#77747e}
   <div class="panel"><div class="muted">Open reports</div><div id="adminOpenReports" style="font-size:30px;font-weight:800">—</div></div>
   <div class="panel"><div class="muted">All reports</div><div id="adminAllReports" style="font-size:30px;font-weight:800">—</div></div>
  </div>
+ <div class="panel" style="margin:14px 0">
+  <div class="section-head"><div><h3>👥 User Management</h3><p class="muted">Search members and manage account access</p></div><span class="muted" id="adminUsersStatus">Not loaded</span></div>
+  <div class="toolbar"><input id="adminUserSearch" type="search" placeholder="Search by name or username…" oninput="renderAdminUsers()"><select id="adminUserStatusFilter" class="field" style="max-width:180px;margin:0" onchange="renderAdminUsers()"><option value="all">All users</option><option value="active">Active</option><option value="blocked">Blocked</option></select><button class="secondary" type="button" onclick="loadAdminUsers()">↻ Refresh users</button></div>
+  <div id="adminUsersList"><p class="muted">User accounts will appear here.</p></div>
+ </div>
  <div class="panel"><div class="section-head"><h3>🚩 User reports</h3><span class="muted" id="adminReportStatus">Loading…</span></div><div id="adminReportsList"><p class="muted">Reports will appear here.</p></div></div>
  <p class="notice" style="margin-top:14px">Admin actions are protected by Supabase Row Level Security.</p>
 </section></main>
@@ -1357,9 +1362,47 @@ async function loadAdminDashboard(){
  document.getElementById("adminAllReports").textContent=reports.error?"—":String(reports.data?reports.data.length:0);
  document.getElementById("adminOpenReports").textContent=openReports.error?"—":String(openReports.count||0);
  if(reports.error){status.textContent="Could not load reports. Check admin RLS migration.";list.innerHTML="<p class='muted'>Reports unavailable.</p>";return}
+ await loadAdminUsers();
  status.textContent=(reports.data?reports.data.length:0)+" recent reports";
  if(!reports.data||!reports.data.length){list.innerHTML="<p class='muted'>No reports submitted yet.</p>";return}
  list.innerHTML=reports.data.map(r=>"<article class='panel' style='margin:10px 0'><div style='display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap'><b>"+escapeHtml(r.reason)+"</b><span class='muted'>"+escapeHtml(r.status)+"</span></div><p>"+escapeHtml(r.details||"No additional details")+"</p><small class='muted'>Reported user: "+escapeHtml(r.reported_user_id)+" · "+escapeHtml(new Date(r.created_at).toLocaleString())+"</small><div style='display:flex;gap:8px;flex-wrap:wrap;margin-top:10px'><button class='secondary' onclick='setHeartTalkReportStatus("+r.id+", \"reviewing\")'>Reviewing</button><button class='secondary' onclick='setHeartTalkReportStatus("+r.id+", \"resolved\")'>Resolve</button><button class='secondary' onclick='setHeartTalkReportStatus("+r.id+", \"dismissed\")'>Dismiss</button></div></article>").join("");
+}
+let adminUsersCache=[];
+async function loadAdminUsers(){
+ const status=document.getElementById("adminUsersStatus"),list=document.getElementById("adminUsersList");
+ if(!status||!list)return;
+ if(!currentUser){status.textContent="Admin login required";return}
+ status.textContent="Loading users…";list.innerHTML='<p class="muted">Loading registered users…</p>';
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,created_at,account_status").order("created_at",{ascending:false}).limit(500);
+ if(error){status.textContent="Could not load users";list.innerHTML='<div class="notice">User list unavailable. Run supabase/admin_user_management.sql in Supabase SQL Editor. '+escapeHtml(error.message)+'</div>';return}
+ adminUsersCache=data||[];
+ status.textContent=adminUsersCache.length+" users";
+ renderAdminUsers();
+}
+function renderAdminUsers(){
+ const list=document.getElementById("adminUsersList");if(!list)return;
+ const q=(document.getElementById("adminUserSearch")?.value||"").trim().toLowerCase();
+ const filter=document.getElementById("adminUserStatusFilter")?.value||"all";
+ const rows=adminUsersCache.filter(u=>{
+  const state=u.account_status==="blocked"?"blocked":"active";
+  return (filter==="all"||filter===state)&&((u.display_name||"").toLowerCase().includes(q)||(u.username||"").toLowerCase().includes(q));
+ });
+ if(!rows.length){list.innerHTML='<p class="muted">No users match this search.</p>';return}
+ list.innerHTML=rows.map(u=>{
+  const state=u.account_status==="blocked"?"blocked":"active",label=state==="blocked"?"⛔ Blocked":"● Active";
+  const joined=u.created_at?new Date(u.created_at).toLocaleDateString():"—";
+  return '<article class="panel" style="margin:10px 0;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap"><div style="min-width:0;flex:1"><b>'+escapeHtml(u.display_name||"Unnamed member")+'</b><div class="muted">@'+escapeHtml(u.username||"no-username")+' · '+escapeHtml(u.age||"—")+' · '+escapeHtml(u.country||"")+'</div><small class="muted">Joined '+escapeHtml(joined)+' · ID '+escapeHtml(u.id)+'</small><div style="margin-top:7px;color:'+(state==="blocked"?"#ff7b91":"#62d6a5")+';font-size:12px;font-weight:800">'+label+'</div></div><button class="secondary" type="button" onclick="setHeartTalkUserStatus(\''+u.id+'\',\''+(state==="blocked"?"active":"blocked")+'\')">'+(state==="blocked"?"Unblock user":"Block user")+'</button></article>';
+ }).join("");
+}
+async function setHeartTalkUserStatus(userId,status){
+ if(!currentUser){notify("Please log in as an admin.");return}
+ if(userId===currentUser.id){notify("You cannot block your own admin account.");return}
+ const action=status==="blocked"?"block":"unblock";
+ if(!confirm("Are you sure you want to "+action+" this user?"))return;
+ const {error}=await supabaseClient.rpc("admin_set_user_status",{target_user_id:userId,new_status:status});
+ if(error){notify("Could not "+action+" user. Check admin SQL setup and permissions.");console.error(error);return}
+ notify(status==="blocked"?"User blocked successfully.":"User unblocked successfully.");
+ await loadAdminUsers();
 }
 async function setHeartTalkReportStatus(reportId,status){
  const {error}=await supabaseClient.from("user_reports").update({status}).eq("id",reportId);
