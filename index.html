@@ -579,7 +579,7 @@ p{color:#77747e}
 <div class="ig-edit-photo-area"><div class="ig-edit-photo" id="editProfileAvatar">🙂</div><label for="profilePhotoInput" class="ig-edit-photo-link">📷 Upload your own photo</label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadProfilePhoto(event)"></div>
 <div class="avatar-picker" id="avatarPicker">
  <div class="avatar-picker-head"><div><b>✨ Choose your cartoon avatar</b><small>Glossy 3D-look cartoon characters · choose your favourite</small></div><span>3D CARTOON</span></div>
- <div class="avatar-gender-tabs"><button type="button" class="active" data-avatar-gender="female" onclick="setAvatarGender('female',this)">👩 Female</button><button type="button" data-avatar-gender="male" onclick="setAvatarGender('male',this)">👨 Male</button><button type="button" data-avatar-gender="other" onclick="setAvatarGender('other',this)">🧑 Other</button></div>
+ <div class="avatar-gender-tabs"><button type="button" class="active" data-avatar-gender="female" onclick="setAvatarGender('female',this)">👩 Female</button><button type="button" data-avatar-gender="male" onclick="setAvatarGender('male',this)">👨 Male</button></div>
  <div class="ht-3d-stage"><canvas id="hearttalk3DCanvas" aria-label="Interactive 3D cartoon avatar"></canvas><div class="ht-3d-hint">Drag to rotate · Select a character below</div></div>
  <div class="avatar-options" id="avatarOptions"></div>
  <p class="avatar-picker-note">Choose a character, then tap Save changes.</p>
@@ -726,7 +726,7 @@ async function loadProfile(){
  const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender").eq("id",currentUser.id).maybeSingle();
  if(error){console.error(error);notify("Profile load failed: "+error.message);return}
  if(data){
-  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";document.getElementById("profileGender").value=data.gender||"female";selectedHeartTalkGender=data.gender||"female";selectedHeartTalkAvatar=data.avatar_url||"";
+  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";document.getElementById("profileGender").value=(data.gender==="male"?"male":"female");selectedHeartTalkGender=(data.gender==="male"?"male":"female");selectedHeartTalkAvatar=data.avatar_url||"";
   document.getElementById("profileDisplayName").textContent=data.display_name||"Your name";
   document.getElementById("profileHandle").textContent=(data.username||"hearttalk_member");
   document.getElementById("profileDisplayAge").textContent=data.age?data.age+" years":"18+";
@@ -789,7 +789,7 @@ function openProfileSettings(){
  if(panel){panel.style.display="block";setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),80);}
 }
 
-const heartTalkAvatarSeeds={female:["Ananya jasmine braid","Diya pink saree bindi","Meera headphones hoodie","Isha round glasses","Kavya flower hair","Sana pink cap","Aadhya traditional gold jhumka","Nisha bob haircut yellow kurti","Tara white floral dress","Mira winter beanie","Riya pink hoodie heart","Noor flower crown","Avani purple headphones","Ira yellow sweater glasses","Vijaya silk saree jasmine"],male:["Arjun headphones hoodie","Ayaan round glasses","Kabir curly hair","Rohan black cap","Dev sunglasses","Ishaan winter beanie","Reyansh yellow hoodie glasses","Advik purple headphones","Vihaan black jacket","Kian smart suit glasses","Neil denim jacket","Aarav grey hoodie","Rudra brown jacket","Shaurya red hoodie","Vikram styled beard"],other:["Sky","River","Ari","Robin","Sam","Alex","Kai","Sunny","Jules","Noor","Ash","Sage"]};
+const heartTalkAvatarSeeds={female:["Ananya jasmine braid","Diya pink saree bindi","Meera headphones hoodie","Isha round glasses","Kavya flower hair","Sana pink cap","Aadhya traditional gold jhumka","Nisha bob haircut yellow kurti","Tara white floral dress","Mira winter beanie","Riya pink hoodie heart","Noor flower crown","Avani purple headphones","Ira yellow sweater glasses","Vijaya silk saree jasmine"],male:["Arjun headphones hoodie","Ayaan round glasses","Kabir curly hair","Rohan black cap","Dev sunglasses","Ishaan winter beanie","Reyansh yellow hoodie glasses","Advik purple headphones","Vihaan black jacket","Kian smart suit glasses","Neil denim jacket","Aarav grey hoodie","Rudra brown jacket","Shaurya red hoodie","Vikram styled beard"]};
 let selectedHeartTalkAvatar="";let selectedHeartTalkGender="female";
 function heartTalkAvatarUrl(seed){
  // Locally generated glossy 3D-style avatar artwork; no external image service required.
@@ -853,7 +853,7 @@ const heartTalkFemaleAvatarFiles=[
 ];
 function renderHeartTalkAvatarChoices(){
  const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";
- (heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{
+ (heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.female).forEach((seed,index)=>{
   const heartTalkMaleAvatarFiles=[
  "a_polished_high_detail_cartoon_vector_portrait_in.png",
  "a_polished_detailed_vector_cartoon_style_portrait.png",
