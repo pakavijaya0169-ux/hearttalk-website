@@ -21,8 +21,17 @@
  <article class="card"><div class="muted small">Blocked users</div><div class="metric" id="blockedUsers">—</div></article>
  <article class="card"><div class="muted small">Open reports</div><div class="metric" id="openReports">—</div></article>
 </div>
-<div class="tabs"><button class="tab active" data-tab="users" onclick="switchTab('users')">👥 Users</button><button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 Reports</button><button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊 Analytics & Revenue</button></div>
-<section id="usersTab" class="card"><div class="section-head"><div><h2>User Management</h2><div class="muted small">Search profiles and manage account access</div></div><span class="muted small" id="userCount">—</span></div><div class="toolbar"><input class="control search" id="userSearch" placeholder="Search name or username…" oninput="renderUsers()"><select class="control" id="statusFilter" onchange="renderUsers()"><option value="all">All users</option><option value="active">Active</option><option value="blocked">Blocked</option></select></div><div id="usersList"><div class="empty">Users will appear here.</div></div></section>
+<div class="tabs"><button class="tab active" data-tab="users" onclick="switchTab('users')">👥 User Registry</button><button class="tab" data-tab="profiles" onclick="switchTab('profiles')">🖼️ Profile Review</button><button class="tab" data-tab="security" onclick="switchTab('security')">🔐 Security & RBAC</button><button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 Reports</button><button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊 Analytics & Revenue</button></div>
+<section id="usersTab" class="card"><div class="section-head"><div><h2>👤 User Master Registry</h2><div class="muted small">Search by name, username, User ID, email or phone using admin-only database access</div></div><span class="muted small" id="userCount">—</span></div><div class="toolbar"><input class="control search" id="userSearch" placeholder="Name / username / User ID / email / phone" onkeydown="if(event.key==='Enter')loadUsers()"><select class="control" id="statusFilter"><option value="all">All users</option><option value="active">Active</option><option value="blocked">Blocked</option></select><input class="control" id="userRegionFilter" placeholder="Country / State" style="width:155px"><input class="control" id="userDateFrom" type="date" title="Registered from"><input class="control" id="userDateTo" type="date" title="Registered until"><button class="btn" onclick="loadUsers()">Search</button><button class="btn" onclick="resetUserFilters()">Reset</button></div><div class="notice small">Truecaller ID and hardware IMEI/MAC are not collected by the current app. We will not scrape those identifiers. Device blocking uses app-generated hashed device tokens.</div><div id="usersList"><div class="empty">Users will appear here.</div></div></section>
+<section id="profilesTab" class="card hidden"><div class="section-head"><div><h2>🖼️ Profile Moderation Queue</h2><div class="muted small">Review new or edited avatars, usernames and bios before they are visible to other users</div></div><button class="btn" onclick="loadProfileQueue()">↻ Refresh queue</button></div><div id="profileQueueList"><div class="empty">Loading profile review queue…</div></div></section>
+<section id="securityTab" class="hidden">
+ <div class="card"><div class="section-head"><div><h2>🔐 Device & IP Hash Blacklist</h2><div class="muted small">Store hashed app device tokens or IP identifiers. Never enter Aadhaar, IMEI or MAC addresses.</div></div><button class="btn" onclick="loadIdentityBlacklist()">↻ Refresh</button></div>
+  <div class="toolbar"><select class="control" id="blacklistType"><option value="device_token_hash">App device-token SHA-256</option><option value="ip_hash">IP SHA-256</option></select><input class="control search" id="blacklistHash" placeholder="64-character lowercase SHA-256 hash"><input class="control search" id="blacklistReason" placeholder="Reason for blacklist"><button class="btn danger" onclick="addIdentityBlacklist()">Add hash</button></div><div id="blacklistList"><div class="empty">No blacklist entries loaded.</div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><div class="section-head"><div><h2>Staff Role Management</h2><div class="muted small">Super Admin assigns limited staff roles. These roles do not yet grant access to admin tools.</div></div><button class="btn" onclick="loadStaffRoles()">↻ Refresh</button></div>
+  <div class="toolbar"><input class="control search" id="staffUserId" placeholder="Staff Supabase User UUID"><select class="control" id="staffRole"><option value="moderator">Moderator</option><option value="agency_manager">Agency Manager</option><option value="support">Support</option><option value="remove">Remove role</option></select><button class="btn" onclick="saveStaffRole()">Save role</button></div><div id="staffRolesList"><div class="empty">No staff roles loaded.</div></div>
+ </div>
+</section>
 <section id="reportsTab" class="card hidden"><div class="section-head"><div><h2>User Reports</h2><div class="muted small">Review, resolve and audit community reports</div></div><span class="muted small" id="reportCount">—</span></div><div class="toolbar"><select class="control" id="reportStatusFilter" onchange="renderReports()"><option value="all">All reports</option><option value="open">Pending</option><option value="reviewing">Under review</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select><button class="btn" onclick="loadReports()">↻ Refresh reports</button></div><div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px"><article class="card"><div class="muted small">Pending</div><div class="metric" id="pendingReports">0</div></article><article class="card"><div class="muted small">Reviewing</div><div class="metric" id="reviewingReports">0</div></article><article class="card"><div class="muted small">Resolved</div><div class="metric" id="resolvedReports">0</div></article><article class="card"><div class="muted small">Dismissed</div><div class="metric" id="dismissedReports">0</div></article></div><div id="reportsList"><div class="empty">Reports will appear here.</div></div><div class="section-head" style="margin-top:25px"><div><h2>Admin Action History</h2><div class="muted small">Recent report moderation actions</div></div><button class="btn" onclick="loadAuditLog()">↻ Refresh history</button></div><div id="auditList"><div class="empty">Audit history will appear here.</div></div></section>
 <section id="analyticsTab" class="hidden">
  <div class="card">
@@ -56,7 +65,7 @@ let sessionUser=null,usersCache=[],reportsCache=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
-function switchTab(tab){$("usersTab").classList.toggle("hidden",tab!=="users");$("reportsTab").classList.toggle("hidden",tab!=="reports");$("analyticsTab").classList.toggle("hidden",tab!=="analytics");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics")loadAnalytics()}
+function switchTab(tab){["users","profiles","security","reports","analytics"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics")loadAnalytics();if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -87,8 +96,14 @@ window.login=login;
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
 async function logout(){await db.auth.signOut();sessionUser=null;usersCache=[];reportsCache=[];$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
 async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics()])}
-async function loadUsers(){const {data,error,count}=await db.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,created_at,updated_at,account_status", {count:"exact"}).order("created_at",{ascending:false}).limit(500);if(error){$("usersList").innerHTML='<div class="notice">Could not load users: '+esc(error.message)+'</div>';return}usersCache=data||[];$("totalUsers").textContent=count??usersCache.length;$("activeUsers").textContent=usersCache.filter(u=>u.account_status!=="blocked").length;$("blockedUsers").textContent=usersCache.filter(u=>u.account_status==="blocked").length;$("userCount").textContent=usersCache.length+" loaded";renderUsers()}
-function renderUsers(){const q=$("userSearch").value.trim().toLowerCase(),f=$("statusFilter").value;const rows=usersCache.filter(u=>(f==="all"||(u.account_status==="blocked"?"blocked":"active")===f)&&((u.display_name||"").toLowerCase().includes(q)||(u.username||"").toLowerCase().includes(q)));if(!rows.length){$("usersList").innerHTML='<div class="empty">No users match this search.</div>';return}$("usersList").innerHTML=rows.map(u=>{const blocked=u.account_status==="blocked",state=blocked?"Blocked":"Active",action=u.id===sessionUser.id?'<span class="muted small">Your admin account</span>':'<button class="btn '+(blocked?'':'danger')+'" onclick="changeStatus(\''+u.id+'\',\''+(blocked?'active':'blocked')+'\')">'+(blocked?'Unblock':'Block user')+'</button>';return '<article class="user-row"><div class="user-main"><div class="user-name">'+esc(u.display_name||"Unnamed user")+'</div><div class="user-meta">@'+esc(u.username||"no username")+' · '+esc(u.age||"—")+' · '+esc(u.country||"")+'</div><div class="user-meta">Joined '+(u.created_at?new Date(u.created_at).toLocaleDateString():"—")+' · '+esc(u.id)+'</div><div class="state '+(blocked?'blocked':'')+'">● '+state+'</div></div><button class="btn" onclick="viewUser(\''+u.id+'\')">View details</button>'+action+'</article>'}).join("")}
+async function loadUsers(){
+ const args={search_term:$("userSearch").value.trim()||null,status_filter:$("statusFilter").value,country_filter:$("userRegionFilter").value.trim()||null,date_from:$("userDateFrom").value?new Date($("userDateFrom").value+"T00:00:00").toISOString():null,date_to:$("userDateTo").value?new Date(new Date($("userDateTo").value+"T00:00:00").getTime()+86400000).toISOString():null,result_limit:500};
+ const {data,error}=await db.rpc("admin_list_user_registry",args);
+ if(error){$("usersList").innerHTML='<div class="notice">User Registry SQL setup required. Run supabase/phase1_identity_management.sql. '+esc(error.message)+'</div>';return}
+ usersCache=data||[];$("totalUsers").textContent=usersCache.length;$("activeUsers").textContent=usersCache.filter(u=>u.account_status!=="blocked").length;$("blockedUsers").textContent=usersCache.filter(u=>u.account_status==="blocked").length;$("userCount").textContent=usersCache.length+" users found";renderUsers()
+}
+function resetUserFilters(){$("userSearch").value="";$("statusFilter").value="all";$("userRegionFilter").value="";$("userDateFrom").value="";$("userDateTo").value="";loadUsers()}
+function renderUsers(){const rows=usersCache;if(!rows.length){$("usersList").innerHTML='<div class="empty">No users match this search.</div>';return}$("usersList").innerHTML=rows.map(u=>{const blocked=u.account_status==="blocked",state=blocked?"Blocked":"Active",action=u.id===sessionUser.id?'<span class="muted small">Your admin account</span>':'<button class="btn '+(blocked?'':'danger')+'" onclick="changeStatus(\''+u.id+'\',\''+(blocked?'active':'blocked')+'\')">'+(blocked?'Unblock':'Block user')+'</button>';return '<article class="user-row"><div class="user-main"><div class="user-name">'+esc(u.display_name||"Unnamed user")+'</div><div class="user-meta">@'+esc(u.username||"no username")+' · '+esc(u.age||"—")+' · '+esc(u.state||u.country||"")+'</div><div class="user-meta">Email: '+esc(u.email||"—")+' · Phone: '+esc(u.phone||"—")+'</div><div class="user-meta">Joined '+(u.created_at?new Date(u.created_at).toLocaleDateString():"—")+' · '+esc(u.id)+'</div><div class="state '+(blocked?'blocked':'')+'">● '+state+'</div></div><button class="btn" onclick="viewUser(\''+u.id+'\')">View details</button>'+action+'</article>'}).join("")}
 async function viewUser(id){
  const u=usersCache.find(x=>x.id===id);if(!u)return;
  $("userModal").classList.add("show");
@@ -102,6 +117,46 @@ async function viewUser(id){
 }
 function closeUser(){$("userModal").classList.remove("show")}
 async function changeStatus(id,status){if(!sessionUser||id===sessionUser.id)return;const verb=status==="blocked"?"block":"unblock";if(!confirm("Are you sure you want to "+verb+" this account?"))return;const {error}=await db.rpc("admin_set_user_status",{target_user_id:id,new_status:status});if(error){toast("Action failed: "+error.message);return}toast("User "+(status==="blocked"?"blocked":"unblocked"));await loadUsers()}
+async function loadProfileQueue(){
+ const box=$("profileQueueList");box.innerHTML='<div class="empty">Loading pending profiles…</div>';
+ const {data,error}=await db.rpc("admin_list_profile_review_queue");
+ if(error){box.innerHTML='<div class="notice">Run supabase/phase1_identity_management.sql first. '+esc(error.message)+'</div>';return}
+ if(!data?.length){box.innerHTML='<div class="empty">No pending profile reviews.</div>';return}
+ box.innerHTML=data.map(p=>'<article class="user-row"><div class="user-main">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="Profile avatar" style="width:64px;height:64px;border-radius:50%;object-fit:cover;float:left;margin-right:14px">':'')+'<div class="user-name">'+esc(p.display_name||"Unnamed user")+'</div><div class="user-meta">@'+esc(p.username||"no username")+' · '+esc(p.state||p.country||"")+'</div><p>'+esc(p.bio||"No bio")+'</p><div class="user-meta">Submitted '+new Date(p.submitted_at).toLocaleString()+' · '+esc(p.user_id)+'</div></div><div class="toolbar"><button class="btn primary" onclick="reviewProfile(\''+p.user_id+'\',\'approved\')">Approve</button><button class="btn danger" onclick="reviewProfile(\''+p.user_id+'\',\'rejected\')">Reject</button></div></article>').join("")
+}
+async function reviewProfile(id,decision){
+ const note=prompt("Optional moderator note (do not enter sensitive personal information):","");if(note===null)return;
+ const {error}=await db.rpc("admin_review_profile",{target_user_id:id,decision,moderator_note:note||null});
+ if(error){toast("Profile review failed: "+error.message);return}toast("Profile "+decision);await loadProfileQueue();await loadUsers()
+}
+async function loadIdentityBlacklist(){
+ const box=$("blacklistList");box.innerHTML='<div class="empty">Loading blacklist…</div>';
+ const {data,error}=await db.rpc("admin_list_identity_blacklist");
+ if(error){box.innerHTML='<div class="notice">Run Phase 1 SQL first. '+esc(error.message)+'</div>';return}
+ box.innerHTML=data?.length?data.map(x=>'<article class="user-row"><div class="user-main"><b>'+esc(x.identifier_type)+'</b><div class="user-meta">'+esc(x.identifier_hash)+'</div><div class="user-meta">'+esc(x.reason)+' · '+new Date(x.created_at).toLocaleString()+'</div><div class="state '+(x.active?'blocked':'')+'">'+(x.active?'Active blacklist':'Disabled')+'</div></div><button class="btn" onclick="toggleBlacklist('+x.id+','+(!x.active)+')">'+(x.active?'Disable':'Enable')+'</button></article>').join(""):'<div class="empty">No blacklist entries.</div>'
+}
+async function addIdentityBlacklist(){
+ const type=$("blacklistType").value,hash=$("blacklistHash").value.trim(),reason=$("blacklistReason").value.trim();
+ if(!/^[a-f0-9]{64}$/.test(hash)){toast("Enter a 64-character lowercase SHA-256 hash.");return}
+ if(reason.length<3){toast("Enter a reason of at least 3 characters.");return}
+ const {error}=await db.rpc("admin_add_identity_blacklist",{identifier_type:type,identifier_hash:hash,reason});
+ if(error){toast("Could not add hash: "+error.message);return}
+ $("blacklistHash").value="";$("blacklistReason").value="";toast("Hashed identifier added.");loadIdentityBlacklist()
+}
+async function toggleBlacklist(id,active){const {error}=await db.rpc("admin_set_blacklist_active",{target_id:id,is_active:active});if(error){toast(error.message);return}loadIdentityBlacklist()}
+async function loadStaffRoles(){
+ const box=$("staffRolesList");box.innerHTML='<div class="empty">Loading staff roles…</div>';
+ const {data,error}=await db.rpc("admin_list_staff_roles");
+ if(error){box.innerHTML='<div class="notice">Run Phase 1 SQL first. '+esc(error.message)+'</div>';return}
+ box.innerHTML=data?.length?data.map(x=>'<article class="user-row"><div class="user-main"><b>'+esc(x.email||x.user_id)+'</b><div class="user-meta">'+esc(x.user_id)+'</div><div class="state">'+esc(x.staff_role)+'</div></div></article>').join(""):'<div class="empty">No staff roles assigned.</div>'
+}
+async function saveStaffRole(){
+ const id=$("staffUserId").value.trim(),role=$("staffRole").value;
+ if(!/^[0-9a-f-]{36}$/i.test(id)){toast("Enter a valid Supabase User UUID.");return}
+ const {error}=await db.rpc("admin_set_staff_role",{target_user_id:id,new_staff_role:role});
+ if(error){toast("Could not update staff role: "+error.message);return}
+ $("staffUserId").value="";toast("Staff role updated.");loadStaffRoles()
+}
 async function loadAnalytics(){
  const errorBox=$("analyticsError");if(!errorBox||!sessionUser)return;
  errorBox.classList.add("hidden");
