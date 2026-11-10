@@ -93,6 +93,7 @@ grant execute on function public.is_profile_approved(uuid) to authenticated;
 
 -- Hide unapproved profiles from other users; owners can always see their own.
 drop policy if exists "Users can view profiles" on public.profiles;
+drop policy if exists "Users can view approved profiles" on public.profiles;
 create policy "Users can view approved profiles"
 on public.profiles for select to authenticated
 using (
