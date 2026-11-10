@@ -74,16 +74,30 @@ when (
 )
 execute function public.queue_profile_for_review();
 
+-- SECURITY DEFINER lookup avoids profile_review_queue RLS blocking the
+-- approval check when another authenticated user views a profile.
+create or replace function public.is_profile_approved(target_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select exists(
+    select 1 from public.profile_review_queue q
+    where q.profile_id=target_profile_id and q.status='approved'
+  );
+$;
+revoke all on function public.is_profile_approved(uuid) from public;
+grant execute on function public.is_profile_approved(uuid) to authenticated;
+
 -- Hide unapproved profiles from other users; owners can always see their own.
 drop policy if exists "Users can view profiles" on public.profiles;
 create policy "Users can view approved profiles"
 on public.profiles for select to authenticated
 using (
   auth.uid() = id
-  or exists (
-    select 1 from public.profile_review_queue q
-    where q.profile_id = profiles.id and q.status = 'approved'
-  )
+  or public.is_profile_approved(profiles.id)
   or exists (
     select 1 from public.hearttalk_user_roles r
     where r.user_id = auth.uid() and r.role = 'admin'
@@ -244,6 +258,29 @@ begin
   return true;
 end;
 $$;
+
+-- Prevent ordinary users from bypassing the admin account-status RPC.
+create or replace function public.guard_profile_account_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if new.account_status is distinct from old.account_status
+     and not exists (
+       select 1 from public.hearttalk_user_roles r
+       where r.user_id=auth.uid() and r.role='admin'
+     ) then
+    raise exception 'Only an administrator can change account status';
+  end if;
+  return new;
+end;
+$;
+drop trigger if exists profiles_guard_account_status on public.profiles;
+create trigger profiles_guard_account_status
+before update of account_status on public.profiles
+for each row execute function public.guard_profile_account_status();
 
 -- RBAC staff assignments. Existing hearttalk_user_roles role='admin' remains
 -- the Super Admin authority; these narrower roles do not grant admin RPC access.
