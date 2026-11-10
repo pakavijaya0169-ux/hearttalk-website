@@ -11,7 +11,7 @@
 <body>
 <header class="top"><div class="brand"><span class="logo">🛡️</span> HeartTalk <span class="muted">/ Admin</span></div><button id="logoutBtn" class="btn hidden" onclick="logout()">Log out</button></header>
 <main class="wrap">
-<section id="loginView" class="card login"><div class="eyebrow">Private control center</div><h1>Admin sign in</h1><p class="muted">Sign in with an existing HeartTalk admin account. Public registration is disabled here.</p><form onsubmit="event.preventDefault();login()"><label class="field"><span>Admin email</span><input class="control" id="email" type="email" autocomplete="username" required placeholder="admin@example.com"></label><label class="field"><span>Password</span><input class="control" id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label><button id="loginBtn" class="btn primary" type="submit">Sign in securely</button></form><p id="loginError" class="muted small"></p><div class="foot">Access is verified against the HeartTalk admin role in Supabase.</div></section>
+<section id="loginView" class="card login"><div class="eyebrow">Private control center</div><h1>Admin sign in</h1><p class="muted">Sign in with an existing HeartTalk admin account. Public registration is disabled here.</p><div><label class="field"><span>Admin email</span><input class="control" id="email" type="email" autocomplete="username" required placeholder="admin@example.com"></label><label class="field"><span>Password</span><input class="control" id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label><button id="loginBtn" class="btn primary" type="button" onclick="login()">Sign in securely</button></div><p id="loginError" class="small" role="status" aria-live="polite" style="min-height:20px;color:#ff9ab8;margin-top:12px"></p><div class="foot">Access is verified against the HeartTalk admin role in Supabase.</div></section>
 <section id="appView" class="hidden">
 <div class="heading"><div><div class="eyebrow">HeartTalk control center</div><h1>Admin Dashboard</h1><div class="muted">Platform overview and community safety</div></div><button class="btn" onclick="refreshAll()">↻ Refresh data</button></div>
 <div class="notice">Admin-only workspace. Sensitive actions are checked again by Supabase Row Level Security and secure database functions.</div>
@@ -41,17 +41,27 @@ function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";
 function switchTab(tab){$("usersTab").classList.toggle("hidden",tab!=="users");$("reportsTab").classList.toggle("hidden",tab!=="reports");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab))}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
- const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn");
- $("loginError").textContent="";b.disabled=true;b.textContent="Checking access…";
+ const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
+ message.textContent="";
+ if(!email||!password){message.textContent="Enter your email and password.";return}
+ b.disabled=true;b.textContent="Connecting to Supabase…";
+ message.textContent="Checking your HeartTalk account…";
  try{
-  const {data,error}=await db.auth.signInWithPassword({email,password});
-  if(error)throw error;
-  const allowed=await verifyAdmin(data.user);
-  if(!allowed){await db.auth.signOut();throw new Error("This account does not have HeartTalk admin access.")}
-  sessionUser=data.user;await showApp();await refreshAll();
+  const result=await Promise.race([
+   db.auth.signInWithPassword({email,password}),
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error("The sign-in request timed out. Check your internet connection and try again.")),15000))
+  ]);
+  if(result.error)throw result.error;
+  if(!result.data?.user)throw new Error("Supabase did not return a signed-in user. Please try again.");
+  message.textContent="Checking administrator permission…";
+  const allowed=await verifyAdmin(result.data.user);
+  if(!allowed){await db.auth.signOut();throw new Error("Login succeeded, but this account is not assigned the HeartTalk admin role. The admin role must be added to hearttalk_user_roles for this user ID.");}
+  sessionUser=result.data.user;
+  message.textContent="Access verified. Loading dashboard…";
+  await showApp();await refreshAll();
  }catch(e){
-  $("loginError").textContent=e?.message||"Sign in failed. Please try again.";
-  console.error("HeartTalk admin sign-in failed:",e);
+  message.textContent=e?.message||"Sign-in failed. Please check your details and try again.";
+  console.error("HeartTalk admin sign-in:",e);
  }finally{b.disabled=false;b.textContent="Sign in securely"}
 }
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
