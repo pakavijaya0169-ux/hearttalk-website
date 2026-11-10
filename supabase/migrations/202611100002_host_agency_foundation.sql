@@ -236,6 +236,14 @@ begin
     raise exception 'Applicant no longer meets female host eligibility requirements';
   end if;
 
+  if p_decision = 'approved' and (
+    select count(distinct d.document_type)
+    from public.host_kyc_documents d
+    where d.user_id = v_user_id and d.status = 'approved'
+  ) < 3 then
+    raise exception 'Aadhaar, PAN and video selfie must all be approved before host approval';
+  end if;
+
   update public.host_applications
   set status = p_decision,
       reviewed_at = now(),
@@ -285,6 +293,53 @@ with check (
       and a.status in ('pending','under_review')
   )
 );
+
+-- Admin-only KYC review RPC. Document bytes stay in private Storage; this RPC
+-- changes metadata status only and records the review in the immutable audit trail.
+create or replace function public.admin_review_host_kyc_document(
+  p_document_id uuid,
+  p_decision text,
+  p_review_note text default null
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_user_id uuid;
+  v_document_type text;
+begin
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  if not public.is_hearttalk_admin() then raise exception 'Admin access required'; end if;
+  if p_decision is null or p_decision not in ('approved','rejected') then
+    raise exception 'Decision must be approved or rejected';
+  end if;
+
+  update public.host_kyc_documents
+  set status = p_decision,
+      reviewed_at = now(),
+      reviewed_by = auth.uid(),
+      review_note = left(p_review_note,1000)
+  where id = p_document_id and status = 'pending'
+  returning user_id, document_type into v_user_id, v_document_type;
+
+  if not found then raise exception 'Pending KYC document not found'; end if;
+
+  insert into public.hearttalk_admin_audit_log
+    (admin_user_id, action, target_type, target_id, details)
+  values
+    (auth.uid(), 'host_kyc_' || p_decision, 'host_kyc_document',
+     p_document_id::text,
+     jsonb_build_object('user_id', v_user_id, 'document_type', v_document_type,
+                        'review_note', left(p_review_note,1000)));
+
+  return true;
+end;
+$;
+
+revoke all on function public.admin_review_host_kyc_document(uuid,text,text) from public;
+grant execute on function public.admin_review_host_kyc_document(uuid,text,text) to authenticated;
 
 -- Attendance is written only by trusted server functions (service_role), not by browsers.
 revoke all on public.host_attendance_sessions from anon, authenticated;
