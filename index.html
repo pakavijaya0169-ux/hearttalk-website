@@ -943,7 +943,7 @@ async function saveProfile(){
 async function loadDiscover(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
  grid.innerHTML='<div class="notice">Loading community members...</div>';
- const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
  const [mine,theirs]=await Promise.all([supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id)]);
  if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
@@ -1580,7 +1580,7 @@ const heartTalkOriginalLoadDiscover=loadDiscover;
 loadDiscover=async function(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Please log in to discover HeartTalk members.</div>';return}
  grid.innerHTML='<div class="notice">Loading members…</div>';
- const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,account_status").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
  const [mine,theirs]=await Promise.all([supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id)]);
  if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety database setup is required. Please check the safety SQL setup.</div>';return}
