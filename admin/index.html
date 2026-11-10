@@ -102,8 +102,8 @@ function renderReports(){
   const reporter=(r.reporter_name||"Unknown")+" (@"+(r.reporter_username||"no username")+")";
   const reported=(r.reported_user_name||"Unknown")+" (@"+(r.reported_username||"no username")+")";
   const when=r.created_at?new Date(r.created_at).toLocaleString():"";
-  const profileAction='<button class="btn" onclick="viewUser(\\''+r.reported_user_id+'\\')">View reported profile</button>';
-  const actions='<div class="toolbar">'+profileAction+(r.status==="resolved"||r.status==="dismissed"?'':'<button class="btn" onclick="setReportStatus('+r.report_id+',\\'reviewing\\')">Under review</button><button class="btn" onclick="setReportStatus('+r.report_id+',\\'resolved\\')">Resolve</button><button class="btn danger" onclick="setReportStatus('+r.report_id+',\\'dismissed\\')">Dismiss</button>')+'</div>';
+  const profileAction='<button class="btn" onclick="viewUser(\''+r.reported_user_id+'\')">View reported profile</button>';
+  const actions='<div class="toolbar">'+profileAction+(r.status==="resolved"||r.status==="dismissed"?'':'<button class="btn" onclick="setReportStatus('+r.report_id+',\'reviewing\')">Under review</button><button class="btn" onclick="setReportStatus('+r.report_id+',\'resolved\')">Resolve</button><button class="btn danger" onclick="setReportStatus('+r.report_id+',\'dismissed\')">Dismiss</button>')+'</div>';
   return '<article class="report-row"><div class="user-main"><b>'+esc(r.reason)+'</b><div class="user-meta">Report #'+esc(r.report_id)+' · '+esc(when)+'</div><div class="state '+(r.status==="dismissed"?'blocked':'')+'">'+esc(r.status.toUpperCase())+'</div><p>'+esc(r.details||"No additional details provided.")+'</p><div class="user-meta"><b>Reported by:</b> '+esc(reporter)+'<br><b>Reported account:</b> '+esc(reported)+'<br><span class="small">Reporter ID: '+esc(r.reporter_id)+'<br>Reported user ID: '+esc(r.reported_user_id)+'</span></div></div>'+actions+'</article>';
  }).join("");
 }
