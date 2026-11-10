@@ -854,7 +854,14 @@ const heartTalkFemaleAvatarFiles=[
 function renderHeartTalkAvatarChoices(){
  const box=document.getElementById("avatarOptions");if(!box)return;box.innerHTML="";
  (heartTalkAvatarSeeds[selectedHeartTalkGender]||heartTalkAvatarSeeds.other).forEach((seed,index)=>{
-  const filename=selectedHeartTalkGender==="female"?heartTalkFemaleAvatarFiles[index]:null;
+  const heartTalkMaleAvatarFiles=[
+ "a_polished_high_detail_cartoon_vector_portrait_in.png",
+ "a_polished_detailed_vector_cartoon_avatar_portrai.png",
+ "a_polished_3d_illustrated_cartoon_style_portrait_i.png",
+ "a_polished_glossy_cartoon_style_digital_illustrat.png",
+ "a_polished_vector_cartoon_style_portrait_avatar_a.png"
+];
+  const filename=selectedHeartTalkGender==="female"?heartTalkFemaleAvatarFiles[index]:(selectedHeartTalkGender==="male"?heartTalkMaleAvatarFiles[index]:null);
   const url=filename?"./"+filename:heartTalkAvatarUrl(seed+" HeartTalk "+selectedHeartTalkGender);
   const isSelected=selectedHeartTalkAvatar===url||(filename&&selectedHeartTalkAvatar.endsWith("/"+filename));
   const b=document.createElement("button");b.type="button";b.className="avatar-option"+(isSelected?" selected":"");b.title=seed+" avatar";
