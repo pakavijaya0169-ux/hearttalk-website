@@ -23,7 +23,7 @@
 </div>
 <div class="tabs"><button class="tab active" data-tab="users" onclick="switchTab('users')">👥 Users</button><button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 Reports</button></div>
 <section id="usersTab" class="card"><div class="section-head"><div><h2>User Management</h2><div class="muted small">Search profiles and manage account access</div></div><span class="muted small" id="userCount">—</span></div><div class="toolbar"><input class="control search" id="userSearch" placeholder="Search name or username…" oninput="renderUsers()"><select class="control" id="statusFilter" onchange="renderUsers()"><option value="all">All users</option><option value="active">Active</option><option value="blocked">Blocked</option></select></div><div id="usersList"><div class="empty">Users will appear here.</div></div></section>
-<section id="reportsTab" class="card hidden"><div class="section-head"><div><h2>User Reports</h2><div class="muted small">Review and resolve community reports</div></div><span class="muted small" id="reportCount">—</span></div><div id="reportsList"><div class="empty">Reports will appear here.</div></div></section>
+<section id="reportsTab" class="card hidden"><div class="section-head"><div><h2>User Reports</h2><div class="muted small">Review, resolve and audit community reports</div></div><span class="muted small" id="reportCount">—</span></div><div class="toolbar"><select class="control" id="reportStatusFilter" onchange="renderReports()"><option value="all">All reports</option><option value="open">Pending</option><option value="reviewing">Under review</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select><button class="btn" onclick="loadReports()">↻ Refresh reports</button></div><div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px"><article class="card"><div class="muted small">Pending</div><div class="metric" id="pendingReports">0</div></article><article class="card"><div class="muted small">Reviewing</div><div class="metric" id="reviewingReports">0</div></article><article class="card"><div class="muted small">Resolved</div><div class="metric" id="resolvedReports">0</div></article><article class="card"><div class="muted small">Dismissed</div><div class="metric" id="dismissedReports">0</div></article></div><div id="reportsList"><div class="empty">Reports will appear here.</div></div><div class="section-head" style="margin-top:25px"><div><h2>Admin Action History</h2><div class="muted small">Recent report moderation actions</div></div><button class="btn" onclick="loadAuditLog()">↻ Refresh history</button></div><div id="auditList"><div class="empty">Audit history will appear here.</div></div></section>
 <p class="foot">HeartTalk Admin · Private access · Never share admin credentials or Supabase secret keys.</p>
 </section>
 </main>
@@ -59,8 +59,42 @@ async function viewUser(id){
 }
 function closeUser(){$("userModal").classList.remove("show")}
 async function changeStatus(id,status){if(!sessionUser||id===sessionUser.id)return;const verb=status==="blocked"?"block":"unblock";if(!confirm("Are you sure you want to "+verb+" this account?"))return;const {error}=await db.rpc("admin_set_user_status",{target_user_id:id,new_status:status});if(error){toast("Action failed: "+error.message);return}toast("User "+(status==="blocked"?"blocked":"unblocked"));await loadUsers()}
-async function loadReports(){const {data,error}=await db.from("user_reports").select("id,reporter_id,reported_user_id,reason,details,status,created_at").order("created_at",{ascending:false}).limit(200);if(error){$("reportsList").innerHTML='<div class="notice">Could not load reports: '+esc(error.message)+'</div>';return}reportsCache=data||[];$("reportCount").textContent=reportsCache.length+" reports";$("openReports").textContent=reportsCache.filter(r=>["open","reviewing"].includes(r.status)).length;if(!reportsCache.length){$("reportsList").innerHTML='<div class="empty">No reports submitted yet.</div>';return}$("reportsList").innerHTML=reportsCache.map(r=>'<article class="report-row"><div class="user-main"><b>'+esc(r.reason)+'</b><div class="user-meta">Status: '+esc(r.status)+' · '+(r.created_at?new Date(r.created_at).toLocaleString():"")+'</div><p>'+esc(r.details||"No additional details")+'</p><div class="user-meta">Reporter: '+esc(r.reporter_id)+'<br>Reported user: '+esc(r.reported_user_id)+'</div></div><div class="toolbar"><button class="btn" onclick="setReportStatus('+r.id+',\'reviewing\')">Reviewing</button><button class="btn" onclick="setReportStatus('+r.id+',\'resolved\')">Resolve</button><button class="btn danger" onclick="setReportStatus('+r.id+',\'dismissed\')">Dismiss</button></div></article>').join("")}
-async function setReportStatus(id,status){const {error}=await db.from("user_reports").update({status}).eq("id",id);if(error){toast("Could not update report: "+error.message);return}toast("Report updated");await loadReports()}
+async function loadReports(){
+ const {data,error}=await db.rpc("admin_list_user_reports");
+ if(error){$("reportsList").innerHTML='<div class="notice">Reports could not load. Run supabase/admin_reports_management.sql in Supabase SQL Editor. '+esc(error.message)+'</div>';return}
+ reportsCache=data||[];
+ const count=status=>reportsCache.filter(r=>r.status===status).length;
+ $("reportCount").textContent=reportsCache.length+" reports";
+ $("openReports").textContent=count("open")+count("reviewing");
+ $("pendingReports").textContent=count("open");$("reviewingReports").textContent=count("reviewing");$("resolvedReports").textContent=count("resolved");$("dismissedReports").textContent=count("dismissed");
+ renderReports();await loadAuditLog();
+}
+function renderReports(){
+ const filter=$("reportStatusFilter")?.value||"all";
+ const rows=reportsCache.filter(r=>filter==="all"||r.status===filter);
+ if(!rows.length){$("reportsList").innerHTML='<div class="empty">'+(reportsCache.length?'No reports in this status.':'No reports submitted yet.')+'</div>';return}
+ $("reportsList").innerHTML=rows.map(r=>{
+  const reporter=(r.reporter_name||"Unknown")+" (@"+(r.reporter_username||"no username")+")";
+  const reported=(r.reported_user_name||"Unknown")+" (@"+(r.reported_username||"no username")+")";
+  const when=r.created_at?new Date(r.created_at).toLocaleString():"";
+  const actions=r.status==="resolved"||r.status==="dismissed"?'<span class="muted small">Closed</span>':'<div class="toolbar"><button class="btn" onclick="setReportStatus('+r.report_id+',\\'reviewing\\')">Under review</button><button class="btn" onclick="setReportStatus('+r.report_id+',\\'resolved\\')">Resolve</button><button class="btn danger" onclick="setReportStatus('+r.report_id+',\\'dismissed\\')">Dismiss</button></div>';
+  return '<article class="report-row"><div class="user-main"><b>'+esc(r.reason)+'</b><div class="user-meta">Report #'+esc(r.report_id)+' · '+esc(when)+'</div><div class="state '+(r.status==="dismissed"?'blocked':'')+'">'+esc(r.status.toUpperCase())+'</div><p>'+esc(r.details||"No additional details provided.")+'</p><div class="user-meta"><b>Reported by:</b> '+esc(reporter)+'<br><b>Reported account:</b> '+esc(reported)+'<br><span class="small">Reporter ID: '+esc(r.reporter_id)+'<br>Reported user ID: '+esc(r.reported_user_id)+'</span></div></div>'+actions+'</article>';
+ }).join("");
+}
+async function setReportStatus(id,status){
+ const labels={reviewing:"mark this report as under review",resolved:"resolve this report",dismissed:"dismiss this report"};
+ if(!labels[status]||!confirm("Are you sure you want to "+labels[status]+"?"))return;
+ const {error}=await db.rpc("admin_set_report_status",{target_report_id:id,new_status:status});
+ if(error){toast("Could not update report: "+error.message);return}
+ toast("Report status updated.");await loadReports();
+}
+async function loadAuditLog(){
+ const target=$("auditList");if(!target)return;
+ const {data,error}=await db.rpc("admin_list_recent_audit_log");
+ if(error){target.innerHTML='<div class="notice">Audit history unavailable: '+esc(error.message)+'</div>';return}
+ if(!data?.length){target.innerHTML='<div class="empty">No admin actions recorded yet.</div>';return}
+ target.innerHTML=data.map(x=>'<article class="report-row"><div class="user-main"><b>'+esc(x.action.replaceAll("_"," "))+'</b><div class="user-meta">'+esc(x.target_type)+' #'+esc(x.target_id)+' · '+(x.created_at?new Date(x.created_at).toLocaleString():"")+'</div><div class="user-meta">Admin ID: '+esc(x.admin_user_id)+'</div><div class="user-meta">Change: '+esc(JSON.stringify(x.details||{}))+'</div></div></article>').join("");
+}
 db.auth.onAuthStateChange(async(_event,session)=>{if(!session?.user){sessionUser=null;return}if(await verifyAdmin(session.user)){sessionUser=session.user;showApp();refreshAll()}else{await db.auth.signOut();$("loginError").textContent="This account does not have admin access."}});
 db.auth.getSession().then(async({data})=>{if(data.session?.user){if(await verifyAdmin(data.session.user)){sessionUser=data.session.user;showApp();refreshAll()}else{await db.auth.signOut()}}});
 </script>
