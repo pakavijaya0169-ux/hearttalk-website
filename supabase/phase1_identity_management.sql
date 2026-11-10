@@ -82,12 +82,12 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $$
   select exists(
     select 1 from public.profile_review_queue q
     where q.profile_id=target_profile_id and q.status='approved'
   );
-$;
+$$;
 revoke all on function public.is_profile_approved(uuid) from public;
 grant execute on function public.is_profile_approved(uuid) to authenticated;
 
