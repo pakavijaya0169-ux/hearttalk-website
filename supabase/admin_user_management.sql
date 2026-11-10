@@ -34,7 +34,7 @@ begin
     raise exception 'Authentication required';
   end if;
 
-  if new_status not in ('active','blocked') then
+  if new_status is null or new_status not in ('active','blocked') then
     raise exception 'Invalid account status';
   end if;
 
