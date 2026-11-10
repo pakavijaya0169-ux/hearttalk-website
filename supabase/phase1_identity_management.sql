@@ -266,7 +266,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   if new.account_status is distinct from old.account_status
      and not exists (
@@ -277,7 +277,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 drop trigger if exists profiles_guard_account_status on public.profiles;
 create trigger profiles_guard_account_status
 before update of account_status on public.profiles
