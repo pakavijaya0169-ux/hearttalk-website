@@ -1,6 +1,23 @@
 -- HeartTalk Admin Analytics (read-only, admin-only aggregate metrics)
 -- Run in Supabase SQL Editor. Does not expose message contents or payment secrets.
 
+-- Verified payment ledger. Amounts are stored in paise; a trusted payment
+-- provider webhook/server must insert or update rows after verifying payment.
+create table if not exists public.payment_transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  provider text not null,
+  provider_transaction_id text not null unique,
+  amount_paise bigint not null check (amount_paise >= 0),
+  currency text not null default 'INR' check (currency = 'INR'),
+  status text not null check (status in ('pending','succeeded','failed','refunded')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.payment_transactions enable row level security;
+revoke all on public.payment_transactions from anon, authenticated;
+grant all on public.payment_transactions to service_role;
+
 create or replace function public.admin_get_analytics(days_back integer default 7)
 returns jsonb
 language plpgsql
@@ -40,6 +57,9 @@ begin
     'wallet_purchase_credits', (select coalesce(sum(amount),0) from public.wallet_ledger where entry_type = 'purchase' and amount > 0),
     'wallet_spent_credits', (select coalesce(sum(abs(amount)),0) from public.wallet_ledger where entry_type = 'spend'),
     'wallet_refund_credits', (select coalesce(sum(amount),0) from public.wallet_ledger where entry_type = 'refund' and amount > 0),
+    'payment_revenue_paise', (select coalesce(sum(amount_paise),0) from public.payment_transactions where status = 'succeeded' and currency = 'INR'),
+    'payment_refunds_paise', (select coalesce(sum(amount_paise),0) from public.payment_transactions where status = 'refunded' and currency = 'INR'),
+    'successful_payments', (select count(*) from public.payment_transactions where status = 'succeeded' and currency = 'INR'),
     'reports_open', (select count(*) from public.user_reports where status = 'open'),
     'reports_reviewing', (select count(*) from public.user_reports where status = 'reviewing'),
     'daily', coalesce((
