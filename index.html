@@ -1200,13 +1200,17 @@ async function sendMessage(e){
  await loadMessages();await loadConversations()
 }
 
+// Zero-cost calling mode: use public STUN servers for direct peer-to-peer calls.
+// STUN does not relay media, so no Metered TURN traffic is consumed.
+// Some restrictive networks will still require a TURN relay; those calls may fail
+// until a paid or separately provisioned TURN fallback is enabled.
 async function getMeteredIceServers(){
  if(cachedIceServers)return cachedIceServers;
- const {data,error}=await supabaseClient.functions.invoke("get-turn-credentials");
- if(error)throw new Error("Secure call setup is unavailable. Please try again later.");
- const servers=data?.iceServers;
- if(!Array.isArray(servers)||!servers.length)throw new Error("Secure call setup returned no connection servers.");
- cachedIceServers=servers;return servers;
+ cachedIceServers=[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:stun.cloudflare.com:3478"}
+ ];
+ return cachedIceServers;
 }
 
 let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[];
