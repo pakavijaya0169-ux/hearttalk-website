@@ -20,3 +20,6 @@ Build refresh: 2026-11-11 — rebuild APK with latest website JavaScript fix.
 Chat screen layout refresh: 2026-11-11.
 
 APK refresh: include profile session and null-element fixes.
+
+
+Store UI build refresh: 2026-11-11. Android WebView loads the latest HeartTalk GitHub Pages website, including the Gifts, Frames and Wallpapers Store screen.
