@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Build;
+import android.net.Uri;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.PermissionRequest;
@@ -44,9 +45,12 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> {
-                    String origin = request.getOrigin() == null ? "" : request.getOrigin().toString();
-                    // Only grant media capture to the exact HeartTalk website origin.
-                    if (!"https://pakavijaya0169-ux.github.io".equals(origin)) {
+                    Uri origin = request.getOrigin();
+                    // WebView may include a trailing slash in the origin URI.
+                    // Validate scheme and host separately while keeping the allowlist exact.
+                    if (origin == null
+                            || !"https".equalsIgnoreCase(origin.getScheme())
+                            || !"pakavijaya0169-ux.github.io".equalsIgnoreCase(origin.getHost())) {
                         request.deny();
                         return;
                     }
