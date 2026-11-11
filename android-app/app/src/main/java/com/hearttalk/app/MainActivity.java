@@ -2,6 +2,8 @@ package com.hearttalk.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.ActivityNotFoundException;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Build;
@@ -10,6 +12,7 @@ import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -17,6 +20,8 @@ import android.webkit.WebViewClient;
 public class MainActivity extends Activity {
     private WebView webView;
     private PermissionRequest pendingPermissionRequest;
+    private ValueCallback<Uri[]> fileChooserCallback;
+    private static final int FILE_CHOOSER_REQUEST = 73;
     private static final int MEDIA_PERMISSION_REQUEST = 71;
     private static final int NOTIFICATION_PERMISSION_REQUEST = 72;
     private final String appUrl = "https://pakavijaya0169-ux.github.io/hearttalk-website/";
@@ -45,6 +50,26 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> handleWebMediaPermission(request));
+            }
+
+            @Override public boolean onShowFileChooser(
+                    WebView view,
+                    ValueCallback<Uri[]> filePathCallback,
+                    FileChooserParams fileChooserParams) {
+                if (fileChooserCallback != null) {
+                    fileChooserCallback.onReceiveValue(null);
+                    fileChooserCallback = null;
+                }
+                fileChooserCallback = filePathCallback;
+                try {
+                    Intent chooserIntent = fileChooserParams.createIntent();
+                    startActivityForResult(chooserIntent, FILE_CHOOSER_REQUEST);
+                    return true;
+                } catch (ActivityNotFoundException e) {
+                    fileChooserCallback = null;
+                    filePathCallback.onReceiveValue(null);
+                    return false;
+                }
             }
 
             @Override public void onPermissionRequestCanceled(PermissionRequest request) {
@@ -141,11 +166,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            if (fileChooserCallback != null) {
+                Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                fileChooserCallback.onReceiveValue(results);
+                fileChooserCallback = null;
+            }
+        }
+    }
+
     @Override public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed();
     }
 
     @Override protected void onDestroy() {
+        if (fileChooserCallback != null) { fileChooserCallback.onReceiveValue(null); fileChooserCallback = null; }
         if (webView != null) { webView.removeCallbacks(securityCheck); webView.destroy(); webView = null; }
         super.onDestroy();
     }
