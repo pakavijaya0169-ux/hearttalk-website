@@ -1181,7 +1181,9 @@ async function startVoiceRecording(event){
  }catch(e){
   voiceHoldActive=false;btn.classList.remove("recording");btn.textContent="🎙️ Hold to record";
   if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;
-  notify("Allow microphone access to record a voice message.");
+  console.error("HeartTalk voice recording microphone error",e);
+  const reason=e?.name==="NotAllowedError"?"Microphone permission denied by Android/WebView.":e?.name==="NotFoundError"?"No microphone input device was found.":e?.name==="NotReadableError"?"Microphone is busy or unavailable to another app.":e?.name==="SecurityError"?"Microphone access is blocked for this page.":(e?.message||e?.name||"Unknown microphone error");
+  notify("Microphone error: "+reason);
  }finally{voicePermissionPending=false;if(!voiceHoldActive&&chatRecorder?.state==="recording")chatRecorder.stop()}
 }
 function finishVoiceRecording(event){
