@@ -1310,8 +1310,8 @@ async function pollIncomingCalls(){
  if(error||!data?.length)return;
  const now=Date.now();
  for(const oldCall of data){
-  if(now-new Date(oldCall.created_at).getTime()>55000){
-   await supabaseClient.from("call_sessions").update({status:"missed",ended_at:new Date().toISOString()}).eq("id",oldCall.id).eq("status","ringing");
+  if(now-new Date(oldCall.created_at).getTime()>50000){
+   await supabaseClient.rpc("hearttalk_expire_call",{target_call_id:oldCall.id});
   }
  }
  const call=data.find(c=>now-new Date(c.created_at).getTime()<=50000);
