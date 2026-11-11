@@ -13,3 +13,6 @@ This Android Studio project wraps the published HeartTalk website in a WebView.
 `MainActivity` polls the visible HeartTalk UI and applies Android `WindowManager.LayoutParams.FLAG_SECURE` only while `chatView`, `activeAudioCall`, or `activeVideoCall` is visible. Android then blocks OS screenshots and screen recording for those protected screens. This does not prevent filming the display with another device.
 
 Camera and microphone permissions are requested by the WebView when a call needs them. This wrapper is a starter build and must be tested on real Android devices before public release.
+
+
+Build refresh: 2026-11-11 — rebuild APK with latest website JavaScript fix.
