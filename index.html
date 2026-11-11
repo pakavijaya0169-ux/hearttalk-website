@@ -740,7 +740,7 @@ async function verifyPhoneOtp(){
  try{
   const {data,error}=await supabaseClient.auth.verifyOtp({phone:pendingPhone,token,type:"sms"});
   if(error)throw error;
-  currentUser=data.user;authRequiredAtStartup=false;document.getElementById("authCloseBtn")?.style.removeProperty("display");document.getElementById("authModal").classList.remove("show");document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;
+  currentUser=data.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");document.getElementById("authCloseBtn")?.style.removeProperty("display");document.getElementById("authModal").classList.remove("show");document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;
   await loadProfile();await loadDiscover();notify("Phone number verified. Welcome to HeartTalk!");
  }catch(e){notify(e.message||"OTP verification failed. Try again.");}
  finally{b.disabled=false;b.textContent="Verify & Login"}
@@ -1459,10 +1459,10 @@ async function setHeartTalkReportStatus(reportId,status){
 }
 
 supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;refreshHeartTalkAdminAccess();if(currentUser){startIncomingCallPolling()}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
-supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;authRequiredAtStartup=false;startIncomingCallPolling();refreshHeartTalkAdminAccess();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}else{authRequiredAtStartup=true;document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
+supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");startIncomingCallPolling();refreshHeartTalkAdminAccess();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}else{authRequiredAtStartup=true;document.body.classList.add("auth-required");document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
 </script>
 <script>
-document.addEventListener("DOMContentLoaded",()=>{if(!localStorage.getItem("hearttalk_language"))document.getElementById("languageModal")?.classList.add("show")});
+document.addEventListener("DOMContentLoaded",()=>{if(!localStorage.getItem("hearttalk_language")&&currentUser)document.getElementById("languageModal")?.classList.add("show")});
 function chooseHeartTalkLanguage(lang){localStorage.setItem("hearttalk_language",lang);document.getElementById("languageModal")?.classList.remove("show");const label=document.getElementById("profileLanguageLabel");if(label)label.textContent=lang+" selected";notify("Language saved: "+lang)}
 document.addEventListener("DOMContentLoaded",()=>{const label=document.getElementById("profileLanguageLabel");if(label)label.textContent=(localStorage.getItem("hearttalk_language")||"Choose your language")});
 </script>
