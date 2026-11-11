@@ -714,11 +714,11 @@ window.addEventListener("DOMContentLoaded",()=>setAuthMethod("email"));
 let authMethod="email",pendingPhone="";
 function setAuthMethod(method){
  authMethod=method;
- document.getElementById("emailAuthFields").style.display=method==="email"?"block":"none";
- document.getElementById("phoneAuthFields").style.display=method==="phone"?"block":"none";
- document.getElementById("emailAuthTab").classList.toggle("primary",method==="email");
+ const emailFields=document.getElementById("emailAuthFields"); if(emailFields) emailFields.style.display=method==="email"?"block":"none";
+ const phoneFields=document.getElementById("phoneAuthFields"); if(phoneFields) phoneFields.style.display=method==="phone"?"block":"none";
+ document.getElementById("emailAuthTab")?.classList.toggle("primary",method==="email");
  document.getElementById("phoneAuthTab")?.classList.toggle("primary",method==="phone");
- document.getElementById("authDescription").textContent=method==="phone"?"Sign up or log in securely with an SMS verification code.":"Create your account or log in.";
+ const authDescription=document.getElementById("authDescription"); if(authDescription) authDescription.textContent=method==="phone"?"Sign up or log in securely with an SMS verification code.":"Create your account or log in.";
 }
 async function sendPhoneOtp(){
  const digits=document.getElementById("authPhone").value.replace(/\D/g,"");
