@@ -1091,6 +1091,7 @@ async function renderChatMessageContent(raw){
   if(bits[0]==="audio")return '<audio class="chat-audio" controls preload="none" src="'+url+'"></audio>';
   return "Attachment";
  }
+ if(value==="[[SAFETY_BLOCKED_PHONE]]")return '<span class="muted">🛡️ Phone number sharing blocked by HeartTalk safety.</span>';
  if(value.startsWith("[[STICKER]]")){const parts=value.slice("[[STICKER]]".length).replace(/^\]+/,"").split("|");return '<div class="sent-sticker">'+escapeHtml(parts[0]||"💗")+'</div>'}
  return escapeHtml(value).replace(/\n/g,"<br>");
 }
@@ -1150,12 +1151,23 @@ function cancelVoiceRecording(event){
  else if(!voicePermissionPending){if(chatRecordStream)chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;const btn=document.getElementById("voiceRecordBtn");if(btn){btn.classList.remove("recording");btn.textContent="🎙️ Hold to record"}}
 }
 
+function containsIndianMobileNumber(value){
+ const text=String(value||"");
+ return /(?:^|[^0-9])(?:\\+?91[\\s().-]*)?0?[6-9](?:[\\s().-]*[0-9]){9}(?:$|[^0-9])/.test(text);
+}
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
  try{if(await isHeartTalkBlocked(activeChatUser.id)){notify("This conversation is unavailable because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
+ const containsPhone=containsIndianMobileNumber(content);
  const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:content});
- if(error){notify(error.message);return}input.value="";await loadMessages();await loadConversations()
+ if(error){notify(error.message);return}
+ input.value="";
+ if(containsPhone){
+  notify("Phone numbers cannot be shared on HeartTalk. The message was hidden and any active call with this member was ended.");
+  if(activeCallId)await endCurrentCall();
+ }else{notify("Message sent 💗")}
+ await loadMessages();await loadConversations()
 }
 
 async function getMeteredIceServers(){
@@ -1232,7 +1244,7 @@ async function startOutgoingCall(type){
   document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
   showActiveCallUI(type,target.display_name||"HeartTalk member",false);callStatus("Calling "+target.display_name+"… waiting for them to answer.");
   signalPollTimer=setInterval(pollCallSignals,1200);
-  callPollTimer=setInterval(checkCallStatus,1800);
+  callPollTimer=setInterval(checkCallStatus,700);
  }catch(e){console.error(e);callStatus("Could not start call: "+(e.message||e));notify("Call could not start. Check microphone/camera permission and database access.");await cleanupCall(false)}
 }
 async function checkCallStatus(){
@@ -1278,7 +1290,7 @@ async function acceptIncomingCall(){
   document.getElementById("incomingCallPanel").classList.remove("show");
   const {data:sigs,error:serr}=await supabaseClient.from("call_signals").select("id,sender_id,signal_type,payload").eq("call_id",id).eq("signal_type","offer").order("id",{ascending:true}).limit(1);if(serr)throw serr;
   if(sigs?.[0]){lastSignalId=sigs[0].id;await handleCallSignal(sigs[0])}
-  showActiveCallUI(call.call_type,callerProfile?.display_name||"HeartTalk member",true);callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,1800);
+  showActiveCallUI(call.call_type,callerProfile?.display_name||"HeartTalk member",true);callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,700);
   window.pendingIncomingCallId=null;
  }catch(e){notify("Could not accept call: "+e.message);await cleanupCall(false)}
 }
@@ -1510,7 +1522,7 @@ function subscribeLiveChat(roomId){
  const box=document.getElementById("liveChatMessages");box.innerHTML="";
  liveChatChannel=supabaseClient.channel("live-chat-"+roomId).on("broadcast",{event:"message"},({payload})=>{const p=document.createElement("p");p.textContent=(payload.name||"Member")+": "+(payload.text||"");box.appendChild(p);box.scrollTop=box.scrollHeight}).subscribe();
 }
-async function sendLiveChat(){const input=document.getElementById("liveChatInput"),text=input.value.trim();if(!text||!liveChatChannel||!currentUser)return;const name=document.getElementById("profileDisplayName")?.textContent||"Member";await liveChatChannel.send({type:"broadcast",event:"message",payload:{name,text}});input.value=""}
+async function sendLiveChat(){const input=document.getElementById("liveChatInput"),text=input.value.trim();if(!text||!liveChatChannel||!currentUser)return;if(containsIndianMobileNumber(text)){input.value="";notify("Phone number sharing is blocked in HeartTalk live chat.");if(activeCallId)await endCurrentCall();return}const name=document.getElementById("profileDisplayName")?.textContent||"Member";await liveChatChannel.send({type:"broadcast",event:"message",payload:{name,text}});input.value=""}
 document.addEventListener("DOMContentLoaded",()=>{const originalShowView=window.showView;window.showView=function(name){originalShowView(name);if(name==="live")loadLiveRooms()}});
 </script>
 
