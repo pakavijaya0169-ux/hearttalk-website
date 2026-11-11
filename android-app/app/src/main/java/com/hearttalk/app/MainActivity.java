@@ -41,12 +41,27 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> {
+                    String origin = request.getOrigin() == null ? "" : request.getOrigin().toString();
+                    if (!origin.startsWith("https://pakavijaya0169-ux.github.io/")) {
+                        request.deny();
+                        return;
+                    }
                     pendingPermissionRequest = request;
-                    if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    boolean needsAudio = false;
+                    boolean needsCamera = false;
+                    for (String resource : request.getResources()) {
+                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) needsAudio = true;
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) needsCamera = true;
+                    }
+                    boolean audioGranted = !needsAudio || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+                    boolean cameraGranted = !needsCamera || checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+                    if (audioGranted && cameraGranted) {
                         request.grant(request.getResources());
                     } else {
-                        requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, MEDIA_PERMISSION_REQUEST);
+                        java.util.ArrayList<String> permissions = new java.util.ArrayList<>();
+                        if (needsAudio && !audioGranted) permissions.add(Manifest.permission.RECORD_AUDIO);
+                        if (needsCamera && !cameraGranted) permissions.add(Manifest.permission.CAMERA);
+                        requestPermissions(permissions.toArray(new String[0]), MEDIA_PERMISSION_REQUEST);
                     }
                 });
             }
