@@ -1,4 +1,6 @@
 -- HeartTalk call safety: one active call per user, atomic start/accept, 50-second ring timeout.
+alter table public.call_sessions drop constraint if exists call_sessions_status_check;
+alter table public.call_sessions add constraint call_sessions_status_check check (status in ('ringing','accepted','rejected','ended','missed','cancelled','busy'));
 -- Run this migration in Supabase SQL Editor after the existing schema.sql.
 create index if not exists call_sessions_caller_active_idx
   on public.call_sessions(caller_id, status, created_at desc);
@@ -111,7 +113,7 @@ declare
   v_updated integer;
 begin
   if v_user is null then raise exception 'Authentication required'; end if;
-  if final_status not in ('rejected','ended','cancelled') then raise exception 'Invalid final call status'; end if;
+  if final_status not in ('rejected','ended','cancelled','busy') then raise exception 'Invalid final call status'; end if;
   update public.call_sessions
      set status=final_status,ended_at=now()
    where id=target_call_id
