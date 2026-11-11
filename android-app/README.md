@@ -26,3 +26,6 @@ Store UI build refresh: 2026-11-11. Android WebView loads the latest HeartTalk G
 
 
 Coin packages wallet UI updated; rebuild Android wrapper against the latest HeartTalk website.
+
+
+Trigger APK rebuild for updated HeartTalk coin package list.
