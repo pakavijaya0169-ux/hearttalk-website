@@ -1302,7 +1302,7 @@ async function checkCallStatus(){
  const {data,error}=await supabaseClient.from("call_sessions").select("status,created_at").eq("id",activeCallId).maybeSingle();
  if(error||!data)return;
  if(data.status==="accepted"){callRingDeadline=null;callStatus("Connected. You can talk now.");setActiveCallConnected();}
- if(["rejected","ended","missed","cancelled"].includes(data.status)){callStatus(data.status==="rejected"?"Call declined.":"Call ended.");await cleanupCall(false)}
+ if(["rejected","ended","missed","cancelled","busy"].includes(data.status)){callStatus(data.status==="busy"?"The other member is already on another call.":data.status==="rejected"?"Call declined.":data.status==="missed"?"No answer. Call disconnected.":"Call ended.");if(data.status==="busy")notify("User is on another call.");await cleanupCall(false)}
 }
 async function pollIncomingCalls(){
  if(!currentUser||window.pendingIncomingCallId)return;
@@ -1316,7 +1316,7 @@ async function pollIncomingCalls(){
  }
  const call=data.find(c=>now-new Date(c.created_at).getTime()<=50000);
  if(!call)return;
- if(activeCallId||callStarting){await supabaseClient.rpc("hearttalk_expire_call",{target_call_id:call.id});return;}
+ if(activeCallId||callStarting){await supabaseClient.rpc("hearttalk_end_call",{target_call_id:call.id,final_status:"busy"});return;}
  window.pendingIncomingCallId=call.id;
  const p=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();
  const callerName=p.data?.display_name||"A HeartTalk member";
