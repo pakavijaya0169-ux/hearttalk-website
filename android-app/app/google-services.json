@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "125077497164",
+    "project_id": "hearttalk0169",
+    "storage_bucket": "hearttalk0169.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125077497164:android:106da1cb46c90014acdbe9",
+        "android_client_info": {
+          "package_name": "com.hearttalk.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDY02M77n3_pHcaxu2myFV5Xto2rgbsKLs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
