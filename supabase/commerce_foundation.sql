@@ -58,7 +58,8 @@ begin
  select coin_price into v_price from public.hearttalk_gift_catalog
  where gift_code=selected_gift_code and active=true;
  if v_price is null then raise exception 'Gift is unavailable'; end if;
- select coalesce(sum(amount),0) into v_balance from public.wallet_ledger where user_id=v_sender for update;
+ perform 1 from auth.users where id=v_sender for update;
+ select coalesce(sum(amount),0) into v_balance from public.wallet_ledger where user_id=v_sender;
  if v_balance<v_price then raise exception 'Not enough coins. Please add coins to your wallet.'; end if;
  v_host_share:=floor(v_price*0.60)::integer;
  v_platform_share:=v_price-v_host_share;
