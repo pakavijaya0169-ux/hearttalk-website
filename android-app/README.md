@@ -16,3 +16,5 @@ Camera and microphone permissions are requested by the WebView when a call needs
 
 
 Build refresh: 2026-11-11 — rebuild APK with latest website JavaScript fix.
+
+Chat screen layout refresh: 2026-11-11.
