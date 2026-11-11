@@ -1279,7 +1279,7 @@ async function startOutgoingCall(type){
  const target=selectedCallUser();if(!target||target.id===currentUser.id){notify("First open Discover and select a member.");showView("discover");return}
  if(!navigator.mediaDevices?.getUserMedia){notify("Use HTTPS and a browser that supports microphone/camera.");return}
  if(activeCallId||callStarting){notify("Already on a call. End the current call before starting another.");return}
- callStarting=true;document.querySelectorAll("[onclick*=\\"startOutgoingCall\\"]").forEach(b=>b.disabled=true);
+ callStarting=true;document.querySelectorAll('[onclick*="startOutgoingCall"]').forEach(b=>b.disabled=true);
  try{
   const remoteName=document.getElementById("remoteCallName");
   if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
@@ -1294,7 +1294,7 @@ async function startOutgoingCall(type){
   showActiveCallUI(type,target.display_name||"HeartTalk member",false);callStatus("Calling "+target.display_name+"… waiting up to 50 seconds.");
   signalPollTimer=setInterval(pollCallSignals,1200);
   callPollTimer=setInterval(checkCallStatus,700);
- }catch(e){console.error("HeartTalk outgoing call failed",e);const detail=(e?.message||e?.details||e?.hint||String(e)).toString().slice(0,220);callStatus("Call failed: "+detail);notify(/busy|already.*call|another call/i.test(detail)?"User is on another call.": "Call failed: "+detail);await cleanupCall(false)}finally{callStarting=false;document.querySelectorAll("[onclick*=\\"startOutgoingCall\\"]").forEach(b=>b.disabled=!!activeCallId)}
+ }catch(e){console.error("HeartTalk outgoing call failed",e);const detail=(e?.message||e?.details||e?.hint||String(e)).toString().slice(0,220);callStatus("Call failed: "+detail);notify(/busy|already.*call|another call/i.test(detail)?"User is on another call.": "Call failed: "+detail);await cleanupCall(false)}finally{callStarting=false;document.querySelectorAll('[onclick*="startOutgoingCall"]').forEach(b=>b.disabled=!!activeCallId)}
 }
 async function checkCallStatus(){
  if(!activeCallId)return;
@@ -1360,7 +1360,7 @@ async function endCurrentCall(){
  callStatus("You ended the call.");await cleanupCall(false);
 }
 async function cleanupCall(updateStatus){
- if(signalPollTimer)clearInterval(signalPollTimer);if(callPollTimer)clearInterval(callPollTimer);signalPollTimer=null;callPollTimer=null;callRingDeadline=null;document.querySelectorAll("[onclick*=\\"startOutgoingCall\\"]").forEach(b=>b.disabled=false);
+ if(signalPollTimer)clearInterval(signalPollTimer);if(callPollTimer)clearInterval(callPollTimer);signalPollTimer=null;callPollTimer=null;callRingDeadline=null;document.querySelectorAll('[onclick*="startOutgoingCall"]').forEach(b=>b.disabled=false);
  if(peerConnection){peerConnection.ontrack=null;peerConnection.close();peerConnection=null}
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
  const a=document.getElementById("localCallVideo"),b=document.getElementById("remoteCallVideo"),c=document.getElementById("localCallVideoFull"),d=document.getElementById("remoteCallVideoFull");[a,b,c,d].forEach(v=>{if(v)v.srcObject=null});hideActiveCallUI();
