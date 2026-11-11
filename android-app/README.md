@@ -29,3 +29,6 @@ Coin packages wallet UI updated; rebuild Android wrapper against the latest Hear
 
 
 Trigger APK rebuild for updated HeartTalk coin package list.
+
+
+Rebuild Android APK after updating HeartTalk coin package pricing.
