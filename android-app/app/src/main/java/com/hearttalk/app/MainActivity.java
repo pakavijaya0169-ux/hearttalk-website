@@ -44,41 +44,7 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest request) {
-                runOnUiThread(() -> {
-                    Uri origin = request.getOrigin();
-                    // WebView may include a trailing slash in the origin URI.
-                    // Validate scheme and host separately while keeping the allowlist exact.
-                    if (origin == null
-                            || !"https".equalsIgnoreCase(origin.getScheme())
-                            || !"pakavijaya0169-ux.github.io".equalsIgnoreCase(origin.getHost())) {
-                        request.deny();
-                        return;
-                    }
-
-                    boolean needsAudio = false;
-                    boolean needsCamera = false;
-                    for (String resource : request.getResources()) {
-                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) needsAudio = true;
-                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) needsCamera = true;
-                    }
-                    if (!needsAudio && !needsCamera) {
-                        request.deny();
-                        return;
-                    }
-
-                    pendingPermissionRequest = request;
-                    boolean audioGranted = !needsAudio || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                    boolean cameraGranted = !needsCamera || checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-                    if (audioGranted && cameraGranted) {
-                        request.grant(request.getResources());
-                        pendingPermissionRequest = null;
-                    } else {
-                        java.util.ArrayList<String> permissions = new java.util.ArrayList<>();
-                        if (needsAudio && !audioGranted) permissions.add(Manifest.permission.RECORD_AUDIO);
-                        if (needsCamera && !cameraGranted) permissions.add(Manifest.permission.CAMERA);
-                        requestPermissions(permissions.toArray(new String[0]), MEDIA_PERMISSION_REQUEST);
-                    }
-                });
+                runOnUiThread(() -> handleWebMediaPermission(request));
             }
 
             @Override public void onPermissionRequestCanceled(PermissionRequest request) {
@@ -87,6 +53,48 @@ public class MainActivity extends Activity {
         });
         webView.loadUrl(appUrl);
         webView.postDelayed(securityCheck, 500);
+    }
+
+    private void handleWebMediaPermission(PermissionRequest request) {
+        Uri origin = request.getOrigin();
+        if (origin == null
+                || !"https".equalsIgnoreCase(origin.getScheme())
+                || !"pakavijaya0169-ux.github.io".equalsIgnoreCase(origin.getHost())) {
+            request.deny();
+            return;
+        }
+
+        java.util.ArrayList<String> requestedResources = new java.util.ArrayList<>();
+        boolean needsAudio = false;
+        boolean needsCamera = false;
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) {
+                needsAudio = true;
+                requestedResources.add(resource);
+            } else if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
+                needsCamera = true;
+                requestedResources.add(resource);
+            }
+        }
+        if (requestedResources.isEmpty()) {
+            request.deny();
+            return;
+        }
+
+        boolean audioGranted = !needsAudio
+                || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        boolean cameraGranted = !needsCamera
+                || checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        if (audioGranted && cameraGranted) {
+            request.grant(requestedResources.toArray(new String[0]));
+            return;
+        }
+
+        pendingPermissionRequest = request;
+        java.util.ArrayList<String> permissions = new java.util.ArrayList<>();
+        if (needsAudio && !audioGranted) permissions.add(Manifest.permission.RECORD_AUDIO);
+        if (needsCamera && !cameraGranted) permissions.add(Manifest.permission.CAMERA);
+        requestPermissions(permissions.toArray(new String[0]), MEDIA_PERMISSION_REQUEST);
     }
 
     private final Runnable securityCheck = new Runnable() {
@@ -114,8 +122,21 @@ public class MainActivity extends Activity {
         if (requestCode == MEDIA_PERMISSION_REQUEST && pendingPermissionRequest != null) {
             boolean granted = grantResults.length > 0;
             for (int result : grantResults) granted &= result == PackageManager.PERMISSION_GRANTED;
-            if (granted) pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
-            else pendingPermissionRequest.deny();
+            if (granted) {
+                java.util.ArrayList<String> allowedResources = new java.util.ArrayList<>();
+                for (String resource : pendingPermissionRequest.getResources()) {
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
+                            && checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        allowedResources.add(resource);
+                    }
+                    if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                            && checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        allowedResources.add(resource);
+                    }
+                }
+                if (!allowedResources.isEmpty()) pendingPermissionRequest.grant(allowedResources.toArray(new String[0]));
+                else pendingPermissionRequest.deny();
+            } else pendingPermissionRequest.deny();
             pendingPermissionRequest = null;
         }
     }
