@@ -1279,7 +1279,7 @@ async function startOutgoingCall(type){
   showActiveCallUI(type,target.display_name||"HeartTalk member",false);callStatus("Calling "+target.display_name+"… waiting for them to answer.");
   signalPollTimer=setInterval(pollCallSignals,1200);
   callPollTimer=setInterval(checkCallStatus,700);
- }catch(e){console.error(e);callStatus("Could not start call: "+(e.message||e));notify("Call could not start. Check microphone/camera permission and database access.");await cleanupCall(false)}
+ }catch(e){console.error("HeartTalk outgoing call failed",e);const detail=(e?.message||e?.details||e?.hint||String(e)).toString().slice(0,220);callStatus("Call failed: "+detail);notify("Call failed: "+detail);await cleanupCall(false)}
 }
 async function checkCallStatus(){
  if(!activeCallId)return;
