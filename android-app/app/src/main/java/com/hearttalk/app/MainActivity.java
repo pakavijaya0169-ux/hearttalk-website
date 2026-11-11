@@ -42,21 +42,29 @@ public class MainActivity extends Activity {
             @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> {
                     String origin = request.getOrigin() == null ? "" : request.getOrigin().toString();
-                    if (!origin.startsWith("https://pakavijaya0169-ux.github.io/")) {
+                    // Only grant media capture to the exact HeartTalk website origin.
+                    if (!"https://pakavijaya0169-ux.github.io".equals(origin)) {
                         request.deny();
                         return;
                     }
-                    pendingPermissionRequest = request;
+
                     boolean needsAudio = false;
                     boolean needsCamera = false;
                     for (String resource : request.getResources()) {
                         if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) needsAudio = true;
                         if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) needsCamera = true;
                     }
+                    if (!needsAudio && !needsCamera) {
+                        request.deny();
+                        return;
+                    }
+
+                    pendingPermissionRequest = request;
                     boolean audioGranted = !needsAudio || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
                     boolean cameraGranted = !needsCamera || checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
                     if (audioGranted && cameraGranted) {
                         request.grant(request.getResources());
+                        pendingPermissionRequest = null;
                     } else {
                         java.util.ArrayList<String> permissions = new java.util.ArrayList<>();
                         if (needsAudio && !audioGranted) permissions.add(Manifest.permission.RECORD_AUDIO);
@@ -64,6 +72,10 @@ public class MainActivity extends Activity {
                         requestPermissions(permissions.toArray(new String[0]), MEDIA_PERMISSION_REQUEST);
                     }
                 });
+            }
+
+            @Override public void onPermissionRequestCanceled(PermissionRequest request) {
+                if (pendingPermissionRequest == request) pendingPermissionRequest = null;
             }
         });
         webView.loadUrl(appUrl);
