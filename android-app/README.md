@@ -32,3 +32,6 @@ Trigger APK rebuild for updated HeartTalk coin package list.
 
 
 Rebuild Android APK after updating HeartTalk coin package pricing.
+
+
+Trigger Android APK build for latest starter coin package updates.
