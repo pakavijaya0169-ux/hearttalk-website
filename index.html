@@ -759,27 +759,33 @@ async function handleAuth(){
 }
 async function logout(){await supabaseClient.auth.signOut();currentUser=null;activeChatUser=null;document.getElementById("authTop").textContent="Login / Sign Up";document.getElementById("authTop").onclick=openAuth;document.getElementById("discoverGrid").innerHTML='<div class="notice">Login to discover community members.</div>';document.getElementById("conversationList").textContent="Login to view messages.";document.getElementById("messageList").innerHTML='<div class="muted">Log in to start chatting.</div>';notify("You have logged out.");showView("home")}
 async function loadProfile(){
- if(!currentUser){const r=await supabaseClient.auth.getUser();currentUser=r.data.user}
+ let session=(await supabaseClient.auth.getSession()).data?.session||null;
+ if(!session){session=(await supabaseClient.auth.refreshSession()).data?.session||null}
+ if(session?.user)currentUser=session.user;
+ if(!currentUser){const userResult=await supabaseClient.auth.getUser();currentUser=userResult.data?.user||null}
  if(!currentUser)return;
  const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender").eq("id",currentUser.id).maybeSingle();
- if(error){console.error(error);notify("Profile load failed: "+error.message);return}
+ if(error){console.error("Profile load failed",error);notify("Profile load failed: "+error.message);return}
+ const setValue=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value};
+ const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
  if(data){
-  document.getElementById("profileName").value=data.display_name||"";document.getElementById("profileUsername").value=data.username||"";document.getElementById("profileAge").value=data.age||"";document.getElementById("profileCountry").value=data.country||"";document.getElementById("profileBio").value=data.bio||"";document.getElementById("profileGender").value=(data.gender==="male"?"male":"female");selectedHeartTalkGender=(data.gender==="male"?"male":"female");selectedHeartTalkAvatar=data.avatar_url||"";
-  document.getElementById("profileDisplayName").textContent=data.display_name||"Your name";
-  document.getElementById("profileHandle").textContent=(data.username||"hearttalk_member");
-  document.getElementById("profileDisplayAge").textContent=data.age?data.age+" years":"18+";
-  document.getElementById("profileDisplayCountry").textContent=data.country||"Add your country";
-  document.getElementById("profileDisplayBio").textContent=data.bio||"Add a little about yourself so people can get to know you.";
+  setValue("profileName",data.display_name||"");setValue("profileUsername",data.username||"");setValue("profileAge",data.age||"");setValue("profileCountry",data.country||"");setValue("profileBio",data.bio||"");setValue("profileGender",data.gender==="male"?"male":"female");
+  selectedHeartTalkGender=data.gender==="male"?"male":"female";selectedHeartTalkAvatar=data.avatar_url||"";
+  setText("profileDisplayName",data.display_name||"Your name");setText("profileHandle",data.username||"hearttalk_member");setText("profileDisplayAge",data.age?data.age+" years":"18+");setText("profileDisplayCountry",data.country||"Add your country");setText("profileDisplayBio",data.bio||"Add a little about yourself so people can get to know you.");
   renderProfileAvatar(data.avatar_url);
- } else {renderProfileAvatar(null);}
- const [followers,following]=await Promise.all([
+ }else{renderProfileAvatar(null)}
+ const getFollowCounts=()=>Promise.all([
   supabaseClient.from("follows").select("follower_id",{count:"exact",head:true}).eq("followed_id",currentUser.id),
   supabaseClient.from("follows").select("followed_id",{count:"exact",head:true}).eq("follower_id",currentUser.id)
  ]);
- if(followers.error||following.error){console.warn("Follow counts unavailable",followers.error||following.error);}
- document.getElementById("profileFollowers").textContent=followers.count??0;
- document.getElementById("profileFollowing").textContent=following.count??0;
- const coin=document.getElementById("coinBalance")?.textContent||"0";document.getElementById("profileCoinBalance").textContent=coin;
+ let [followers,following]=await getFollowCounts();
+ if(followers.status===401||following.status===401||followers.error?.status===401||following.error?.status===401){
+  const refreshed=await supabaseClient.auth.refreshSession();
+  if(refreshed.data?.session){currentUser=refreshed.data.session.user;[followers,following]=await getFollowCounts()}
+ }
+ if(followers.error||following.error)console.warn("Follow counts unavailable",followers.error||following.error);
+ setText("profileFollowers",followers.count??0);setText("profileFollowing",following.count??0);
+ setText("profileCoinBalance",document.getElementById("coinBalance")?.textContent||"0");
  await loadMyProfilePosts();
 }
 async function loadMyProfilePosts(){
