@@ -16,6 +16,7 @@ import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -46,7 +47,16 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return handleExternalPaymentUrl(request.getUrl().toString());
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleExternalPaymentUrl(url);
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> handleWebMediaPermission(request));
@@ -78,6 +88,38 @@ public class MainActivity extends Activity {
         });
         webView.loadUrl(appUrl);
         webView.postDelayed(securityCheck, 500);
+    }
+
+    // Allow Razorpay/UPI payment apps to open from the hosted checkout page.
+    // Normal HTTPS website navigation remains inside the HeartTalk WebView.
+    private boolean handleExternalPaymentUrl(String url) {
+        if (url == null) return true;
+        Uri uri = Uri.parse(url);
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+        if ("http".equals(scheme) || "https".equals(scheme)) return false;
+
+        try {
+            if ("intent".equals(scheme)) {
+                Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException missingApp) {
+                    String fallback = intent.getStringExtra("browser_fallback_url");
+                    if (fallback != null && fallback.startsWith("https://")) webView.loadUrl(fallback);
+                }
+                return true;
+            }
+
+            if ("upi".equals(scheme) || "tez".equals(scheme) || "phonepe".equals(scheme)
+                    || "paytmmp".equals(scheme) || "gpay".equals(scheme) || "bhim".equals(scheme)) {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                return true;
+            }
+        } catch (Exception ignored) {
+            // Keep unsupported payment schemes from breaking the HeartTalk screen.
+            return true;
+        }
+        return true;
     }
 
     private void handleWebMediaPermission(PermissionRequest request) {

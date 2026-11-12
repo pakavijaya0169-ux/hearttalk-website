@@ -59,6 +59,21 @@
  </div>
  <div class="card" style="margin-top:16px"><div class="section-head"><div><h2>Daily activity</h2><div class="muted small">New profiles and sent messages per day</div></div></div><div id="dailyActivity" class="empty">Loading activity…</div></div>
  <div class="card" style="margin-top:16px"><div class="section-head"><div><h2>Revenue & wallet</h2><div class="muted small">Financial reporting based on recorded database fields</div></div></div><div class="grid"><article class="card"><div class="muted small">Wallet purchase credits</div><div class="metric" id="walletPurchases">—</div></article><article class="card"><div class="muted small">Wallet spent credits</div><div class="metric" id="walletSpending">—</div></article><article class="card"><div class="muted small">Wallet refund credits</div><div class="metric" id="walletRefunds">—</div></article><article class="card"><div class="muted small">Verified payment revenue (INR)</div><div class="metric" id="paymentRevenue" style="font-size:20px">—</div><div class="muted small" id="paymentCount">—</div></article><article class="card"><div class="muted small">Refunded payments (INR)</div><div class="metric" id="paymentRefunds" style="font-size:20px">—</div></article></div><div class="notice" style="margin-top:14px">Important: Wallet credits are not rupees. Subscription records do not contain paid amounts. Connect a verified payment provider and store successful INR transactions before showing actual revenue.</div></div>
+ <div class="card" style="margin-top:16px">
+  <div class="section-head"><div><h2>💳 Payment Operations</h2><div class="muted small">Verified Razorpay payments, wallet credits and host gift earnings</div></div><button class="btn" onclick="loadPaymentDashboard()">↻ Refresh payments</button></div>
+  <div id="paymentDashboardError" class="notice hidden"></div>
+  <div class="grid">
+   <article class="card"><div class="muted small">Verified revenue</div><div class="metric" id="pRevenue">₹0</div></article>
+   <article class="card"><div class="muted small">Successful payments</div><div class="metric" id="pCount">0</div></article>
+   <article class="card"><div class="muted small">Coins sold</div><div class="metric" id="pCoins">0</div></article>
+   <article class="card"><div class="muted small">Pending orders</div><div class="metric" id="pPending">0</div></article>
+   <article class="card"><div class="muted small">Host gift earnings</div><div class="metric" id="pHostCoins">0</div></article>
+   <article class="card"><div class="muted small">Virtual gifts sent</div><div class="metric" id="pGiftCount">0</div></article>
+  </div>
+  <h3 style="margin-top:18px">Recent verified transactions</h3>
+  <div id="paymentTransactions" class="empty">Payment transactions will appear here after secure payment setup.</div>
+  <div class="notice" style="margin-top:12px">Host earnings shown here are coins, not INR. Bank payouts remain disabled until legal, tax, KYC and payment-provider settlement requirements are completed.</div>
+ </div>
 </section>
 </div></div>
 <p class="foot">HeartTalk Admin · Private access · Never share admin credentials or Supabase secret keys.</p>
@@ -167,8 +182,23 @@ async function saveStaffRole(){
  if(error){toast("Could not update staff role: "+error.message);return}
  $("staffUserId").value="";toast("Staff role updated.");loadStaffRoles()
 }
+async function loadPaymentDashboard(){
+ const errorBox=$("paymentDashboardError"),list=$("paymentTransactions");
+ if(!sessionUser||!errorBox||!list)return;
+ errorBox.classList.add("hidden");list.innerHTML='<div class="empty">Loading payment records…</div>';
+ const {data,error}=await db.rpc("admin_get_payment_dashboard");
+ if(error){errorBox.textContent="Payment dashboard SQL setup required. Apply supabase/migrations/202611120001_commerce_payments_activation.sql. "+error.message;errorBox.classList.remove("hidden");list.innerHTML='<div class="empty">No payment data available until setup is complete.</div>';return}
+ const n=v=>Number(v||0).toLocaleString("en-IN");
+ $("pRevenue").textContent="₹"+(Number(data.total_revenue_paise||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+ $("pCount").textContent=n(data.successful_payments);$("pCoins").textContent=n(data.coins_sold);
+ $("pPending").textContent=n(data.pending_orders);$("pHostCoins").textContent=n(data.host_earned_coins);
+ $("pGiftCount").textContent=n(data.gift_count);
+ const rows=data.recent_payments||[];
+ list.innerHTML=rows.length?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr><th style="text-align:left;padding:10px">Payment ID</th><th style="text-align:left;padding:10px">Account</th><th style="text-align:right;padding:10px">Amount</th><th style="text-align:right;padding:10px">Coins</th><th style="text-align:left;padding:10px">Status</th><th style="text-align:left;padding:10px">Date</th></tr></thead><tbody>'+rows.map(x=>'<tr style="border-top:1px solid var(--line)"><td style="padding:10px">'+esc(x.payment_id)+'</td><td style="padding:10px">'+esc(x.email||"Account unavailable")+'</td><td style="padding:10px;text-align:right">₹'+(Number(x.amount_paise||0)/100).toFixed(2)+'</td><td style="padding:10px;text-align:right">'+n(x.coins)+'</td><td style="padding:10px">'+esc(x.status)+'</td><td style="padding:10px">'+(x.created_at?new Date(x.created_at).toLocaleString():"—")+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">No verified payments yet.</div>';
+}
 async function loadAnalytics(){
  const errorBox=$("analyticsError");if(!errorBox||!sessionUser)return;
+ loadPaymentDashboard();
  errorBox.classList.add("hidden");
  const days=Number($("analyticsPeriod")?.value||7);
  const {data,error}=await db.rpc("admin_get_analytics",{days_back:days});
