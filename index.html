@@ -1918,5 +1918,4 @@ async function heartTalkReportClientError(type,message,stack){
 }
 window.addEventListener("error",e=>{heartTalkReportClientError("runtime",e.message||"JavaScript error",e.error?.stack||"");});
 window.addEventListener("unhandledrejection",e=>{const v=e.reason;heartTalkReportClientError("promise",v?.message||String(v||"Unhandled promise rejection"),v?.stack||"");});
-</script>
 </script></body></html>
