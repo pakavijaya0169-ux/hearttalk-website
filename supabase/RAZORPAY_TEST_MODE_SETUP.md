@@ -34,3 +34,17 @@ This change adds the shared commerce backend used by the website and Android Web
 
 ## Important
 Do not add Razorpay secrets to HTML, JavaScript, GitHub, APK resources, or any client-side settings. Never use TEST credentials for real customers. Do not switch to LIVE keys until Razorpay merchant approval, business/KYC/tax requirements, refund handling, terms, and payout compliance are complete.
+
+
+## Admin Support Inbox & App Error Center (2026-11-12)
+
+After the Razorpay commerce migration, apply the additional admin support migration:
+
+1. Open Supabase Dashboard → SQL Editor → New query.
+2. Copy the complete file `supabase/migrations/202611120002_admin_support_error_center.sql` from GitHub.
+3. Run it once. It creates the support conversation/message tables and app error report table, with user-scoped RLS and admin-only RPCs.
+4. Deploy the updated static website/admin files from the repository (GitHub Pages will publish after the main-branch merge).
+
+The user-facing app then shows a Support button for signed-in users. Messages are stored in Supabase and appear in Admin → Customer Support. Admin replies are written to the same conversation. Runtime JavaScript errors and unhandled promise rejections from signed-in sessions are recorded in Admin → App Errors. This does not capture every native Android crash; native crash reporting requires a dedicated Android crash SDK.
+
+Do not put payment credentials, passwords, OTPs, or other secrets in support messages.

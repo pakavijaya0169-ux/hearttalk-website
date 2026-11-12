@@ -6,7 +6,7 @@
 <style>
 :root{color-scheme:dark;--bg:#18091c;--panel:#2a102d;--panel2:#35143a;--line:#65305f;--text:#fff0f7;--muted:#d2afc8;--pink:#ff5e91;--purple:#bd55a7;--green:#59d6a5;--red:#ff758e}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#42123e 0,transparent 38%),var(--bg);color:var(--text);font:15px Inter,system-ui,Arial,sans-serif;min-height:100vh}button,input,select{font:inherit}button{cursor:pointer}.top{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100% - 1280px)/2));border-bottom:1px solid var(--line);background:#210d25eF;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}.brand{font-size:21px;font-weight:850;display:flex;align-items:center;gap:11px}.logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(130deg,var(--pink),var(--purple))}.wrap{max-width:1280px;margin:auto;padding:30px 20px 70px}.eyebrow{color:#ff76ad;font-size:11px;font-weight:850;letter-spacing:1.8px;text-transform:uppercase}.heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:22px}.heading h1{font-size:30px;margin:6px 0}.muted{color:var(--muted)}.small{font-size:12px}.btn{border:1px solid #a44b83;color:#fff0f7;background:#43183f;border-radius:24px;padding:10px 16px;font-weight:700}.btn.primary{border:0;background:linear-gradient(100deg,var(--pink),var(--purple))}.btn.danger{border-color:#a73f61;background:#4c1a36;color:#ffd9e3}.btn:disabled{opacity:.5;cursor:not-allowed}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.card{background:linear-gradient(145deg,#35163a,#251027);border:1px solid var(--line);border-radius:20px;padding:19px;box-shadow:0 8px 24px #0002}.metric{font-size:32px;font-weight:850;margin-top:8px}.layout{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}.admin-shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start;margin-top:18px}.admin-sidebar{position:sticky;top:88px;display:flex;flex-direction:column;gap:8px;padding:14px;background:linear-gradient(145deg,#301333,#210d25);border:1px solid var(--line);border-radius:18px;min-height:300px}.sidebar-title{font-size:10px;font-weight:850;letter-spacing:1.6px;color:#ff76ad;padding:7px 10px 12px}.admin-sidebar .tab{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border-radius:12px;padding:13px 12px;font-weight:700}.admin-sidebar .tab span{flex:1}.admin-main{min-width:0}.admin-main>.grid{margin-bottom:16px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.section-head h2{font-size:18px;margin:0}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.control{background:#170b1b;border:1px solid #70416b;border-radius:12px;padding:11px 13px;color:white;min-width:0}.toolbar .control.search{flex:1;min-width:220px}.user-row,.report-row{border:1px solid #63335e;background:#2e1532;border-radius:16px;padding:15px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.user-main{min-width:220px;flex:1}.user-name{font-weight:800}.user-meta{font-size:12px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}.state{font-size:12px;font-weight:850;margin-top:7px;color:var(--green)}.state.blocked{color:var(--red)}.empty,.notice{padding:15px;border-radius:13px;background:#321735;border:1px solid #694065;color:var(--muted)}.notice{margin-bottom:18px}.hidden{display:none!important}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tab{border:1px solid var(--line);background:#2b112e;color:var(--muted);padding:10px 16px;border-radius:25px}.tab.active{background:linear-gradient(100deg,var(--pink),var(--purple));color:white;border-color:transparent}.modal{position:fixed;inset:0;background:#08030bd9;z-index:10;display:none;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.dialog{width:min(100%,460px);background:#2b1230;border:1px solid #985087;border-radius:22px;padding:23px}.dialog h2{margin-top:0}.field{display:block;margin:13px 0}.field span{display:block;margin-bottom:7px;color:var(--muted);font-size:13px}.field input{width:100%}.dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3c1a40;border:1px solid #a94d91;color:white;padding:12px 18px;border-radius:12px;display:none;z-index:20;max-width:90%}.login{max-width:440px;margin:7vh auto;padding:28px}.login h1{margin:8px 0 6px}.login input{width:100%;margin:8px 0 14px}.login .btn{width:100%}.foot{margin-top:24px;font-size:12px;color:#b995b4;text-align:center}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-shell{grid-template-columns:190px minmax(0,1fr);gap:12px}.admin-sidebar{padding:10px}.admin-sidebar .tab{font-size:12px;padding:11px 9px}}@media(max-width:560px){.admin-shell{grid-template-columns:1fr}.admin-sidebar{position:static;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.sidebar-title{grid-column:1/-1;padding-bottom:4px}.admin-sidebar .tab{justify-content:flex-start}.admin-main>.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.top{padding:0 14px;height:62px}.brand{font-size:18px}.wrap{padding:20px 13px 45px}.heading{align-items:flex-start;flex-direction:column}.heading h1{font-size:25px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{padding:14px}.metric{font-size:26px}.user-row{align-items:flex-start}.user-row .btn{width:100%}.toolbar .control.search{min-width:100%}}
-</style>
+.ht-admin-transcript{max-height:300px;overflow:auto;background:#1c0d20;border:1px solid var(--line);border-radius:12px;padding:10px}.ht-admin-message{padding:9px 10px;border-bottom:1px solid #50304f;overflow-wrap:anywhere}.ht-admin-message:last-child{border-bottom:0}.ht-admin-message small{display:block;margin-top:5px}</style>
 </head>
 <body>
 <header class="top"><div class="brand"><span class="logo">🛡️</span> HeartTalk <span class="muted">/ Admin</span></div><button id="logoutBtn" class="btn hidden" onclick="logout()">Log out</button></header>
@@ -22,6 +22,8 @@
 <button class="tab" data-tab="profiles" onclick="switchTab('profiles')">🖼️ <span>Profile Review</span></button>
 <button class="tab" data-tab="security" onclick="switchTab('security')">🔐 <span>Security & RBAC</span></button>
 <button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 <span>Reports</span></button>
+<button class="tab" data-tab="support" onclick="switchTab('support')">💬 <span>Customer Support</span></button>
+<button class="tab" data-tab="errors" onclick="switchTab('errors')">🛠️ <span>App Errors</span></button>
 <button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊 <span>Analytics & Revenue</span></button>
 </aside>
 <div class="admin-main">
@@ -42,6 +44,16 @@
  </div>
 </section>
 <section id="reportsTab" class="card hidden"><div class="section-head"><div><h2>User Reports</h2><div class="muted small">Review, resolve and audit community reports</div></div><span class="muted small" id="reportCount">—</span></div><div class="toolbar"><select class="control" id="reportStatusFilter" onchange="renderReports()"><option value="all">All reports</option><option value="open">Pending</option><option value="reviewing">Under review</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select><button class="btn" onclick="loadReports()">↻ Refresh reports</button></div><div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px"><article class="card"><div class="muted small">Pending</div><div class="metric" id="pendingReports">0</div></article><article class="card"><div class="muted small">Reviewing</div><div class="metric" id="reviewingReports">0</div></article><article class="card"><div class="muted small">Resolved</div><div class="metric" id="resolvedReports">0</div></article><article class="card"><div class="muted small">Dismissed</div><div class="metric" id="dismissedReports">0</div></article></div><div id="reportsList"><div class="empty">Reports will appear here.</div></div><div class="section-head" style="margin-top:25px"><div><h2>Admin Action History</h2><div class="muted small">Recent report moderation actions</div></div><button class="btn" onclick="loadAuditLog()">↻ Refresh history</button></div><div id="auditList"><div class="empty">Audit history will appear here.</div></div></section>
+<section id="supportTab" class="card hidden">
+ <div class="section-head"><div><h2>💬 Customer Support Inbox</h2><div class="muted small">Messages sent from the HeartTalk website and Android app</div></div><button class="btn" onclick="loadSupportInbox()">↻ Refresh inbox</button></div>
+ <div class="toolbar"><select class="control" id="supportFilter" onchange="renderSupportInbox()"><option value="all">All conversations</option><option value="open">Open</option><option value="answered">Answered</option><option value="closed">Closed</option></select><span class="muted small" id="supportCount"></span></div>
+ <div id="supportInboxList"><div class="empty">Loading customer messages…</div></div>
+</section>
+<section id="errorsTab" class="card hidden">
+ <div class="section-head"><div><h2>🛠️ App Error Monitoring</h2><div class="muted small">Runtime errors reported by signed-in users on Website and Android WebView</div></div><button class="btn" onclick="loadAppErrors()">↻ Refresh errors</button></div>
+ <div class="toolbar"><select class="control" id="errorFilter" onchange="renderAppErrors()"><option value="all">All errors</option><option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="ignored">Ignored</option></select><span class="muted small" id="errorCount"></span></div>
+ <div id="appErrorsList"><div class="empty">No app errors loaded.</div></div>
+</section>
 <section id="analyticsTab" class="hidden">
  <div class="card">
   <div class="section-head"><div><h2>📊 Platform Analytics</h2><div class="muted small">Aggregate activity from your HeartTalk database</div></div><div class="toolbar"><select class="control" id="analyticsPeriod" onchange="loadAnalytics()"><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select><button class="btn" onclick="loadAnalytics()">↻ Refresh analytics</button></div></div>
@@ -90,7 +102,7 @@ let sessionUser=null,usersCache=[],reportsCache=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
-function switchTab(tab){["users","profiles","security","reports","analytics"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics")loadAnalytics();if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}}
+function switchTab(tab){["users","profiles","security","reports","support","errors","analytics"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics")loadAnalytics();if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -120,7 +132,7 @@ async function login(){
 window.login=login;
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
 async function logout(){await db.auth.signOut();sessionUser=null;usersCache=[];reportsCache=[];$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
-async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics()])}
+async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics(),loadSupportInbox(),loadAppErrors()])}
 async function loadUsers(){
  const args={search_term:$("userSearch").value.trim()||null,status_filter:$("statusFilter").value,country_filter:$("userRegionFilter").value.trim()||null,date_from:$("userDateFrom").value?new Date($("userDateFrom").value+"T00:00:00").toISOString():null,date_to:$("userDateTo").value?new Date(new Date($("userDateTo").value+"T00:00:00").getTime()+86400000).toISOString():null,result_limit:500};
  const {data,error}=await db.rpc("admin_list_user_registry",args);
@@ -181,6 +193,59 @@ async function saveStaffRole(){
  const {error}=await db.rpc("admin_set_staff_role",{target_user_id:id,new_staff_role:role});
  if(error){toast("Could not update staff role: "+error.message);return}
  $("staffUserId").value="";toast("Staff role updated.");loadStaffRoles()
+}
+async function loadSupportInbox(){
+ const box=$("supportInboxList");if(!box||!sessionUser)return;
+ box.innerHTML='<div class="empty">Loading support conversations…</div>';
+ const {data,error}=await db.rpc("admin_get_support_inbox");
+ if(error){box.innerHTML='<div class="notice">Support inbox SQL setup required. Apply supabase/migrations/202611120002_admin_support_error_center.sql. '+esc(error.message)+'</div>';return}
+ supportCache=Array.isArray(data)?data:[];
+ renderSupportInbox();
+}
+let supportCache=[];
+function renderSupportInbox(){
+ const box=$("supportInboxList");if(!box)return;
+ const filter=$("supportFilter")?.value||"all";
+ const rows=supportCache.filter(x=>filter==="all"||x.status===filter);
+ $("supportCount").textContent=supportCache.length+" conversations";
+ if(!rows.length){box.innerHTML='<div class="empty">No customer support conversations found.</div>';return}
+ box.innerHTML=rows.map(x=>{
+  const msgs=x.messages||[];
+  const transcript=msgs.map(m=>'<div class="ht-admin-message"><b>'+(m.sender_role==="admin"?"HeartTalk Support":"Customer")+'</b><div>'+esc(m.message)+'</div><small class="muted">'+(m.created_at?new Date(m.created_at).toLocaleString():"")+'</small></div>').join("");
+  const closed=x.status==="closed";
+  return '<article class="report-row" style="display:block"><div class="section-head"><div><b>'+esc(x.subject)+'</b><div class="user-meta">'+esc(x.display_name||"User")+' · '+esc(x.email||"")+' · @'+esc(x.username||"")+'</div><div class="user-meta">'+esc(x.user_id)+' · '+(x.updated_at?new Date(x.updated_at).toLocaleString():"")+'</div></div><span class="state '+(closed?'blocked':'')+'">'+esc(x.status.toUpperCase())+'</span></div><div class="ht-admin-transcript">'+transcript+'</div>'+(closed?'<div class="notice small">Conversation closed.</div>':'<textarea class="control" id="supportReply_'+x.thread_id+'" rows="2" style="width:100%;margin:10px 0" maxlength="4000" placeholder="Write a reply to the customer…"></textarea><div class="toolbar"><button class="btn primary" onclick="replySupportThread(\''+x.thread_id+'\')">Send reply</button><button class="btn danger" onclick="setSupportStatus(\''+x.thread_id+'\',\'closed\')">Close conversation</button></div>')+'</article>';
+ }).join("");
+}
+async function replySupportThread(id){
+ const field=$("supportReply_"+id),message=field?.value.trim();if(!message){toast("Write a reply first.");return}
+ const {error}=await db.rpc("admin_reply_support_thread",{p_thread_id:id,p_message:message});
+ if(error){toast("Reply failed: "+error.message);return}
+ toast("Reply sent to customer.");await loadSupportInbox();
+}
+async function setSupportStatus(id,status){
+ if(!confirm("Close this support conversation?"))return;
+ const {error}=await db.rpc("admin_set_support_status",{p_thread_id:id,p_status:status});
+ if(error){toast(error.message);return}toast("Support conversation closed.");await loadSupportInbox();
+}
+async function loadAppErrors(){
+ const box=$("appErrorsList");if(!box||!sessionUser)return;
+ box.innerHTML='<div class="empty">Loading app errors…</div>';
+ const {data,error}=await db.rpc("admin_get_app_errors");
+ if(error){box.innerHTML='<div class="notice">Error monitoring SQL setup required. Apply supabase/migrations/202611120002_admin_support_error_center.sql. '+esc(error.message)+'</div>';return}
+ errorCache=Array.isArray(data)?data:[];renderAppErrors();
+}
+let errorCache=[];
+function renderAppErrors(){
+ const box=$("appErrorsList");if(!box)return;
+ const filter=$("errorFilter")?.value||"all",rows=errorCache.filter(x=>filter==="all"||x.status===filter);
+ $("errorCount").textContent=errorCache.length+" error reports";
+ if(!rows.length){box.innerHTML='<div class="empty">No app errors in this filter.</div>';return}
+ box.innerHTML=rows.map(x=>'<article class="report-row"><div class="user-main"><b>'+esc(x.message)+'</b><div class="user-meta">'+esc(x.source)+' · '+esc(x.error_type)+' · '+(x.created_at?new Date(x.created_at).toLocaleString():"")+'</div><div class="user-meta">'+esc(x.display_name||x.email||"Unknown user")+' · '+esc(x.user_id||"Anonymous")+' · '+esc(x.page||"")+' · '+esc(x.app_version||"")+'</div><div class="state '+(x.status==="open"?"blocked":"")+'">'+esc(x.status.toUpperCase())+'</div>'+(x.stack?'<details style="margin-top:9px"><summary>Technical details</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(x.stack)+'</pre></details>':'')+'</div><div class="toolbar">'+(x.status==="resolved"||x.status==="ignored"?'':'<button class="btn" onclick="setAppErrorStatus('+x.id+',\'investigating\')">Investigating</button><button class="btn primary" onclick="setAppErrorStatus('+x.id+',\'resolved\')">Resolve</button><button class="btn danger" onclick="setAppErrorStatus('+x.id+',\'ignored\')">Ignore</button>')+'</div></article>').join("");
+}
+async function setAppErrorStatus(id,status){
+ const {error}=await db.rpc("admin_set_app_error_status",{p_error_id:id,p_status:status});
+ if(error){toast("Could not update error: "+error.message);return}
+ toast("Error status updated.");await loadAppErrors();
 }
 async function loadPaymentDashboard(){
  const errorBox=$("paymentDashboardError"),list=$("paymentTransactions");

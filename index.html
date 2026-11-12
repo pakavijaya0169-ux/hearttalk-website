@@ -1844,4 +1844,78 @@ async function loadHostEarnings(){
 }
 document.addEventListener("DOMContentLoaded",renderHeartTalkStore);
 const heartTalkStoreBaseShowView=showView;showView=function(n){heartTalkStoreBaseShowView(n);if(n==="store")renderHeartTalkStore();};
+
+<!-- HeartTalk Customer Support widget -->
+<style>
+#htSupportFab{position:fixed;right:18px;bottom:104px;z-index:70;border:0;border-radius:28px;padding:13px 17px;background:linear-gradient(110deg,#f12d83,#8b42e8);color:#fff;font-weight:800;box-shadow:0 8px 25px #a52d7550}
+#htSupportModal{display:none;position:fixed;inset:0;z-index:100;background:#160b1dbb;align-items:center;justify-content:center;padding:14px}
+#htSupportModal.open{display:flex}
+#htSupportPanel{width:min(100%,520px);max-height:88vh;display:flex;flex-direction:column;background:#fff;border:1px solid #f0d9e5;border-radius:20px;padding:18px;color:#211b25;box-shadow:0 20px 70px #0004}
+#htSupportPanel h2{margin:0;color:#211b25}#htSupportMessages{overflow:auto;min-height:120px;max-height:42vh;padding:10px 0}
+.ht-support-msg{padding:10px 12px;border-radius:13px;background:#f5eef7;margin:8px 0;overflow-wrap:anywhere}
+.ht-support-msg.admin{background:#ffe7f1}.ht-support-meta{font-size:11px;color:#777;margin-top:5px}
+#htSupportPanel input,#htSupportPanel textarea{width:100%;margin:6px 0;background:#f8f7fa;color:#211b25;border:1px solid #e8dce7;border-radius:10px;padding:11px}
+#htSupportPanel textarea{min-height:75px;resize:vertical}
+@media(max-width:600px){#htSupportFab{right:12px;bottom:91px;padding:11px 14px}#htSupportPanel{max-height:92vh}}
+</style>
+<button id="htSupportFab" type="button" onclick="openHeartTalkSupport()">💬 Support</button>
+<div id="htSupportModal" role="dialog" aria-modal="true" aria-label="HeartTalk customer support">
+ <div id="htSupportPanel">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><h2>HeartTalk Support</h2><small style="color:#777">Send a message to our support team</small></div><button type="button" onclick="closeHeartTalkSupport()" aria-label="Close" style="border:0;background:#f4edf3;border-radius:50%;width:36px;height:36px;font-size:20px">×</button></div>
+  <div id="htSupportStatus" class="notice" style="margin:12px 0">Login to contact HeartTalk support.</div>
+  <div id="htSupportMessages"></div>
+  <label style="font-size:12px;font-weight:700">New conversation subject</label><input id="htSupportSubject" maxlength="120" placeholder="Example: Payment or login problem">
+  <label style="font-size:12px;font-weight:700">Your message</label><textarea id="htSupportText" maxlength="4000" placeholder="Describe how we can help…"></textarea>
+  <button type="button" class="primary" onclick="sendHeartTalkSupport()" style="width:100%;margin-top:8px">Send message</button>
+ </div>
+</div>
+<script>
+let htSupportThreadId=null;
+function openHeartTalkSupport(){document.getElementById("htSupportModal").classList.add("open");loadHeartTalkSupport();}
+function closeHeartTalkSupport(){document.getElementById("htSupportModal").classList.remove("open");}
+async function loadHeartTalkSupport(){
+ const status=document.getElementById("htSupportStatus"),box=document.getElementById("htSupportMessages");
+ if(!currentUser){status.textContent="Please log in first to send a support message.";box.innerHTML="";return;}
+ status.textContent="Loading your support conversation…";
+ const {data:threads,error}=await supabaseClient.from("support_threads").select("id,subject,status,updated_at").eq("user_id",currentUser.id).order("updated_at",{ascending:false}).limit(1);
+ if(error){status.textContent="Support is being prepared. Please try again after the support update is installed.";box.textContent=error.message;return;}
+ const thread=threads?.[0]||null;htSupportThreadId=thread&&thread.status!=="closed"?thread.id:null;
+ if(!thread){status.textContent="No support conversation yet. Start a new conversation below.";box.innerHTML="";return;}
+ document.getElementById("htSupportSubject").value=thread.subject||"";
+ status.textContent="Conversation: "+thread.subject+" · "+thread.status;
+ const {data:messages,error:msgError}=await supabaseClient.from("support_messages").select("sender_role,message,created_at").eq("thread_id",thread.id).order("created_at",{ascending:true});
+ if(msgError){box.textContent=msgError.message;return;}
+ box.innerHTML=(messages||[]).map(m=>'<div class="ht-support-msg '+(m.sender_role==="admin"?"admin":"")+'"><b>'+(m.sender_role==="admin"?"HeartTalk Support":"You")+'</b><div></div><div class="ht-support-meta">'+new Date(m.created_at).toLocaleString()+'</div></div>').join("");
+ [...box.querySelectorAll(".ht-support-msg")].forEach((el,i)=>{el.children[1].textContent=messages[i].message;});
+ box.scrollTop=box.scrollHeight;
+}
+async function sendHeartTalkSupport(){
+ if(!currentUser){openAuth();return;}
+ const subject=document.getElementById("htSupportSubject").value.trim(),message=document.getElementById("htSupportText").value.trim(),status=document.getElementById("htSupportStatus");
+ if(subject.length<3){notify("Please enter a subject with at least 3 characters.");return;}
+ if(!message){notify("Please type your support message.");return;}
+ status.textContent="Sending your message…";
+ try{
+  if(!htSupportThreadId){
+   const {data:thread,error}=await supabaseClient.from("support_threads").insert({user_id:currentUser.id,subject}).select("id").single();
+   if(error)throw error;htSupportThreadId=thread.id;
+  }
+  const {error}=await supabaseClient.from("support_messages").insert({thread_id:htSupportThreadId,sender_id:currentUser.id,sender_role:"user",message});
+  if(error)throw error;
+  document.getElementById("htSupportText").value="";notify("Support message sent successfully.");await loadHeartTalkSupport();
+ }catch(e){status.textContent="Could not send. Please try again.";notify(e.message||"Support message failed.");}
+}
+let htLastErrorAt=0;
+async function heartTalkReportClientError(type,message,stack){
+ if(!currentUser)return;
+ const now=Date.now();if(now-htLastErrorAt<10000)return;htLastErrorAt=now;
+ try{await supabaseClient.from("app_error_reports").insert({
+  user_id:currentUser.id,source:/Android|wv/i.test(navigator.userAgent)?"android":"web",
+  error_type:type,message:String(message||"Unknown app error").slice(0,2000),
+  stack:String(stack||"").slice(0,8000),page:location.pathname,
+  app_version:"hearttalk-web-2026.11.12"
+ });}catch(_){}
+}
+window.addEventListener("error",e=>{heartTalkReportClientError("runtime",e.message||"JavaScript error",e.error?.stack||"");});
+window.addEventListener("unhandledrejection",e=>{const v=e.reason;heartTalkReportClientError("promise",v?.message||String(v||"Unhandled promise rejection"),v?.stack||"");});
 </script></body></html>
