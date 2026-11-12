@@ -11,6 +11,8 @@ create table if not exists public.support_threads (
 create index if not exists support_threads_user_updated_idx on public.support_threads(user_id,updated_at desc);
 create index if not exists support_threads_status_updated_idx on public.support_threads(status,updated_at desc);
 alter table public.support_threads enable row level security;
+revoke all on public.support_threads from anon,public;
+grant select,insert on public.support_threads to authenticated;
 drop policy if exists "Users can view own support threads" on public.support_threads;
 create policy "Users can view own support threads" on public.support_threads
  for select to authenticated using(user_id=auth.uid());
