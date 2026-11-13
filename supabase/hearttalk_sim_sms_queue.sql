@@ -6,6 +6,7 @@ create table if not exists public.hearttalk_sms_queue (
   message text not null,
   status text not null default 'pending' check (status in ('pending','processing','sent','failed')),
   created_at timestamptz not null default now(),
+  expires_at timestamptz not null default (now() + interval '60 seconds'),
   locked_at timestamptz,
   sent_at timestamptz,
   error text
