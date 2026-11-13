@@ -35,3 +35,6 @@ Rebuild Android APK after updating HeartTalk coin package pricing.
 
 
 Trigger Android APK build for latest starter coin package updates.
+
+
+Store catalogue refresh: 2026-11-13 — rebuild the Android WebView APK with the latest Gifts, Profile Frames and Wallpapers Store UI. Frames and wallpapers are preview-only; no purchase/apply flow is enabled.
