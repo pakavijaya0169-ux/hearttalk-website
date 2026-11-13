@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     };
     const phone = event.user?.phone;
     const otp = event.sms?.otp;
-    if (!phone || !/^\\+[1-9]\\d{7,14}$/.test(phone) || !otp || !/^\\d{4,8}$/.test(otp)) {
+    if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone) || !otp || !/^\d{4,8}$/.test(otp)) {
       return json({ error: { http_code: 400, message: "Invalid SMS hook payload" } }, 400);
     }
     const response = await fetch(gateway, {
