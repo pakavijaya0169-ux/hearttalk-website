@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   try {
     const { phone, code } = await req.json();
-    if (typeof phone !== "string" || !/^\\+[1-9]\\d{7,14}$/.test(phone) || typeof code !== "string" || !/^\\d{6}$/.test(code)) return json({ error: "invalid_input" }, 400);
+    if (typeof phone !== "string" || !/^\+[1-9]\d{7,14}$/.test(phone) || typeof code !== "string" || !/^\d{6}$/.test(code)) return json({ error: "invalid_input" }, 400);
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const pepper = Deno.env.get("OTP_PEPPER");
     if (!pepper) return json({ error: "otp_backend_not_configured" }, 503);
