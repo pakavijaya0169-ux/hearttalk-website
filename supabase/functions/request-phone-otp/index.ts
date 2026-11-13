@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   if (!gateway || !gatewayKey || !pepper) return json({ error: "sms_delivery_not_configured", message: "A real SMS gateway and OTP_PEPPER must be configured before sending OTPs." }, 503);
   try {
     const { phone } = await req.json();
-    if (typeof phone !== "string" || !/^\\+[1-9]\\d{7,14}$/.test(phone)) return json({ error: "invalid_phone" }, 400);
+    if (typeof phone !== "string" || !/^\+[1-9]\d{7,14}$/.test(phone)) return json({ error: "invalid_phone" }, 400);
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: recent } = await supabase.from("hearttalk_phone_otps").select("created_at").eq("phone_e164", phone).is("consumed_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
     if (recent && Date.now() - new Date(recent.created_at).getTime() < 60_000) return json({ error: "resend_cooldown", retry_after_seconds: 60 }, 429);
