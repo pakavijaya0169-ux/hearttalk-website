@@ -168,3 +168,25 @@ end;
 $$;
 revoke all on function public.admin_set_host_payout_requests_enabled(boolean) from public,anon;
 grant execute on function public.admin_set_host_payout_requests_enabled(boolean) to authenticated;
+
+create or replace function public.admin_review_host_payout_request(
+  p_request_id uuid,p_status text,p_note text default null
+) returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_row public.host_payout_requests%rowtype;
+begin
+  if auth.uid() is null or not public.is_hearttalk_admin() then
+    raise exception 'Admin access required';
+  end if;
+  if p_status not in ('approved','rejected') then
+    raise exception 'Review status must be approved or rejected';
+  end if;
+  select * into v_row from public.host_payout_requests where id=p_request_id for update;
+  if not found then raise exception 'Payout request not found'; end if;
+  if v_row.status <> 'pending' then raise exception 'Only pending requests can be reviewed'; end if;
+  update public.host_payout_requests set status=p_status,admin_note=left(coalesce(p_note,''),500),
+    reviewed_at=now(),reviewed_by=auth.uid() where id=p_request_id;
+  return jsonb_build_object('status',p_status,'request_id',p_request_id);
+end;
+$$;
+revoke all on function public.admin_review_host_payout_request(uuid,text,text) from public,anon;
+grant execute on function public.admin_review_host_payout_request(uuid,text,text) to authenticated;
