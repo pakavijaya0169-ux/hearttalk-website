@@ -84,8 +84,9 @@
   </div>
   <h3 style="margin-top:18px">Recent verified transactions</h3>
   <div id="paymentTransactions" class="empty">Payment transactions will appear here after secure payment setup.</div>
-  <div class="notice" style="margin-top:12px">Host earnings shown here are coins, not INR. Bank payouts remain disabled until legal, tax, KYC and payment-provider settlement requirements are completed.</div>
+  <div class="notice" style="margin-top:12px">Host earnings conversion: ₹0.50 per earned host coin. Purchased wallet coins are not redeemable for cash. Process bank transfers only after provider approval, KYC and compliance checks.</div>
  </div>
+ <div class="card" style="margin-top:16px"><div class="section-head"><div><h2>🏦 Manual Host Payout Requests</h2><div class="muted small">Review requests, transfer through bank manually, then record the UTR/reference.</div></div><button class="btn" onclick="loadManualPayouts()">↻ Refresh requests</button></div><div class="notice">Payout requests are disabled by default. Do not enable or pay out until Cashfree/provider has approved HeartTalk’s complete model and required compliance checks are complete.</div><div id="manualPayoutStatus" class="muted small" style="margin:10px 0">Loading payout requests…</div><div id="manualPayoutList" class="empty">No payout requests loaded.</div></div>
 </section>
 </div></div>
 <p class="foot">HeartTalk Admin · Private access · Never share admin credentials or Supabase secret keys.</p>
@@ -102,7 +103,7 @@ let sessionUser=null,usersCache=[],reportsCache=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
-function switchTab(tab){["users","profiles","security","reports","support","errors","analytics"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics")loadAnalytics();if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
+function switchTab(tab){["users","profiles","security","reports","support","errors","analytics"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();loadManualPayouts();}if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -132,7 +133,7 @@ async function login(){
 window.login=login;
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
 async function logout(){await db.auth.signOut();sessionUser=null;usersCache=[];reportsCache=[];$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
-async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics(),loadSupportInbox(),loadAppErrors()])}
+async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics(),loadSupportInbox(),loadAppErrors(),loadPaymentDashboard(),loadManualPayouts()])}
 async function loadUsers(){
  const args={search_term:$("userSearch").value.trim()||null,status_filter:$("statusFilter").value,country_filter:$("userRegionFilter").value.trim()||null,date_from:$("userDateFrom").value?new Date($("userDateFrom").value+"T00:00:00").toISOString():null,date_to:$("userDateTo").value?new Date(new Date($("userDateTo").value+"T00:00:00").getTime()+86400000).toISOString():null,result_limit:500};
  const {data,error}=await db.rpc("admin_list_user_registry",args);
@@ -246,6 +247,26 @@ async function setAppErrorStatus(id,status){
  const {error}=await db.rpc("admin_set_app_error_status",{p_error_id:id,p_status:status});
  if(error){toast("Could not update error: "+error.message);return}
  toast("Error status updated.");await loadAppErrors();
+}
+async function loadManualPayouts(){
+ const status=$("manualPayoutStatus"),box=$("manualPayoutList");if(!status||!box)return;
+ status.textContent="Loading payout requests…";
+ const {data,error}=await db.rpc("admin_list_host_payout_requests");
+ if(error){status.textContent="Payout workflow SQL migration is required.";box.innerHTML='<div class="notice">'+esc(error.message)+'</div>';return;}
+ const rows=Array.isArray(data)?data:[];
+ status.textContent=rows.length+" request(s) · host earnings rate ₹0.50 per coin";
+ if(!rows.length){box.innerHTML='<div class="empty">No host payout requests yet.</div>';return;}
+ box.innerHTML=rows.map(r=>'<div class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+esc(r.host_email||r.host_id)+'</b><div class="muted small">'+new Date(r.created_at).toLocaleString()+'</div></div><div><b>₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</b><div class="muted small">'+Number(r.requested_coins||0)+' earned coins · '+esc(r.status)+'</div></div></div><div class="muted small" style="margin:8px 0">Request ID: '+esc(r.id)+'</div>'+(r.payout_reference?'<div class="muted small">UTR: '+esc(r.payout_reference)+'</div>':'')+(r.status==="pending"?'<div class="toolbar"><button class="btn" onclick="reviewHostPayout(\''+esc(r.id)+'\',\'approved\')">Approve</button><button class="btn danger" onclick="reviewHostPayout(\''+esc(r.id)+'\',\'rejected\')">Reject</button></div>':'')+(["pending","approved"].includes(r.status)?'<div class="toolbar"><input id="payoutUtr_'+esc(r.id)+'" class="control" placeholder="Bank UTR / reference" style="max-width:240px"><button class="btn primary" onclick="markHostPayoutPaid(\''+esc(r.id)+'\')">Mark paid</button></div>':'')+'</div>').join("");
+}
+async function reviewHostPayout(id,status){
+ const note=status==="rejected"?"Rejected by admin": "Approved for manual bank transfer";
+ const {error}=await db.rpc("admin_review_host_payout_request",{p_request_id:id,p_status:status,p_note:note});
+ if(error){toast(error.message);return;}toast("Payout request "+status+".");await loadManualPayouts();
+}
+async function markHostPayoutPaid(id){
+ const ref=$("payoutUtr_"+id)?.value.trim();if(!ref){toast("Enter bank UTR/reference after completing the transfer.");return;}
+ const {error}=await db.rpc("admin_mark_host_payout_paid",{p_request_id:id,p_payout_reference:ref});
+ if(error){toast(error.message);return;}toast("Payout marked paid and recorded.");await loadManualPayouts();
 }
 async function loadPaymentDashboard(){
  const errorBox=$("paymentDashboardError"),list=$("paymentTransactions");
