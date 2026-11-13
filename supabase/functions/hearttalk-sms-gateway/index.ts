@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     const { data: job, error: readError } = await db.from("hearttalk_sms_queue")
       .select("id,phone,message")
       .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
