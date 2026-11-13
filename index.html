@@ -790,7 +790,7 @@ async function loadWallet(){
 }
 let authRequiredAtStartup=false;
 function openAuth(){document.getElementById("authModal").classList.add("show");setAuthMethod("phone")}
-window.addEventListener("DOMContentLoaded",()=>setAuthMethod("email"));
+window.addEventListener("DOMContentLoaded",()=>setAuthMethod("phone"));
 let authMethod="phone",pendingPhone="";
 function setAuthMethod(method){
  authMethod="phone";
