@@ -259,6 +259,13 @@ p{color:#77747e}
  #chatView .sendbar input{height:44px;min-width:0}
  #chatView .sendbar button{height:44px;min-width:58px;padding:0 14px}
 }
+
+/* Connect discovery interest ticker */
+.ht-interest-strip{margin:14px 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}
+.ht-interest-strip::-webkit-scrollbar{display:none}.ht-interest-track{display:flex;gap:10px;width:max-content;padding:4px 2px 9px;animation:htInterestDrift 65s linear infinite}.ht-interest-strip:hover .ht-interest-track,.ht-interest-strip:focus-within .ht-interest-track{animation-play-state:paused}
+.ht-interest-chip{white-space:nowrap;border:1px solid #a94c91;background:linear-gradient(135deg,#4b1749,#321033);color:#ffe8f5;border-radius:24px;padding:11px 17px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 5px 16px #16071835;transition:transform .2s,background .2s}.ht-interest-chip:hover{transform:translateY(-2px)}.ht-interest-chip.active{background:linear-gradient(100deg,#ff4d91,#c43c91);border-color:#ff78b0;color:white}
+@keyframes htInterestDrift{from{transform:translateX(0)}to{transform:translateX(-24%)}}
+@media(max-width:600px){.ht-interest-strip{margin:10px -8px 14px}.ht-interest-chip{padding:10px 14px;font-size:12px}.ht-interest-track{gap:8px;animation-duration:48s}}
 </style>
 
 <style>
@@ -498,6 +505,31 @@ p{color:#77747e}
   <div class="ht-connect-tools"><button onclick="document.getElementById('discoverSearch').focus()" aria-label="Search">⌕</button><button onclick="notify('Notifications will appear here when enabled.')" aria-label="Notifications">♧</button><button onclick="showView('live')" aria-label="Create room">＋</button></div>
  </div>
  <div class="ht-connect-banner"><div><span class="ht-eyebrow">FIND YOUR PEOPLE</span><h1>Connect <span>Rooms</span></h1><p>Meet new friends, talk, sing and have fun together.</p></div><div class="ht-banner-art">💞</div></div>
+ <div class="ht-interest-strip" aria-label="Explore rooms and interests">
+  <div class="ht-interest-track">
+   <button class="ht-interest-chip active" data-interest="all" onclick="selectConnectInterest('all',this)">🔥 All</button>
+   <button class="ht-interest-chip" data-interest="Antakshari" onclick="selectConnectInterest('Antakshari',this)">🎤 Antakshari</button>
+   <button class="ht-interest-chip" data-interest="Top" onclick="selectConnectInterest('Top',this)">⭐ Top</button>
+   <button class="ht-interest-chip" data-interest="Star Trainers" onclick="selectConnectInterest('Star Trainers',this)">🌟 Star Trainers</button>
+   <button class="ht-interest-chip" data-interest="Telugu" onclick="selectConnectInterest('Telugu',this)">తెలుగు</button>
+   <button class="ht-interest-chip" data-interest="Kannada" onclick="selectConnectInterest('Kannada',this)">ಕನ್ನಡ</button>
+   <button class="ht-interest-chip" data-interest="Hindi" onclick="selectConnectInterest('Hindi',this)">हिंदी</button>
+   <button class="ht-interest-chip" data-interest="Hyderabad" onclick="selectConnectInterest('Hyderabad',this)">📍 Hyderabad</button>
+   <button class="ht-interest-chip" data-interest="Telangana" onclick="selectConnectInterest('Telangana',this)">Telangana</button>
+   <button class="ht-interest-chip" data-interest="Live Video" onclick="selectConnectInterest('Live Video',this)">🔴 Live Video</button>
+   <button class="ht-interest-chip" data-interest="English Trainers" onclick="selectConnectInterest('English Trainers',this)">🇬🇧 English Trainers</button>
+   <button class="ht-interest-chip" data-interest="Friendship" onclick="selectConnectInterest('Friendship',this)">🤝 Friendship</button>
+   <button class="ht-interest-chip" data-interest="Love & Breakup" onclick="selectConnectInterest('Love & Breakup',this)">💗 Love & Breakup</button>
+   <button class="ht-interest-chip" data-interest="Foodie" onclick="selectConnectInterest('Foodie',this)">🍕 Foodie</button>
+   <button class="ht-interest-chip" data-interest="Romantic" onclick="selectConnectInterest('Romantic',this)">💕 Romantic</button>
+   <button class="ht-interest-chip" data-interest="Ludo" onclick="selectConnectInterest('Ludo',this)">🎲 Ludo</button>
+   <button class="ht-interest-chip" data-interest="Carrom" onclick="selectConnectInterest('Carrom',this)">🎯 Carrom</button>
+   <button class="ht-interest-chip" data-interest="Trending" onclick="selectConnectInterest('Trending',this)">🔥 Trending</button>
+   <button class="ht-interest-chip" data-interest="Singing" onclick="selectConnectInterest('Singing',this)">🎶 Singing</button>
+   <button class="ht-interest-chip" data-interest="Chatting" onclick="selectConnectInterest('Chatting',this)">💬 Chatting</button>
+   <button class="ht-interest-chip" data-interest="Busy Now" onclick="selectConnectInterest('Busy Now',this)">🟢 Busy Now</button>
+  </div>
+ </div>
  <div class="ht-filter-row" id="htRoomFilters">
   <button class="ht-filter active" data-filter="all" onclick="setHeartTalkRoomFilter('all',this)">🔥 All Rooms</button>
   <button class="ht-filter" data-filter="star" onclick="setHeartTalkRoomFilter('star',this)">⭐ Star Trainers</button>
@@ -1930,4 +1962,22 @@ async function heartTalkReportClientError(type,message,stack){
 }
 window.addEventListener("error",e=>{heartTalkReportClientError("runtime",e.message||"JavaScript error",e.error?.stack||"");});
 window.addEventListener("unhandledrejection",e=>{const v=e.reason;heartTalkReportClientError("promise",v?.message||String(v||"Unhandled promise rejection"),v?.stack||"");});
+
+// Connect interest filters: scrollable discovery categories.
+let htSelectedInterest="all";
+function selectConnectInterest(interest,button){
+ htSelectedInterest=interest;
+ document.querySelectorAll(".ht-interest-chip").forEach(b=>b.classList.toggle("active",b===button));
+ const search=document.getElementById("discoverSearch"),city=document.getElementById("nearbyCityFilter");
+ if(city)city.value="";
+ if(search)search.value=(interest==="all"||interest==="Top"||interest==="Star Trainers"||interest==="Trending"||interest==="Busy Now"||interest==="Live Video")?"":interest;
+ if(interest==="Antakshari"){showView("games");startHeartGame("antakshari");return;}
+ if(interest==="Ludo"||interest==="Carrom"){notify(interest+" room is coming soon. Member discovery remains available.");return;}
+ if(interest==="Live Video"){showView("live");return;}
+ if(interest==="all"||interest==="Top"||interest==="Star Trainers"||interest==="Trending"||interest==="Busy Now"){
+  if(search)search.value="";
+  if(interest!=="all")notify(interest+" category selected. Verified live-status and trainer ranking filters will be enabled when those profile fields are available.");
+ }
+ renderDiscover();
+}
 </script></body></html>
