@@ -727,7 +727,7 @@ p{color:#77747e}
  <p class="notice" style="margin-top:14px">Admin actions are protected by Supabase Row Level Security.</p>
 </section></main>
 <nav class="bottom"><button class="active" data-view="home" onclick="showView('home')">🏠<small>Home</small></button><button data-view="discover" onclick="showView('discover')">🫶<small>Connect</small></button><button data-view="store" onclick="showView('store')">🛍️<small>Store</small></button><button data-view="chat" onclick="showView('chat')">💬<small>Chats</small></button><button data-view="forums" onclick="showView('forums')">👥<small>Forums</small></button><button data-view="calls" onclick="showView('calls')">📞<small>Calls</small></button><button data-view="profile" onclick="showView('profile')">👤<small>Profile</small></button><button data-view="admin" id="adminNavBtn" onclick="showView('admin')" style="display:none">🛡️<small>Admin</small></button></nav>
-<div class="modal" id="authModal"><div class="dialog"><button class="close" id="authCloseBtn" onclick="closeAuth()">×</button><div class="section-kicker">WELCOME TO HEARTTALK</div><h2 id="authTitle">Your number. Your HeartTalk.</h2><p id="authDescription" class="muted">Register or log in securely with your mobile number.</p><div class="section-kicker" style="margin:12px 0">MOBILE NUMBER VERIFICATION</div><div id="phoneAuthFields"><label>Mobile number</label><div style="display:flex;gap:8px;align-items:center"><span class="secondary" style="padding:12px 14px;white-space:nowrap">🇮🇳 +91</span><input id="authPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" autocomplete="tel-national"></div><button class="primary" id="phoneSendOtp" style="width:100%;margin-top:12px" onclick="sendPhoneOtp()">Send OTP</button><div id="phoneOtpFields" style="display:none;margin-top:12px"><label>Enter SMS OTP</label><input id="authPhoneOtp" type="text" inputmode="numeric" maxlength="8" placeholder="Enter verification code" autocomplete="one-time-code"><button class="primary" id="phoneVerifyOtp" style="width:100%;margin-top:12px" onclick="verifyPhoneOtp()">Verify & Continue</button></div></div><p class="muted" style="font-size:12px;margin-top:14px">By continuing, you agree to use HeartTalk respectfully. Phone verification is required.<br><a href="./legal.html#terms" target="_blank" rel="noopener">Terms</a> · <a href="./legal.html#privacy" target="_blank" rel="noopener">Privacy</a> · <a href="./legal.html#refunds" target="_blank" rel="noopener">Refunds</a></p></div></div>
+<div class="modal" id="authModal"><div class="dialog"><button class="close" id="authCloseBtn" onclick="closeAuth()">×</button><div class="section-kicker">WELCOME TO HEARTTALK</div><h2 id="authTitle">Your email. Your HeartTalk.</h2><p id="authDescription" class="muted">Sign up or log in securely with your email and verification code.</p><div class="section-kicker" style="margin:12px 0">EMAIL VERIFICATION</div><div id="emailAuthFields"><label>Email address</label><input id="authEmail" type="email" inputmode="email" placeholder="Enter your email address" autocomplete="email"><button class="primary" id="emailSendOtp" style="width:100%;margin-top:12px" onclick="sendEmailOtp()">Resend / Send Code</button><div id="emailOtpFields" style="display:none;margin-top:12px"><label>Enter email verification code</label><input id="authEmailOtp" type="text" inputmode="numeric" maxlength="8" placeholder="Enter verification code" autocomplete="one-time-code"><button class="primary" id="emailVerifyOtp" style="width:100%;margin-top:12px" onclick="verifyEmailOtp()">Verify & Continue</button></div></div><p class="muted" style="font-size:12px;margin-top:14px">By continuing, you agree to use HeartTalk respectfully. Email verification is required.<br><a href="./legal.html#terms" target="_blank" rel="noopener">Terms</a> · <a href="./legal.html#privacy" target="_blank" rel="noopener">Privacy</a> · <a href="./legal.html#refunds" target="_blank" rel="noopener">Refunds</a></p></div></div>
 <div class="modal" id="languageModal"><div class="dialog" style="max-width:520px"><div class="section-kicker">Welcome to HeartTalk</div><h2>Select your language</h2><p>Show your language proudly and meet people who speak it.</p><div class="grid" style="grid-template-columns:repeat(3,1fr)"><button class="secondary" onclick="chooseHeartTalkLanguage('Telugu')">తెలుగు<br>Telugu</button><button class="secondary" onclick="chooseHeartTalkLanguage('Hindi')">हिन्दी<br>Hindi</button><button class="secondary" onclick="chooseHeartTalkLanguage('Tamil')">தமிழ்<br>Tamil</button><button class="secondary" onclick="chooseHeartTalkLanguage('English')">English</button><button class="secondary" onclick="chooseHeartTalkLanguage('Kannada')">ಕನ್ನಡ<br>Kannada</button><button class="secondary" onclick="chooseHeartTalkLanguage('Malayalam')">മലയാളം<br>Malayalam</button></div><p class="muted">You can change this later from settings.</p></div></div><div id="toast"></div>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -789,37 +789,30 @@ async function loadWallet(){
  list.innerHTML=rows.map(row=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee"><div><b>'+escapeHtml(String(row.entry_type||"transaction").replace(/_/g," "))+'</b><div class="muted">'+new Date(row.created_at).toLocaleString()+'</div></div><b style="white-space:nowrap;color:'+(row.amount>0?'#129b75':'#d72c78')+'">'+(row.amount>0?"+":"")+Number(row.amount)+' coins</b></div>').join("");
 }
 let authRequiredAtStartup=false;
-function openAuth(){document.getElementById("authModal").classList.add("show");setAuthMethod("phone")}
-window.addEventListener("DOMContentLoaded",()=>setAuthMethod("phone"));
-let authMethod="phone",pendingPhone="";
-function setAuthMethod(method){
- authMethod="phone";
- const authDescription=document.getElementById("authDescription");
- if(authDescription)authDescription.textContent="Sign up or log in securely with your mobile number and SMS verification code.";
- const phoneFields=document.getElementById("phoneAuthFields");if(phoneFields)phoneFields.style.display="block";
-}
-async function sendPhoneOtp(){
- const digits=document.getElementById("authPhone").value.replace(/\D/g,"");
- if(!/^[6-9]\d{9}$/.test(digits)){notify("Enter a valid 10-digit Indian mobile number.");return}
- const phone="+91"+digits;
- const b=document.getElementById("phoneSendOtp");b.disabled=true;b.textContent="Sending...";
+function openAuth(){document.getElementById("authModal").classList.add("show")}
+window.addEventListener("DOMContentLoaded",()=>{});
+let pendingEmail="";
+async function sendEmailOtp(){
+ const email=document.getElementById("authEmail").value.trim().toLowerCase();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){notify("Enter a valid email address.");return}
+ const b=document.getElementById("emailSendOtp");b.disabled=true;b.textContent="Sending...";
  try{
-  const {error}=await supabaseClient.auth.signInWithOtp({phone,options:{channel:"sms"}});
+  const {error}=await supabaseClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
   if(error)throw error;
-  pendingPhone=phone;document.getElementById("phoneOtpFields").style.display="block";notify("OTP sent. Check your SMS.");
- }catch(e){notify(e.message||"Could not send OTP. Check Supabase phone authentication and SMS provider settings.");}
- finally{b.disabled=false;b.textContent="Resend / Send OTP"}
+  pendingEmail=email;document.getElementById("emailOtpFields").style.display="block";notify("Verification code sent. Check your email inbox and spam folder.");
+ }catch(e){notify(e.message||"Could not send email code. Check Supabase email settings.");}
+ finally{b.disabled=false;b.textContent="Resend / Send Code"}
 }
-async function verifyPhoneOtp(){
- const token=document.getElementById("authPhoneOtp").value.trim();
- if(!pendingPhone||!token){notify("Enter the OTP sent to your phone.");return}
- const b=document.getElementById("phoneVerifyOtp");b.disabled=true;b.textContent="Verifying...";
+async function verifyEmailOtp(){
+ const token=document.getElementById("authEmailOtp").value.trim();
+ if(!pendingEmail||!token){notify("Enter the code sent to your email.");return}
+ const b=document.getElementById("emailVerifyOtp");b.disabled=true;b.textContent="Verifying...";
  try{
-  const {data,error}=await supabaseClient.auth.verifyOtp({phone:pendingPhone,token,type:"sms"});
+  const {data,error}=await supabaseClient.auth.verifyOtp({email:pendingEmail,token,type:"email"});
   if(error)throw error;
   currentUser=data.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");document.getElementById("authCloseBtn")?.style.removeProperty("display");document.getElementById("authModal").classList.remove("show");document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;
-  await loadProfile();await loadDiscover();notify("Phone number verified. Welcome to HeartTalk!");
- }catch(e){notify(e.message||"OTP verification failed. Try again.");}
+  await loadProfile();await loadDiscover();notify("Email verified. Welcome to HeartTalk!");
+ }catch(e){notify(e.message||"Email verification failed. Try again.");}
  finally{b.disabled=false;b.textContent="Verify & Login"}
 }
 function closeAuth(){if(authRequiredAtStartup&&!currentUser){notify("Please verify your phone number to continue.");return}document.getElementById("authModal").classList.remove("show")}
