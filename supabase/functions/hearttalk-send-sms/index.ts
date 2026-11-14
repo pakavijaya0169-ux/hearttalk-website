@@ -13,17 +13,38 @@ Deno.serve(async (req) => {
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!secret || !url || !serviceKey) throw new Error("Missing required server secrets");
+
     const hookSecret = secret.split("|")[0].replace(/^v1,whsec_/, "");
     const wh = new Webhook(hookSecret);
     const event = wh.verify(raw, Object.fromEntries(req.headers)) as {
-      user?: { phone?: string };
-      sms?: { otp?: string };
+      user?: { phone?: string | null };
+      sms?: { otp?: string | null };
     };
-    const phone = event.user?.phone;
-    const otp = event.sms?.otp;
-    if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone) || !otp || !/^\d{4,8}$/.test(otp)) {
-      return json({ error: { http_code: 400, message: "Invalid SMS hook payload" } }, 400);
+
+    const rawPhone = String(event.user?.phone ?? "").trim();
+    const otp = String(event.sms?.otp ?? "").trim();
+    // Supabase normally supplies E.164. Normalize a plain Indian 10-digit number defensively.
+    const digits = rawPhone.replace(/[^0-9]/g, "");
+    const phone = rawPhone.startsWith("+")
+      ? "+" + digits
+      : digits.length === 10
+        ? "+91" + digits
+        : digits.length === 12 && digits.startsWith("91")
+          ? "+" + digits
+          : "";
+
+    if (!/^\\+[1-9]\\d{7,14}$/.test(phone) || !/^\\d{4,8}$/.test(otp)) {
+      console.error("Invalid SMS hook fields", {
+        hasUser: Boolean(event.user),
+        hasSms: Boolean(event.sms),
+        phonePresent: Boolean(rawPhone),
+        phoneLength: digits.length,
+        otpPresent: Boolean(otp),
+        otpLength: otp.length,
+      });
+      return json({ error: { http_code: 400, message: "Invalid SMS hook payload: phone or OTP missing/invalid" } }, 400);
     }
+
     const db = createClient(url, serviceKey, { auth: { persistSession: false } });
     const { error } = await db.from("hearttalk_sms_queue").insert({
       phone,
