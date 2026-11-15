@@ -118,14 +118,14 @@ revoke all on function public.admin_list_host_payout_requests(text) from public,
 grant execute on function public.admin_list_host_payout_requests(text) to authenticated;
 
 create or replace function public.admin_approve_host_payout(p_request_id uuid,p_admin_note text default '')
-returns boolean language plpgsql security definer set search_path='' as $
+returns boolean language plpgsql security definer set search_path='' as $$
 begin
  if auth.uid() is null or not public.is_hearttalk_admin() then raise exception 'Admin access required'; end if;
  update public.hearttalk_host_payout_requests set status='approved',admin_note=coalesce(p_admin_note,''),reviewed_by=auth.uid(),reviewed_at=now(),updated_at=now()
  where id=p_request_id and status='pending';
  if not found then raise exception 'Pending request not found'; end if;
  return true;
-end; $;
+end; $$;
 revoke all on function public.admin_approve_host_payout(uuid,text) from public,anon;
 grant execute on function public.admin_approve_host_payout(uuid,text) to authenticated;
 
