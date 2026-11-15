@@ -497,7 +497,7 @@ p{color:#77747e}
   <button onclick="showView('games')"><span>🎮</span><b>Games & Fun</b><small>Antakshari, quizzes and more</small><em>Play now →</em></button>
   <button onclick="showView('forums')"><span>🌸</span><b>Community Feed</b><small>Share moments and thoughts</small><em>Open feed →</em></button>
  </div>
- <div class="frnd-qr-shortcut"><span>🔳</span><div><b>QR friend connect</b><small>Quickly add a friend using their profile QR.</small></div><button onclick="showView('discover')">Open</button></div>
+ <div class="frnd-qr-shortcut referral-share-card"><span>💬</span><div><b>Share HeartTalk on WhatsApp</b><small>Refer a friend and get 100 coins when they join!</small></div><button onclick="shareHeartTalkInvite()">Share</button></div>
 </section>
 <section class="view connect-view" id="discoverView">
  <div class="ht-connect-top">
@@ -2003,4 +2003,22 @@ function renderHeartTalkStore(){
 }
 function heartTalkStoreSendGift(){if(!currentUser){openAuth();return;}notify("Open a member chat, then choose the gift button to send it. Store preview does not deduct coins.");showView("chat");}
 function previewHeartTalkStoreItem(index){const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(item)notify(item.title+": preview only. Purchase and profile apply feature are not enabled yet.");}
-</script></body></html>
+</script>
+<script>
+async function shareHeartTalkInvite() {
+  let referralCode = '';
+  try {
+    const { data } = await supabaseClient.auth.getUser();
+    if (data && data.user) referralCode = data.user.id;
+  } catch (error) {
+    console.warn('Could not read referral user ID', error);
+  }
+  const inviteUrl = new URL(window.location.href);
+  inviteUrl.searchParams.delete('utm_source');
+  if (referralCode) inviteUrl.searchParams.set('ref', referralCode);
+  const message = 'Join me on HeartTalk! Make friends, chat and have fun. Sign up using my invite link. I can earn 100 coins when you join: ' + inviteUrl.toString();
+  const whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(message);
+  window.open(whatsappUrl, '_blank', 'noopener');
+}
+</script>
+\n</body></html>
