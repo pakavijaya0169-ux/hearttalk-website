@@ -106,9 +106,9 @@ begin
  select coalesce(jsonb_agg(to_jsonb(q) order by q.created_at desc),'[]'::jsonb) into v_rows
  from (
   select r.id,r.host_id,r.amount_paise,r.upi_id,r.account_holder_name,r.status,r.utr,r.admin_note,r.created_at,r.reviewed_at,r.paid_at,
-   coalesce(p.display_name,p.username,'HeartTalk Host') as host_name
+   coalesce(u.raw_user_meta_data->>'display_name',u.raw_user_meta_data->>'username',u.email,'HeartTalk Host') as host_name
   from public.hearttalk_host_payout_requests r
-  left join public.profiles p on p.id=r.host_id
+  left join auth.users u on u.id=r.host_id
   where p_status='all' or r.status=p_status
   order by r.created_at desc limit 500
  ) q;
@@ -116,6 +116,18 @@ begin
 end; $$;
 revoke all on function public.admin_list_host_payout_requests(text) from public,anon;
 grant execute on function public.admin_list_host_payout_requests(text) to authenticated;
+
+create or replace function public.admin_approve_host_payout(p_request_id uuid,p_admin_note text default '')
+returns boolean language plpgsql security definer set search_path='' as $
+begin
+ if auth.uid() is null or not public.is_hearttalk_admin() then raise exception 'Admin access required'; end if;
+ update public.hearttalk_host_payout_requests set status='approved',admin_note=coalesce(p_admin_note,''),reviewed_by=auth.uid(),reviewed_at=now(),updated_at=now()
+ where id=p_request_id and status='pending';
+ if not found then raise exception 'Pending request not found'; end if;
+ return true;
+end; $;
+revoke all on function public.admin_approve_host_payout(uuid,text) from public,anon;
+grant execute on function public.admin_approve_host_payout(uuid,text) to authenticated;
 
 create or replace function public.admin_mark_host_payout_paid(p_request_id uuid,p_utr text,p_admin_note text default '')
 returns boolean language plpgsql security definer set search_path='' as $$
@@ -126,8 +138,6 @@ begin
  select * into v from public.hearttalk_host_payout_requests where id=p_request_id for update;
  if not found or v.status not in ('pending','approved') then raise exception 'Request is not payable'; end if;
  update public.hearttalk_host_payout_requests set status='paid',utr=trim(p_utr),admin_note=coalesce(p_admin_note,''),reviewed_by=auth.uid(),reviewed_at=now(),paid_at=now(),updated_at=now() where id=p_request_id;
- insert into public.hearttalk_host_cash_ledger(host_id,amount_paise,entry_type,reference_id,note,created_by)
- values(v.host_id,0,'withdrawal_paid',v.id,'Paid manually; UTR '||trim(p_utr),auth.uid());
  return true;
 end; $$;
 revoke all on function public.admin_mark_host_payout_paid(uuid,text,text) from public,anon;
