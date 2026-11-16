@@ -10,7 +10,7 @@ create table if not exists public.hearttalk_admin_payment_settings (
   updated_by uuid references auth.users(id),
   updated_at timestamptz not null default now(),
   constraint hearttalk_admin_payment_settings_upi_check
-    check (upi_id ~* '^[a-z0-9._-]{2,256}@[a-z][a-z0-9]{1,20}$')
+    check (upi_id ~* '^[a-z0-9._-]+@[a-z][a-z0-9]{1,20}$')
 );
 insert into public.hearttalk_admin_payment_settings(singleton,upi_id)
 values(true,'pakavijaya0169-4@oksbi')
@@ -42,7 +42,7 @@ create or replace function public.admin_save_payment_settings(p_upi_id text,p_qr
 returns boolean language plpgsql security definer set search_path='' as $$
 begin
  if auth.uid() is null or not public.is_hearttalk_admin() then raise exception 'Admin access required'; end if;
- if p_upi_id is null or p_upi_id !~* '^[a-z0-9._-]{2,256}@[a-z][a-z0-9]{1,20}$' then
+ if p_upi_id is null or p_upi_id !~* '^[a-z0-9._-]+@[a-z][a-z0-9]{1,20}$' then
    raise exception 'Enter a valid UPI ID';
  end if;
  if p_qr_image_url is not null and (length(p_qr_image_url)>2048 or p_qr_image_url !~* '^https://') then
