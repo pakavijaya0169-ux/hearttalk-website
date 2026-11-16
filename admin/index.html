@@ -339,10 +339,17 @@ async function savePushCampaign(mode){
  }
  if(!sessionUser){toast("Admin sign-in required.");return}
  const status=mode==="scheduled"?"scheduled":mode==="queued"?"queued":"draft";
- const {error}=await db.from("hearttalk_push_campaigns").insert({title,body,audience,image_url,payload_json:buildPushPayload(),scheduled_at,status,created_by:sessionUser.id});
- if(error){toast("Could not save notification: "+error.message+" · Apply supabase/hearttalk_rich_push_notifications.sql first.");return}
- $("pushCampaignStatus").textContent=status==="queued"?"Saved in send queue. FCM delivery is not active until the sender function and device tokens are configured.":status==="scheduled"?"Scheduled campaign saved. Automatic delivery needs the FCM scheduler to be deployed.":"Draft saved.";
- toast(status==="queued"?"Added to send queue (FCM setup still required).":status==="scheduled"?"Notification scheduled.":"Draft saved.");
+ const {data:createdCampaign,error}=await db.from("hearttalk_push_campaigns").insert({title,body,audience,image_url,payload_json:buildPushPayload(),scheduled_at,status,created_by:sessionUser.id}).select("id").single();
+ if(error){toast("Could not save notification: "+error.message+" · Apply the HeartTalk push SQL migrations first.");return}
+ if(status==="queued"){
+  $("pushCampaignStatus").textContent="Campaign saved. Sending to registered devices…";
+  const {data:sendResult,error:sendError}=await db.functions.invoke("send-hearttalk-push",{body:{campaign_id:createdCampaign.id}});
+  if(sendError||sendResult?.error){const message=sendError?.message||sendResult?.error||"Push sender is not ready";$("pushCampaignStatus").textContent="Saved, but not sent: "+message;toast("Campaign saved; delivery setup needs attention: "+message);}
+  else{$("pushCampaignStatus").textContent="FCM send completed. Delivered: "+sendResult.delivered+" · Failed: "+sendResult.failed;$("pushCampaignStatus").dataset.lastResult=JSON.stringify(sendResult);toast("Push sent. Delivered: "+sendResult.delivered+" · Failed: "+sendResult.failed);}
+ } else {
+  $("pushCampaignStatus").textContent=status==="scheduled"?"Scheduled campaign saved. Automatic scheduled delivery requires a scheduler.":"Draft saved.";
+  toast(status==="scheduled"?"Notification scheduled.":"Draft saved.");
+ }
  $("pushTitle").value="";$("pushBody").value="";$("pushImageFile").value="";$("pushImageUrl").value="";$("pushImagePreview").textContent="No image selected.";uploadedPushImageUrl="";buildPushPayload();
  await loadPushCampaigns();
 }
