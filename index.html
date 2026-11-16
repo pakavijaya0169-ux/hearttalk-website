@@ -773,7 +773,7 @@ function showHeartTalkPushPrompt(){
  document.getElementById("heartTalkPushLater").addEventListener("click",()=>{sessionStorage.setItem("hearttalk_push_prompt_dismissed","1");prompt.remove();});
 }
 async function syncHeartTalkPushAfterLogin(){
- if(!currentUser)return;
+ if(!currentUser || !("Notification" in window) || !("serviceWorker" in navigator))return;
  if(Notification.permission==="granted"){
   try{await registerHeartTalkPushToken();}catch(e){console.warn("HeartTalk push token refresh:",e);}
   return;
