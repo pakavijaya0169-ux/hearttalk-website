@@ -1,10 +1,41 @@
-const CACHE_NAME = "hearttalk-v9";
+const CACHE_NAME = "hearttalk-v10";
 const FILES_TO_CACHE = [
   "/hearttalk-website/",
   "/hearttalk-website/manifest.json",
   "/hearttalk-website/icons/icon-192.svg",
   "/hearttalk-website/icons/icon.svg"
 ];
+
+importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyDV4iEnxAIAKejGhAKMvXDrqvPPr4LCKas",
+  authDomain: "hearttalk0169.firebaseapp.com",
+  projectId: "hearttalk0169",
+  storageBucket: "hearttalk0169.firebasestorage.app",
+  messagingSenderId: "125077497164",
+  appId: "1:125077497164:web:ea097e0d317e5177acdbe9",
+  measurementId: "G-3YCTN9HBE1"
+});
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(payload => {
+  const data = payload.data || {};
+  const notification = payload.notification || {};
+  const title = notification.title || data.title || "HeartTalk";
+  const body = notification.body || data.body || "You have a new update.";
+  const image = notification.image || data.image || data.image_url;
+  const url = data.url || data.click_action || "/hearttalk-website/";
+  return self.registration.showNotification(title, {
+    body,
+    icon: "/hearttalk-website/icons/icon-192.svg",
+    badge: "/hearttalk-website/icons/icon-192.svg",
+    ...(image ? { image } : {}),
+    tag: data.tag || "hearttalk-push",
+    data: { url }
+  });
+});
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE)));
@@ -16,40 +47,6 @@ self.addEventListener("activate", event => {
     Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))
   ));
   self.clients.claim();
-});
-
-/*
- * FCM delivers background Web Push messages to this service worker.
- * The sender can use either a standard FCM notification payload or data payload.
- * Image URLs must be publicly reachable HTTPS URLs (for example, the
- * HeartTalk notification-images Supabase Storage bucket).
- */
-self.addEventListener("push", event => {
-  event.waitUntil((async () => {
-    let payload = {};
-    try {
-      payload = event.data ? event.data.json() : {};
-    } catch (_) {
-      payload = { data: { body: event.data ? event.data.text() : "" } };
-    }
-
-    const data = payload.data || {};
-    const notification = payload.notification || {};
-    const title = notification.title || data.title || "HeartTalk";
-    const body = notification.body || data.body || "You have a new update.";
-    const image = notification.image || data.image || data.image_url || undefined;
-    const url = data.url || data.click_action || "/hearttalk-website/";
-
-    await self.registration.showNotification(title, {
-      body,
-      icon: "/hearttalk-website/icons/icon-192.svg",
-      badge: "/hearttalk-website/icons/icon-192.svg",
-      image,
-      tag: data.tag || "hearttalk-push",
-      renotify: Boolean(data.renotify === "true"),
-      data: { url }
-    });
-  })());
 });
 
 self.addEventListener("notificationclick", event => {
