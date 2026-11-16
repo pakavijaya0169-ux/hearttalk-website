@@ -409,7 +409,23 @@ async function loadPushCampaigns(){
  if(!rows.length){box.innerHTML='<div class="empty">No notification campaigns yet.</div>';return}
  box.innerHTML=rows.map(x=>'<article class="report-row"><div class="user-main">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="" style="width:110px;height:66px;object-fit:cover;border-radius:9px;float:right;margin:0 0 8px 12px">':'')+'<b>'+esc(x.title)+'</b><div class="user-meta">'+esc(x.audience)+' · <b>'+esc(x.status)+'</b> · '+new Date(x.created_at).toLocaleString()+'</div><p>'+esc(x.body)+'</p>'+(x.scheduled_at?'<div class="user-meta">Scheduled: '+new Date(x.scheduled_at).toLocaleString()+'</div>':'')+'<div class="user-meta">Delivered: '+Number(x.delivery_count||0)+' · Failed: '+Number(x.failure_count||0)+'</div>'+(x.last_error?'<div class="user-meta">Error: '+esc(x.last_error)+'</div>':'')+'</div><div class="toolbar">'+(["draft","scheduled","queued"].includes(x.status)?'<button class="btn danger" onclick="cancelPushCampaign(\''+x.id+'\')">Cancel</button>':'')+'</div></article>').join("");
 }
-async function loadAdminNotifications(){const box=$("adminNotificationList");const {data,error}=await db.rpc("admin_list_host_payout_requests",{p_status:"all"});if(error){box.innerHTML="<div class=\"notice\">"+esc(error.message)+"</div>";return;}const rows=Array.isArray(data)?data:[];const pending=rows.filter(x=>x.status==="pending");$("pendingWithdrawalAlerts").textContent=String(pending.length);if(!rows.length){box.innerHTML="<div class=\"empty\">No withdrawal requests yet.</div>";return;}box.innerHTML=rows.slice(0,20).map(x=>"<div class=\"report-row\"><b>"+esc(x.host_name||x.host_id)+"</b><div class=\"muted small\">₹"+(Number(x.amount_paise||0)/100).toFixed(2)+" · "+esc(x.status)+" · "+new Date(x.created_at).toLocaleString()+"</div></div>").join("");}
+async function loadAdminNotifications(){
+ const box=$("adminNotificationList");
+ const [payoutResult,rechargeResult]=await Promise.all([
+  db.rpc("admin_list_host_payout_requests",{p_status:"all"}),
+  db.rpc("admin_list_manual_upi_recharges",{p_status:"pending"})
+ ]);
+ if(payoutResult.error&&rechargeResult.error){box.innerHTML='<div class="notice">'+esc(payoutResult.error.message)+' · '+esc(rechargeResult.error.message)+'</div>';return;}
+ const payouts=Array.isArray(payoutResult.data)?payoutResult.data:[];
+ const recharges=Array.isArray(rechargeResult.data)?rechargeResult.data:[];
+ const pendingPayouts=payouts.filter(x=>x.status==="pending");
+ $("pendingWithdrawalAlerts").textContent=String(pendingPayouts.length);
+ const alerts=[
+  ...recharges.map(x=>({kind:"recharge",created_at:x.created_at,html:'<div class="report-row"><b>🪙 New coin recharge · '+esc(x.user_name||x.email||x.user_id)+'</b><div class="muted small">₹'+(Number(x.amount_paise||0)/100).toFixed(2)+' · '+esc(x.package_title)+' · '+Number(x.coins||0).toLocaleString("en-IN")+' coins · Pending payment check</div><div class="muted small">'+new Date(x.created_at).toLocaleString()+'</div><button class="btn primary" style="margin-top:8px" onclick="switchTab(\'manualRecharge\')">Review & approve</button></div>'})),
+  ...pendingPayouts.map(x=>({kind:"payout",created_at:x.created_at,html:'<div class="report-row"><b>'+esc(x.host_name||x.host_id)+'</b><div class="muted small">₹'+(Number(x.amount_paise||0)/100).toFixed(2)+' · Withdrawal · '+esc(x.status)+' · '+new Date(x.created_at).toLocaleString()+'</div></div>'}))
+ ].sort((x,y)=>new Date(y.created_at)-new Date(x.created_at));
+ box.innerHTML=alerts.length?alerts.slice(0,30).map(x=>x.html).join(""):'<div class="empty">No pending recharge or withdrawal alerts.</div>';
+}
 async function loadManualUpiRecharges(){
  const box=$("manualRechargeList"),count=$("manualRechargeCount");if(!box)return;
  box.innerHTML='<div class="empty">Loading recharge requests…</div>';
@@ -419,10 +435,10 @@ async function loadManualUpiRecharges(){
  const rows=Array.isArray(data)?data:[];
  if(count)count.textContent=rows.length+" request(s)";
  if(!rows.length){box.innerHTML='<div class="empty">No recharge requests in this filter.</div>';return}
- box.innerHTML=rows.map(r=>'<article class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+esc(r.user_name||r.email||r.user_id)+'</b><div class="muted small">'+esc(r.email||"")+' · '+new Date(r.created_at).toLocaleString()+'</div><div class="muted small">User ID: '+esc(r.user_id)+'</div></div><div><b>₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</b><div class="muted small">'+esc(r.package_title)+' · '+Number(r.coins).toLocaleString("en-IN")+' total coins ('+Number(r.paid_coins||0).toLocaleString("en-IN")+' paid + '+Number(r.bonus_coins||0).toLocaleString("en-IN")+' bonus)</div><div class="muted small">Status: '+esc(r.status)+'</div></div></div><div class="notice" style="margin:10px 0">UTR / Reference: <b>'+esc(r.utr)+'</b></div>'+(r.admin_note?'<div class="muted small">Admin note: '+esc(r.admin_note)+'</div>':'')+(r.status==="pending"?'<div class="toolbar"><button class="btn primary" onclick="approveManualUpiRecharge(\''+esc(r.id)+'\')">Approve & credit coins</button><button class="btn danger" onclick="rejectManualUpiRecharge(\''+esc(r.id)+'\')">Reject</button></div>':'')+'</article>').join("");
+ box.innerHTML=rows.map(r=>'<article class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+esc(r.user_name||r.email||r.user_id)+'</b><div class="muted small">'+esc(r.email||"")+' · '+new Date(r.created_at).toLocaleString()+'</div><div class="muted small">User ID: '+esc(r.user_id)+'</div></div><div><b>₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</b><div class="muted small">'+esc(r.package_title)+' · '+Number(r.coins).toLocaleString("en-IN")+' total coins ('+Number(r.paid_coins||0).toLocaleString("en-IN")+' paid + '+Number(r.bonus_coins||0).toLocaleString("en-IN")+' bonus)</div><div class="muted small">Status: '+esc(r.status)+'</div></div></div><div class="notice" style="margin:10px 0">Check your UPI app / bank statement for this exact amount before approving.</div>'+(r.admin_note?'<div class="muted small">Admin note: '+esc(r.admin_note)+'</div>':'')+(r.status==="pending"?'<div class="toolbar"><button class="btn primary" onclick="approveManualUpiRecharge(\''+esc(r.id)+'\')">Approve & credit coins</button><button class="btn danger" onclick="rejectManualUpiRecharge(\''+esc(r.id)+'\')">Reject</button></div>':'')+'</article>').join("");
 }
 async function approveManualUpiRecharge(id){
- if(!confirm("Have you confirmed the exact UPI amount is credited in your bank account for this UTR? Only continue if the bank credit is visible."))return;
+ if(!confirm("Have you confirmed the exact UPI amount is credited in your bank account for this customer? Only approve if the bank credit is visible."))return;
  const {data,error}=await db.rpc("admin_approve_manual_upi_recharge",{p_request_id:id,p_admin_note:"UPI bank credit manually verified"});
  if(error){toast(error.message);return}
  toast("Approved. "+Number(data?.coins||0)+" coins credited to the user's wallet.");
