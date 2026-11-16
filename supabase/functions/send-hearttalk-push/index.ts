@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         failed++;
         const err = await fcmResponse.json().catch(() => ({}));
         const status = err?.error?.details?.[0]?.errorCode || err?.error?.status;
-        if (status === "UNREGISTERED" || status === "INVALID_ARGUMENT") failedTokenIds.push(token.id);
+        if (status === "UNREGISTERED") failedTokenIds.push(token.id);
       }
     }
 
