@@ -1325,7 +1325,7 @@ function cancelVoiceRecording(event){
 function containsIndianMobileNumber(value){
  const text=String(value||"");
  // Match Indian mobile numbers with optional +91/91/0 prefix and common separators.
- return /(^|[^0-9])(?:\\+?91[\\s().-]*)?0?[6-9](?:[\\s().-]*[0-9]){9}(?![0-9])/.test(text);
+ return /(^|[^0-9])(?:\+?91[\s().-]*)?0?[6-9](?:[\s().-]*[0-9]){9}(?![0-9])/.test(text);
 }
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
@@ -1375,7 +1375,7 @@ async function createPeer(){
 let callSpeechRecognition=null,callSafetyTriggered=false;
 function spokenDigits(text){
  const map={zero:"0",oh:"0",one:"1",two:"2",three:"3",four:"4",five:"5",six:"6",seven:"7",eight:"8",nine:"9"};
- return String(text||"").toLowerCase().replace(/\\b(zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\\s,.-]+(zero|oh|one|two|three|four|five|six|seven|eight|nine)){5,}\\b/g,m=>m.split(/[\\s,.-]+/).map(w=>map[w]||w).join(""));
+ return String(text||"").toLowerCase().replace(/\b(zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\s,.-]+(zero|oh|one|two|three|four|five|six|seven|eight|nine)){5,}\b/g,m=>m.split(/[\s,.-]+/).map(w=>map[w]||w).join(""));
 }
 function stopCallSpeechMonitor(){
  if(callSpeechRecognition){try{callSpeechRecognition.onresult=null;callSpeechRecognition.stop()}catch(e){}callSpeechRecognition=null}
