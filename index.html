@@ -481,6 +481,7 @@ p{color:#77747e}
   <button class="frnd-member-card" onclick="showView('discover')"><span class="frnd-member-avatar">😊</span><small>Online members</small><b>Find people</b><em>Connect →</em></button>
   <button class="frnd-member-card" onclick="showView('discover')"><span class="frnd-member-avatar">🥰</span><small>New friends</small><b>Discover</b><em>Connect →</em></button>
  </div>
+ <section class="frnd-all-users-card" style="margin:18px 0;padding:18px;border-radius:18px;background:linear-gradient(120deg,#3a1038,#7b285e);color:#fff"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><small style="opacity:.85;letter-spacing:1px">HEARTTALK COMMUNITY</small><h2 style="margin:5px 0">👥 All Users & Hosts</h2><p style="margin:0;opacity:.9">Discover every active member and verified host</p></div><button type="button" onclick="showView('discover')" style="background:#fff;color:#3a1038;border:0;border-radius:12px;padding:10px 14px;font-weight:700">View all →</button></div></section>
  <div class="section-head frnd-section-head"><h2>All Room Types</h2><button class="secondary" onclick="showView('live')">Explore</button></div>
  <div class="frnd-horizontal room-types">
   <button class="frnd-type-card type-pink" onclick="showView('live')"><b>HeartTalk<br>Connect<br>Rooms</b><span>💑🌸</span></button>
@@ -1119,16 +1120,21 @@ async function loadDiscover(){
  grid.innerHTML='<div class="notice">Loading community members...</div>';
  const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
- const [mine,theirs]=await Promise.all([supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id)]);
+ const [mine,theirs,hostRows]=await Promise.all([
+  supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),
+  supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id),
+  supabaseClient.from("hosts").select("user_id").eq("host_status","active")
+ ]);
  if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
  const hidden=new Set([...(mine.data||[]).map(x=>x.blocked_user_id),...(theirs.data||[]).map(x=>x.blocker_id)]);
- discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id));renderDiscover()
+ const hostIds=new Set(hostRows.error?[]:(hostRows.data||[]).map(x=>x.user_id));
+ discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id)}));renderDiscover()
 }
 function renderDiscover(){
  const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),city=document.getElementById("nearbyCityFilter"),q=(search?.value||"").toLowerCase(),place=(city?.value||"").trim().toLowerCase();
  const rows=discoverUsers.filter(u=>{const text=(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase();return text.includes(q)&&(!place||text.includes(place));});
  if(!rows.length){grid.innerHTML='<div class="notice">No members found yet. Invite friends to join HeartTalk!</div>';return}
- grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">'+(u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":u.gender==="male"?"👨":u.gender==="other"?"🧑":"💗"))+(u.gender?'<span class="gender-avatar-badge">'+(u.gender==="female"?"♀":u.gender==="male"?"♂":"✦")+'</span>':'')+'</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
+ grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">'+(u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":u.gender==="male"?"👨":u.gender==="other"?"🧑":"💗"))+(u.gender?'<span class="gender-avatar-badge">'+(u.gender==="female"?"♀":u.gender==="male"?"♂":"✦")+'</span>':'')+'</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+(u.is_host?' · <span style="color:#b34b83;font-weight:700">⭐ HOST</span>':'')+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
 }
 
 async function isHeartTalkBlocked(userId){
