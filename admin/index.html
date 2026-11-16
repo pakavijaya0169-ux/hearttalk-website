@@ -94,7 +94,7 @@
   </div>
   <h3 style="margin-top:18px">Recent verified transactions</h3>
   <div id="paymentTransactions" class="empty">Manual UPI recharge requests are reviewed in the Coin Recharge tab.</div>
-  <div class="notice" style="margin-top:12px">Host earnings conversion: ₹0.50 per earned host coin. Purchased wallet coins are not redeemable for cash. Process bank transfers only after provider approval, KYC and compliance checks.</div>
+  <div class="notice" style="margin-top:12px">Host earnings conversion: ₹0.50 per earned host coin. Purchased wallet coins are not redeemable for cash. Transfer manually only after checking the host's verified payout details and applicable tax / compliance requirements.</div>
  </div>
  
 </section>
@@ -317,18 +317,19 @@ async function rejectHostPayout(id){const note=prompt("Reason for rejection (req
 async function markHostPayoutPaid(id){const ref=$("payoutUtr_"+id)?.value.trim();if(!ref){toast("Complete UPI transfer first, then enter UTR.");return;}if(!confirm("Confirm that the exact amount has already been transferred to the host?"))return;const {error}=await db.rpc("admin_mark_host_payout_paid",{p_request_id:id,p_utr:ref,p_admin_note:"Manual UPI transfer completed"});if(error){toast(error.message);return;}toast("Marked paid and UTR recorded.");await loadManualPayouts();}
 async function creditHostEarnings(){const host=$("hostCreditUser").value.trim(),amount=Number($("hostCreditAmount").value),source=$("hostCreditSource").value.trim(),note=$("hostCreditNote").value.trim();if(!host||!Number.isFinite(amount)||amount<=0||!source){toast("Enter host UUID, amount and unique source reference.");return;}const {error}=await db.rpc("admin_credit_host_cash_earnings",{p_host_id:host,p_amount_paise:Math.round(amount*100),p_source_reference:source,p_note:note});if(error){toast(error.message);return;}toast("Verified earnings credited to host cash ledger.");$("hostCreditAmount").value="";$("hostCreditSource").value="";$("hostCreditNote").value="";await loadManualPayouts();}
 async function loadPaymentDashboard(){
- const errorBox=$("paymentDashboardError"),list=$("paymentTransactions");
- if(!sessionUser||!errorBox||!list)return;
- errorBox.classList.add("hidden");list.innerHTML='<div class="empty">Loading payment records…</div>';
- const {data,error}=await db.rpc("admin_get_payment_dashboard");
- if(error){errorBox.textContent="Payment dashboard SQL setup required. Apply supabase/migrations/202611120001_commerce_payments_activation.sql. "+error.message;errorBox.classList.remove("hidden");list.innerHTML='<div class="empty">No payment data available until setup is complete.</div>';return}
+ const errorBox=$("paymentDashboardError"),list=$("paymentTransactions");if(!sessionUser||!errorBox||!list)return;
+ errorBox.classList.add("hidden");list.innerHTML='<div class="empty">Loading manual UPI recharge records…</div>';
+ const {data,error}=await db.rpc("admin_list_manual_upi_recharges",{p_status:"all"});
+ if(error){errorBox.textContent="Manual UPI recharge SQL setup required. "+error.message;errorBox.classList.remove("hidden");list.innerHTML='<div class="empty">No manual UPI data available until the SQL migration is applied.</div>';return}
+ const rows=Array.isArray(data)?data:[];
+ const approved=rows.filter(x=>x.status==="approved"),pending=rows.filter(x=>x.status==="pending");
+ const money=approved.reduce((sum,x)=>sum+Number(x.amount_paise||0),0);
+ const coins=approved.reduce((sum,x)=>sum+Number(x.coins||0),0);
  const n=v=>Number(v||0).toLocaleString("en-IN");
- $("pRevenue").textContent="₹"+(Number(data.total_revenue_paise||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
- $("pCount").textContent=n(data.successful_payments);$("pCoins").textContent=n(data.coins_sold);
- $("pPending").textContent=n(data.pending_orders);$("pHostCoins").textContent=n(data.host_earned_coins);
- $("pGiftCount").textContent=n(data.gift_count);
- const rows=data.recent_payments||[];
- list.innerHTML=rows.length?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr><th style="text-align:left;padding:10px">Payment ID</th><th style="text-align:left;padding:10px">Account</th><th style="text-align:right;padding:10px">Amount</th><th style="text-align:right;padding:10px">Coins</th><th style="text-align:left;padding:10px">Status</th><th style="text-align:left;padding:10px">Date</th></tr></thead><tbody>'+rows.map(x=>'<tr style="border-top:1px solid var(--line)"><td style="padding:10px">'+esc(x.payment_id)+'</td><td style="padding:10px">'+esc(x.email||"Account unavailable")+'</td><td style="padding:10px;text-align:right">₹'+(Number(x.amount_paise||0)/100).toFixed(2)+'</td><td style="padding:10px;text-align:right">'+n(x.coins)+'</td><td style="padding:10px">'+esc(x.status)+'</td><td style="padding:10px">'+(x.created_at?new Date(x.created_at).toLocaleString():"—")+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">No verified payments yet.</div>';
+ $("pRevenue").textContent="₹"+(money/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+ $("pCount").textContent=n(approved.length);$("pCoins").textContent=n(coins);
+ $("pPending").textContent=n(pending.length);$("pHostCoins").textContent="—";$("pGiftCount").textContent="—";
+ list.innerHTML=rows.length?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:620px"><thead><tr><th style="text-align:left;padding:10px">User</th><th style="text-align:left;padding:10px">Package</th><th style="text-align:right;padding:10px">Amount</th><th style="text-align:right;padding:10px">Coins</th><th style="text-align:left;padding:10px">UTR</th><th style="text-align:left;padding:10px">Status</th></tr></thead><tbody>'+rows.slice(0,100).map(x=>'<tr style="border-top:1px solid var(--line)"><td style="padding:10px">'+esc(x.user_name||x.email||x.user_id)+'</td><td style="padding:10px">'+esc(x.package_title)+'</td><td style="padding:10px;text-align:right">₹'+(Number(x.amount_paise||0)/100).toFixed(2)+'</td><td style="padding:10px;text-align:right">'+n(x.coins)+'</td><td style="padding:10px">'+esc(x.utr)+'</td><td style="padding:10px">'+esc(x.status)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">No manual UPI recharge requests yet.</div>';
 }
 async function loadAnalytics(){
  const errorBox=$("analyticsError");if(!errorBox||!sessionUser)return;
