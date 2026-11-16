@@ -663,6 +663,23 @@ p{color:#77747e}
 <div class="profile-tabs"><button class="active" id="forumFeedTab" onclick="setForumTab('feed')">Feed</button><button id="forumGroupsTab" onclick="setForumTab('groups')">Groups</button></div>
 <div id="forumFeedPanel"><div id="forumComposer" class="panel" style="display:none;margin-bottom:14px"><h3>Create a post</h3><textarea id="newPostText" rows="3" maxlength="3000" placeholder="What's on your mind?"></textarea><label for="forumImageInput" class="secondary" style="display:inline-block;margin-top:10px;cursor:pointer">📷 Add photo</label><input id="forumImageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewForumImage()" style="display:none"><div id="forumImagePreviewWrap" style="display:none;margin-top:12px"><img id="forumImagePreview" alt="Selected photo preview" style="max-width:100%;max-height:260px;border-radius:16px;object-fit:contain"><button class="secondary" type="button" onclick="removeForumImage()">Remove photo</button></div><div class="muted" style="margin-top:8px">JPG, PNG, WEBP or GIF · Max 5 MB</div><div class="toolbar"><button class="primary" onclick="createForumPost()">Publish post</button><button class="secondary" onclick="closePostComposer()">Cancel</button></div></div><div id="forumFeedList" class="grid"></div></div>
 <div id="forumGroupsPanel" style="display:none"><div class="panel"><h3>Create a group</h3><input id="newGroupName" maxlength="60" placeholder="Group name"><textarea id="newGroupDescription" rows="2" maxlength="300" placeholder="Group description"></textarea><button class="primary" onclick="createForumGroup()">＋ Create group</button></div><div id="forumGroupsList" class="grid"></div></div>
+<div class="panel" style="margin-top:18px" id="hostCommunityPanel">
+ <div class="section-kicker">PRIVATE HOST SPACE</div><h3>💗 HeartTalk Host Community</h3>
+ <p>Official guidance, training updates and host discussions. Phone numbers are not shown.</p>
+ <div id="hostCommunityStatus" class="notice">Loading host community…</div>
+ <div id="hostCommunityAdminTools" style="display:none;margin:12px 0">
+  <h4>Admin controls</h4>
+  <label class="muted" for="hostCommunityUserId">Add a verified host using their HeartTalk User ID</label>
+  <div class="toolbar"><input id="hostCommunityUserId" placeholder="Paste host User ID (UUID)" autocomplete="off"><button class="secondary" onclick="addHostCommunityMember()">Add host</button></div>
+  <textarea id="hostCommunityAnnouncement" rows="2" maxlength="3000" placeholder="Write an official announcement for hosts…"></textarea>
+  <button class="primary" onclick="postHostCommunityMessage('announcement')">Publish announcement</button>
+ </div>
+ <div id="hostCommunityMessages" style="margin-top:14px"></div>
+ <div id="hostCommunityDiscussionBox" style="display:none;margin-top:14px">
+  <textarea id="hostCommunityDiscussion" rows="2" maxlength="3000" placeholder="Ask a question or share an update with other hosts…"></textarea>
+  <button class="primary" onclick="postHostCommunityMessage('discussion')">Send to discussion</button>
+ </div>
+</div>
 </section>
 
 <section class="view" id="gamesView">
@@ -791,7 +808,7 @@ function showView(name){
  document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
  const coinButton=document.getElementById("homeCoinButton");if(coinButton)coinButton.style.display=name==="home"?"inline-flex":"none";
  window.scrollTo({top:0,behavior:"smooth"});
- if(name==="store")loadHeartTalkStore();if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();}if(name==="wallet"){loadWallet();loadHostEarnings();loadOfferBanners();}if(name==="home")loadOfferBanners();if(name==="admin")loadAdminDashboard();
+ if(name==="store")loadHeartTalkStore();if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();loadHostCommunity();}if(name==="wallet"){loadWallet();loadHostEarnings();loadOfferBanners();}if(name==="home")loadOfferBanners();if(name==="admin")loadAdminDashboard();
  if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
 }
 const HEARTTALK_UPI_ID="pakavijaya0169-4@oksbi";
@@ -1660,6 +1677,54 @@ async function addForumComment(id){const input=document.getElementById("comment-
 async function createForumGroup(){const name=document.getElementById("newGroupName").value.trim(),description=document.getElementById("newGroupDescription").value.trim();if(name.length<3){notify("Group name must be at least 3 characters.");return}const r=await supabaseClient.from("forum_groups").insert({name,description,created_by:currentUser.id}).select("id").single();if(r.error){notify(r.error.message);return}const m=await supabaseClient.from("forum_group_members").insert({group_id:r.data.id,user_id:currentUser.id,role:"owner"});if(m.error){notify(m.error.message);return}notify("Group created");await loadForumGroups()}
 async function loadForumGroups(){const box=document.getElementById("forumGroupsList");if(!box)return;if(!currentUser){box.innerHTML='<div class="notice">Log in to view groups.</div>';return}const r=await supabaseClient.from("forum_groups").select("id,name,description,forum_group_members(user_id)").order("created_at",{ascending:false});if(r.error){box.innerHTML='<div class="notice">'+escapeHtml(r.error.message)+'</div>';return}if(!r.data?.length){box.innerHTML='<div class="notice">No groups yet. Create one!</div>';return}box.innerHTML=r.data.map(g=>{const joined=(g.forum_group_members||[]).some(m=>m.user_id===currentUser.id);return '<article class="member-card"><div class="avatar">👥</div><h3>'+escapeHtml(g.name)+'</h3><p>'+escapeHtml(g.description||"HeartTalk group")+'</p><span class="pill">'+g.forum_group_members.length+' members</span><p><button class="primary" '+(joined?'disabled':'')+' onclick="joinForumGroup(&quot;'+g.id+'&quot;)">'+(joined?'Joined ✓':'Join group')+'</button></p></article>'}).join("")}
 async function joinForumGroup(id){const r=await supabaseClient.from("forum_group_members").insert({group_id:id,user_id:currentUser.id,role:"member"});if(r.error){notify(r.code==="23505"?"Already joined":r.error.message);return}notify("You joined the group");await loadForumGroups()}
+let hostCommunityChannel=null;
+async function loadHostCommunity(){
+ const status=document.getElementById("hostCommunityStatus"),box=document.getElementById("hostCommunityMessages");
+ if(!status||!box)return;
+ if(!currentUser){status.textContent="Please log in to view the host community.";box.innerHTML="";return;}
+ status.textContent="Checking your community access…";
+ const {data:adminRole}=await supabaseClient.from("hearttalk_user_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
+ const isAdmin=adminRole?.role==="admin";
+ const {data:membership,error:memberError}=await supabaseClient.from("hearttalk_host_community_members").select("user_id").eq("user_id",currentUser.id).maybeSingle();
+ if(!isAdmin&&!membership){
+  status.textContent="ఈ private group verified hosts కోసం. మీ HeartTalk User IDని Admin‌కు పంపండి; phone number అవసరం లేదు.";
+  document.getElementById("hostCommunityAdminTools").style.display="none";
+  document.getElementById("hostCommunityDiscussionBox").style.display="none";
+  box.innerHTML="";
+  if(memberError&&memberError.code!=="PGRST116")status.textContent+=" Setup pending: Supabase లో host_community.sql run చేయాలి.";
+  return;
+ }
+ status.textContent=isAdmin?"Admin access · మీరు hosts‌ను add చేసి announcements పంపవచ్చు.":"మీరు Host Community member. Announcements చదవండి, discussionలో reply ఇవ్వండి.";
+ document.getElementById("hostCommunityAdminTools").style.display=isAdmin?"block":"none";
+ document.getElementById("hostCommunityDiscussionBox").style.display=isAdmin||!!membership?"block":"none";
+ const {data,error}=await supabaseClient.from("hearttalk_host_community_messages").select("id,author_id,message_type,message,created_at").order("created_at",{ascending:false}).limit(100);
+ if(error){box.innerHTML='<div class="notice">Community setup pending. Run supabase/host_community.sql in Supabase SQL Editor. '+escapeHtml(error.message)+'</div>';return;}
+ if(!data?.length){box.innerHTML='<div class="notice">ఇంకా messages లేవు. Admin మొదటి announcement పంపవచ్చు.</div>';return;}
+ box.innerHTML=data.map(m=>'<article class="feed-card"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+(m.message_type==="announcement"?"📢 Official announcement":"💬 Host discussion")+'</b><small class="muted">'+new Date(m.created_at).toLocaleString()+'</small></div><p style="white-space:pre-wrap">'+escapeHtml(m.message)+'</p><small class="muted">'+(m.author_id===currentUser.id?"You":(m.message_type==="announcement"?"HeartTalk Admin":"Host member"))+'</small></article>').join("");
+ if(!hostCommunityChannel){
+  hostCommunityChannel=supabaseClient.channel("hearttalk-host-community").on("postgres_changes",{event:"*",schema:"public",table:"hearttalk_host_community_messages"},()=>loadHostCommunity()).subscribe();
+ }
+}
+async function addHostCommunityMember(){
+ if(!currentUser)return;
+ const userId=document.getElementById("hostCommunityUserId").value.trim();
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)){notify("Valid HeartTalk User ID (UUID) enter చేయండి.");return;}
+ const {error}=await supabaseClient.from("hearttalk_host_community_members").insert({user_id:userId,added_by:currentUser.id});
+ if(error){notify(error.code==="23505"?"ఈ host ఇప్పటికే groupలో ఉన్నారు.":error.message);return;}
+ document.getElementById("hostCommunityUserId").value="";
+ notify("Host added to HeartTalk Community.");
+ await loadHostCommunity();
+}
+async function postHostCommunityMessage(type){
+ if(!currentUser)return;
+ const isAnnouncement=type==="announcement";
+ const input=document.getElementById(isAnnouncement?"hostCommunityAnnouncement":"hostCommunityDiscussion");
+ const message=input.value.trim();if(!message){notify("Message type చేయండి.");return;}
+ const {error}=await supabaseClient.from("hearttalk_host_community_messages").insert({author_id:currentUser.id,message_type:type,message});
+ if(error){notify(error.message);return;}
+ input.value="";notify(isAnnouncement?"Announcement published.":"Discussion message sent.");
+ await loadHostCommunity();
+}
 function renderForumSearch(){const q=(document.getElementById("forumSearch").value||"").toLowerCase();if(document.getElementById("forumFeedPanel").style.display!=="none"){const rows=(window.heartTalkPosts||[]).filter(p=>p.content.toLowerCase().includes(q));if(q) {const box=document.getElementById("forumFeedList");box.innerHTML=rows.map(p=>'<article class="feed-card"><p>'+escapeHtml(p.content)+'</p></article>').join("")}else loadForumFeed()}else document.querySelectorAll("#forumGroupsList article").forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?"":"none")}
 
 </script>
