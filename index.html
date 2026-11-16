@@ -543,6 +543,11 @@ p{color:#77747e}
  <div id="connectMembersPanel">
   <div class="ht-section-heading"><div><span class="ht-eyebrow">HEARTTALK COMMUNITY</span><h2>Live members</h2><p>Choose someone to connect with</p></div><button class="ht-refresh" onclick="loadDiscover()">↻</button></div>
   <div class="connect-search"><span>⌕</span><input id="discoverSearch" placeholder="Search by name, city or country..." oninput="renderDiscover()"></div>
+  <div class="discover-role-tabs" role="group" aria-label="Community members filter" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px">
+   <button type="button" class="connect-tab active" id="discoverAllTab" onclick="setDiscoverRoleFilter('all')">👥 All Users</button>
+   <button type="button" class="connect-tab" id="discoverHostsTab" onclick="setDiscoverRoleFilter('hosts')">⭐ Hosts</button>
+   <button type="button" class="connect-tab" id="discoverMembersTab" onclick="setDiscoverRoleFilter('members')">💗 Users</button>
+  </div>
   <input id="nearbyCityFilter" class="nearby-city-filter ht-city-input" type="search" placeholder="📍 Enter city name (e.g. Hyderabad)" aria-label="Filter members by city or location" oninput="renderDiscover()">
   <div id="discoverGrid" class="connect-grid"><div class="notice">Login to discover community members.</div></div>
  </div>
@@ -1118,7 +1123,7 @@ async function saveProfile(){
 async function loadDiscover(){
  const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
  grid.innerHTML='<div class="notice">Loading community members...</div>';
- const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).limit(500);
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
  const [mine,theirs,hostRows]=await Promise.all([
   supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),
@@ -1130,9 +1135,17 @@ async function loadDiscover(){
  const hostIds=new Set(hostRows.error?[]:(hostRows.data||[]).map(x=>x.user_id));
  discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id)}));renderDiscover()
 }
+let discoverRoleFilter="all";
+function setDiscoverRoleFilter(filter){
+ discoverRoleFilter=["all","hosts","members"].includes(filter)?filter:"all";
+ document.getElementById("discoverAllTab")?.classList.toggle("active",discoverRoleFilter==="all");
+ document.getElementById("discoverHostsTab")?.classList.toggle("active",discoverRoleFilter==="hosts");
+ document.getElementById("discoverMembersTab")?.classList.toggle("active",discoverRoleFilter==="members");
+ renderDiscover();
+}
 function renderDiscover(){
  const grid=document.getElementById("discoverGrid"),search=document.getElementById("discoverSearch"),city=document.getElementById("nearbyCityFilter"),q=(search?.value||"").toLowerCase(),place=(city?.value||"").trim().toLowerCase();
- const rows=discoverUsers.filter(u=>{const text=(u.display_name+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase();return text.includes(q)&&(!place||text.includes(place));});
+ const rows=discoverUsers.filter(u=>{const text=(u.display_name+" "+(u.username||"")+" "+(u.country||"")+" "+(u.bio||"")).toLowerCase();const roleOk=discoverRoleFilter==="all"||(discoverRoleFilter==="hosts"&&u.is_host)||(discoverRoleFilter==="members"&&!u.is_host);return roleOk&&text.includes(q)&&(!place||text.includes(place));});
  if(!rows.length){grid.innerHTML='<div class="notice">No members found yet. Invite friends to join HeartTalk!</div>';return}
  grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">'+(u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":u.gender==="male"?"👨":u.gender==="other"?"🧑":"💗"))+(u.gender?'<span class="gender-avatar-badge">'+(u.gender==="female"?"♀":u.gender==="male"?"♂":"✦")+'</span>':'')+'</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+(u.is_host?' · <span style="color:#b34b83;font-weight:700">⭐ HOST</span>':'')+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
 }
