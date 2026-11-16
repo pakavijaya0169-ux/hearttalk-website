@@ -667,6 +667,7 @@ p{color:#77747e}
  <div class="section-kicker">PRIVATE HOST SPACE</div><h3>💗 HeartTalk Host Community</h3>
  <p>Official guidance, training updates and host discussions. Phone numbers are not shown.</p>
  <div id="hostCommunityStatus" class="notice">Loading host community…</div>
+ <div id="hostCommunityYourId" class="muted" style="display:none;overflow-wrap:anywhere;margin:8px 0"></div>
  <div id="hostCommunityAdminTools" style="display:none;margin:12px 0">
   <h4>Admin controls</h4>
   <label class="muted" for="hostCommunityUserId">Add a verified host using their HeartTalk User ID</label>
@@ -1695,6 +1696,7 @@ async function loadHostCommunity(){
   return;
  }
  status.textContent=isAdmin?"Admin access · మీరు hosts‌ను add చేసి announcements పంపవచ్చు.":"మీరు Host Community member. Announcements చదవండి, discussionలో reply ఇవ్వండి.";
+ const idBox=document.getElementById("hostCommunityYourId");if(idBox){idBox.style.display=isAdmin?"none":"block";idBox.textContent="మీ HeartTalk User ID: "+currentUser.id+" (Admin‌కు పంపడానికి ID copy చేసుకోండి)";}
  document.getElementById("hostCommunityAdminTools").style.display=isAdmin?"block":"none";
  document.getElementById("hostCommunityDiscussionBox").style.display=isAdmin||!!membership?"block":"none";
  const {data,error}=await supabaseClient.from("hearttalk_host_community_messages").select("id,author_id,message_type,message,created_at").order("created_at",{ascending:false}).limit(100);
