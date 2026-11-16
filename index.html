@@ -801,7 +801,7 @@ async function loadWallet(){
  balance.textContent=String(total);status.textContent=rows.length+" recent ledger entr"+(rows.length===1?"y":"ies")+" · balance from the complete ledger";
  const coin=document.getElementById("coinBalance");if(coin)coin.textContent=String(total);
  const profileCoin=document.getElementById("profileCoinBalance");if(profileCoin)profileCoin.textContent=String(total);
- if(!rows.length){list.innerHTML='<p class="muted">No wallet transactions yet.</p>';}else{list.innerHTML=rows.map(row=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee"><div><b>'+escapeHtml(String(row.entry_type||"transaction").replace(/_/g," "))+'</b><div class="muted">'+new Date(row.created_at).toLocaleString()+'</div></div><b style="white-space:nowrap;color:'+(row.amount>0?'#129b75':'#d72c78')+'">'+(row.amount>0?"+":"")+Number(row.amount)+' coins</b></div>')).join("");}
+ if(!rows.length){list.innerHTML='<p class="muted">No wallet transactions yet.</p>';}else{list.innerHTML=rows.map(row=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee"><div><b>'+escapeHtml(String(row.entry_type||"transaction").replace(/_/g," "))+'</b><div class="muted">'+new Date(row.created_at).toLocaleString()+'</div></div><b style="white-space:nowrap;color:'+(row.amount>0?'#129b75':'#d72c78')+'">'+(row.amount>0?"+":"")+Number(row.amount)+' coins</b></div>').join("");}
   await loadManualRechargeHistory();
  }
  let authRequiredAtStartup=false;
