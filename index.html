@@ -1254,11 +1254,25 @@ let chatRecorder=null,chatRecordStream=null,chatRecordChunks=[];
 let pendingChatPhotos=[];
 function openChatPhotos(){if(!currentUser){openAuth();return}const picker=document.getElementById("chatPhotoInput");if(picker)picker.click()}
 async function uploadChatPhotos(files){const input=document.getElementById("chatPhotoInput");const chosen=Array.from(files||[]);if(!chosen.length)return;if(chosen.length>10){notify("Select up to 10 photos at a time.");input.value="";return}const valid=chosen.filter(file=>file.type.startsWith("image/"));if(!valid.length){notify("Choose image files only.");input.value="";return}if(!activeChatUser){pendingChatPhotos.push(...valid);notify(valid.length+" photo(s) selected. Open a conversation to send them.");input.value="";return}for(const file of valid)await uploadChatMedia(file,"image");input.value=""}
+async function moderateVoiceMessage(file){
+ const form=new FormData();form.append("audio",file,file.name||"voice-message.webm");
+ const {data,error}=await supabaseClient.functions.invoke("moderate-voice-message",{body:form});
+ if(error)throw new Error(error.message||"Voice safety check failed");
+ if(!data||data.ok!==true)throw new Error(data?.error||"Voice safety check unavailable");
+ return data;
+}
 async function uploadChatMedia(file,kind){
  if(!file||!currentUser||!activeChatUser){notify("Open a conversation first.");return}
  const valid=kind==="image"?file.type.startsWith("image/"):file.type.startsWith("audio/");
  if(!valid){notify("Unsupported file type.");return}
  if(file.size>(kind==="image"?8388608:12582912)){notify("File is too large.");return}
+ if(kind==="audio"){
+  notify("Checking voice message for phone numbers…");
+  try{
+   const check=await moderateVoiceMessage(file);
+   if(check.blocked){notify("🛡️ Phone numbers cannot be shared. This voice message was blocked before sending.");return}
+  }catch(e){console.error("Voice safety check failed",e);notify("Voice message not sent: safety check is unavailable. Please try again.");return}
+ }
  const ext=kind==="image"?(file.type.split("/")[1]||"jpg"):"webm";
  const path=currentUser.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"."+ext;
  notify("Uploading "+(kind==="image"?"photo":"voice message")+"…");
@@ -1358,11 +1372,45 @@ async function createPeer(){
  peerConnection.onconnectionstatechange=()=>{if(peerConnection)callStatus("Call connection: "+peerConnection.connectionState)};
  peerConnection.oniceconnectionstatechange=()=>{if(peerConnection&&["failed","disconnected"].includes(peerConnection.iceConnectionState))callStatus("Connection interrupted. Check internet and permissions.")};
 }
+let callSpeechRecognition=null,callSafetyTriggered=false;
+function spokenDigits(text){
+ const map={zero:"0",oh:"0",one:"1",two:"2",three:"3",four:"4",five:"5",six:"6",seven:"7",eight:"8",nine:"9"};
+ return String(text||"").toLowerCase().replace(/\\b(zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\\s,.-]+(zero|oh|one|two|three|four|five|six|seven|eight|nine)){5,}\\b/g,m=>m.split(/[\\s,.-]+/).map(w=>map[w]||w).join(""));
+}
+function stopCallSpeechMonitor(){
+ if(callSpeechRecognition){try{callSpeechRecognition.onresult=null;callSpeechRecognition.stop()}catch(e){}callSpeechRecognition=null}
+}
+function startCallSpeechMonitor(){
+ stopCallSpeechMonitor();callSafetyTriggered=false;
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SpeechRecognition){callStatus("Phone-number voice detection is not supported by this browser.");return}
+ try{
+  const recognition=new SpeechRecognition();callSpeechRecognition=recognition;
+  recognition.lang="en-IN";recognition.continuous=true;recognition.interimResults=true;
+  recognition.onresult=event=>{
+   if(callSafetyTriggered)return;
+   let spoken="";
+   for(let i=event.resultIndex;i<event.results.length;i++)spoken+=" "+event.results[i][0].transcript;
+   const normalized=spokenDigits(spoken);
+   if(containsIndianMobileNumber(normalized)){
+    callSafetyTriggered=true;
+    if(localCallStream)localCallStream.getAudioTracks().forEach(track=>track.enabled=false);
+    callStatus("🛡️ Phone-number sharing detected. Ending call for safety…");
+    notify("🛡️ Phone-number sharing detected. Your microphone was muted and the call is ending.");
+    endCurrentCall();
+   }
+  };
+  recognition.onerror=event=>{if(event.error!=="no-speech"&&event.error!=="aborted")console.warn("HeartTalk call speech safety monitor:",event.error)};
+  recognition.onend=()=>{if(callSpeechRecognition===recognition&&activeCallId&&!callSafetyTriggered){try{recognition.start()}catch(e){}}};
+  recognition.start();
+ }catch(e){console.warn("Call speech safety monitor could not start",e)}
+}
 async function getLocalMedia(type){
  localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==="video"});
  ["localCallVideo","localCallVideoFull"].forEach(id=>{const v=document.getElementById(id);if(v)v.srcObject=localCallStream});
  localCallStream.getTracks().forEach(t=>peerConnection.addTrack(t,localCallStream));
  updateCallButtons(true);
+ startCallSpeechMonitor();
 }
 async function sendCallSignal(type,payload){
  const {error}=await supabaseClient.from("call_signals").insert({call_id:activeCallId,sender_id:currentUser.id,signal_type:type,payload:payload||{}});
@@ -1472,10 +1520,12 @@ async function rejectIncomingCall(){
  stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");notify("Call declined.");
 }
 async function endCurrentCall(){
+ stopCallSpeechMonitor();
  if(activeCallId){try{await sendCallSignal("hangup",{});await supabaseClient.rpc("hearttalk_end_call",{target_call_id:activeCallId,final_status:"ended"})}catch(e){console.warn(e)}}
  callStatus("You ended the call.");await cleanupCall(false);
 }
 async function cleanupCall(updateStatus){
+ stopCallSpeechMonitor();
  if(signalPollTimer)clearInterval(signalPollTimer);if(callPollTimer)clearInterval(callPollTimer);signalPollTimer=null;callPollTimer=null;callRingDeadline=null;document.querySelectorAll('[onclick*="startOutgoingCall"]').forEach(b=>b.disabled=false);
  if(peerConnection){peerConnection.ontrack=null;peerConnection.close();peerConnection=null}
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
