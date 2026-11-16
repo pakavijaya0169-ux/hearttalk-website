@@ -1310,20 +1310,23 @@ function cancelVoiceRecording(event){
 
 function containsIndianMobileNumber(value){
  const text=String(value||"");
- return /(?:^|[^0-9])(?:\\+?91[\\s().-]*)?0?[6-9](?:[\\s().-]*[0-9]){9}(?:$|[^0-9])/.test(text);
+ // Match Indian mobile numbers with optional +91/91/0 prefix and common separators.
+ return /(^|[^0-9])(?:\\+?91[\\s().-]*)?0?[6-9](?:[\\s().-]*[0-9]){9}(?![0-9])/.test(text);
 }
 async function sendMessage(e){
  e.preventDefault();if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
+ // Safety check MUST happen before database insert so the recipient never receives it.
+ if(containsIndianMobileNumber(content)){
+  input.value="";
+  notify("🛡️ Phone numbers cannot be shared on HeartTalk. Your message was blocked before sending.");
+  return;
+ }
  try{if(await isHeartTalkBlocked(activeChatUser.id)){notify("This conversation is unavailable because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
- const containsPhone=containsIndianMobileNumber(content);
  const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:content});
  if(error){notify(error.message);return}
  input.value="";
- if(containsPhone){
-  notify("Phone numbers cannot be shared on HeartTalk. The message was hidden and any active call with this member was ended.");
-  if(activeCallId)await endCurrentCall();
- }else{notify("Message sent 💗")}
+ notify("Message sent 💗");
  await loadMessages();await loadConversations()
 }
 
