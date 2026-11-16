@@ -830,7 +830,6 @@ async function purchaseCoins(packageCode){
  const modal=document.getElementById("manualUpiRechargeModal");
  document.getElementById("manualUpiPackageTitle").textContent=pkg.title+" · "+pkg.coins.toLocaleString("en-IN")+" coins ("+pkg.paidCoins+" paid + "+pkg.bonusCoins+" bonus)";
  document.getElementById("manualUpiAmount").textContent="₹"+pkg.amount.toLocaleString("en-IN");
- document.getElementById("manualUpiId").textContent=HEARTTALK_UPI_ID;
  const status=document.getElementById("manualUpiSubmitStatus"),submit=document.getElementById("manualUpiSubmitBtn"),pay=document.getElementById("manualUpiPayLink");
  status.textContent="Tap Pay with UPI. Complete payment in your UPI app, then return to HeartTalk.";
  submit.style.display="none";submit.disabled=false;pay.style.display="block";
