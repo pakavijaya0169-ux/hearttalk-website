@@ -325,6 +325,7 @@ function buildPushPayload(){
 }
 async function copyPushPayload(){const payload=JSON.stringify(buildPushPayload(),null,2);try{await navigator.clipboard.writeText(payload);toast("FCM JSON payload copied.");}catch(_){toast("Copy unavailable in this browser. Select the JSON preview and copy it.");}}
 ["pushTitle","pushBody","pushImageUrl"].forEach(id=>$(id)?.addEventListener("input",buildPushPayload));
+buildPushPayload();
 async function savePushCampaign(mode){
  const title=$("pushTitle").value.trim(),body=$("pushBody").value.trim(),audience=$("pushAudience").value,image_url=$("pushImageUrl").value.trim()||null;
  if(!title||!body){toast("Enter notification title and message.");return}
@@ -338,11 +339,11 @@ async function savePushCampaign(mode){
  }
  if(!sessionUser){toast("Admin sign-in required.");return}
  const status=mode==="scheduled"?"scheduled":mode==="queued"?"queued":"draft";
- const {error}=await db.from("hearttalk_push_campaigns").insert({title,body,audience,image_url,scheduled_at,status,created_by:sessionUser.id});
+ const {error}=await db.from("hearttalk_push_campaigns").insert({title,body,audience,image_url,payload_json:buildPushPayload(),scheduled_at,status,created_by:sessionUser.id});
  if(error){toast("Could not save notification: "+error.message+" · Apply supabase/hearttalk_rich_push_notifications.sql first.");return}
  $("pushCampaignStatus").textContent=status==="queued"?"Saved in send queue. FCM delivery is not active until the sender function and device tokens are configured.":status==="scheduled"?"Scheduled campaign saved. Automatic delivery needs the FCM scheduler to be deployed.":"Draft saved.";
  toast(status==="queued"?"Added to send queue (FCM setup still required).":status==="scheduled"?"Notification scheduled.":"Draft saved.");
- $("pushTitle").value="";$("pushBody").value="";$("pushImageFile").value="";$("pushImageUrl").value="";$("pushImagePreview").textContent="No image selected.";uploadedPushImageUrl="";
+ $("pushTitle").value="";$("pushBody").value="";$("pushImageFile").value="";$("pushImageUrl").value="";$("pushImagePreview").textContent="No image selected.";uploadedPushImageUrl="";buildPushPayload();
  await loadPushCampaigns();
 }
 async function cancelPushCampaign(id){
