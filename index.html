@@ -734,20 +734,51 @@ const HEARTTALK_FIREBASE_CONFIG = {
 const HEARTTALK_VAPID_PUBLIC_KEY = "BNVUx4f0cZYrUT4_zyu-dDwLc1GCHIq59HS6Y_xQKQaVyiKaBUBOGSek0E7JN4SDMF20AyyFlglynstRGFQuIFM";
 let heartTalkFirebaseMessaging = null;
 try { if (window.firebase && firebase.messaging) { if (!firebase.apps.length) firebase.initializeApp(HEARTTALK_FIREBASE_CONFIG); heartTalkFirebaseMessaging = firebase.messaging(); } } catch (e) { console.warn("HeartTalk push setup:", e); }
+async function registerHeartTalkPushToken(){
+ if(!currentUser)throw new Error("Please sign in first.");
+ if(!("Notification" in window) || !("serviceWorker" in navigator))throw new Error("ఈ browser లో notifications support లేదు.");
+ if(!heartTalkFirebaseMessaging)throw new Error("Firebase Messaging initialize కాలేదు. Page refresh చేసి మళ్లీ ప్రయత్నించండి.");
+ const registration=await navigator.serviceWorker.register("./sw.js");
+ const token=await heartTalkFirebaseMessaging.getToken({vapidKey:HEARTTALK_VAPID_PUBLIC_KEY,serviceWorkerRegistration:registration});
+ if(!token)throw new Error("FCM token రాలేదు. HTTPS మరియు VAPID key verify చేయాలి.");
+ const {error}=await supabaseClient.from("hearttalk_push_tokens").upsert({user_id:currentUser.id,fcm_token:token,platform:"web",enabled:true,updated_at:new Date().toISOString()},{onConflict:"fcm_token"});
+ if(error)throw error;
+ return true;
+}
 async function enableHeartTalkNotifications(){
  if(!currentUser){openAuth();return;}
  if(!("Notification" in window) || !("serviceWorker" in navigator)){notify("ఈ browser లో notifications support లేదు.");return;}
- if(!heartTalkFirebaseMessaging){notify("Firebase notifications initialize కాలేదు. Page refresh చేసి మళ్లీ ప్రయత్నించండి.");return;}
  try{
-  const permission=await Notification.requestPermission();
-  if(permission!=="granted"){notify("Notifications అనుమతి ఇవ్వలేదు. Browser settings లో Allow చేయండి.");return;}
-  const registration=await navigator.serviceWorker.register("./sw.js");
-  const token=await heartTalkFirebaseMessaging.getToken({vapidKey:HEARTTALK_VAPID_PUBLIC_KEY,serviceWorkerRegistration:registration});
-  if(!token)throw new Error("FCM token రాలేదు. HTTPS మరియు VAPID key verify చేయాలి.");
-  const {error}=await supabaseClient.from("hearttalk_push_tokens").upsert({user_id:currentUser.id,fcm_token:token,platform:"web",enabled:true,updated_at:new Date().toISOString()},{onConflict:"fcm_token"});
-  if(error)throw error;
+  const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();
+  if(permission!=="granted"){notify("Notifications అనుమతి ఇవ్వలేదు. Browser site settings లో Allow చేయాలి.");return;}
+  await registerHeartTalkPushToken();
+  document.getElementById("heartTalkPushPrompt")?.remove();
   notify("HeartTalk notifications enable అయ్యాయి!");
- }catch(e){console.error("HeartTalk notification registration failed:",e);notify(e.message||"Notifications enable కాలేదు. Supabase push-token SQL అమలు అయ్యిందో చూడాలి.");}
+ }catch(e){console.error("HeartTalk notification registration failed:",e);notify(e.message||"Notifications enable కాలేదు.");}
+}
+function showHeartTalkPushPrompt(){
+ if(!currentUser || !("Notification" in window) || !("serviceWorker" in navigator))return;
+ if(Notification.permission==="granted"){
+  registerHeartTalkPushToken().catch(e=>console.warn("Automatic HeartTalk token refresh failed:",e));
+  document.getElementById("heartTalkPushPrompt")?.remove();
+  return;
+ }
+ if(Notification.permission==="denied" || document.getElementById("heartTalkPushPrompt") || sessionStorage.getItem("hearttalk_push_prompt_dismissed"))return;
+ const prompt=document.createElement("div");
+ prompt.id="heartTalkPushPrompt";
+ prompt.style.cssText="position:fixed;z-index:100000;left:16px;right:16px;bottom:88px;max-width:520px;margin:0 auto;padding:16px 18px;border:1px solid #ef70bb;border-radius:18px;background:linear-gradient(135deg,#351039,#6b1b61);color:#fff;box-shadow:0 12px 36px #0006;font:14px system-ui,sans-serif";
+ prompt.innerHTML='<div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:25px">🔔</div><div style="flex:1"><strong style="display:block;margin-bottom:5px">HeartTalk Notifications</strong><span style="display:block;opacity:.9;line-height:1.45">కొత్త messages, calls, offers గురించి alerts పొందడానికి notifications అనుమతించండి.</span><div style="display:flex;gap:8px;margin-top:12px"><button type="button" id="heartTalkPushAllow" style="border:0;border-radius:20px;padding:9px 16px;background:#ff5eaa;color:#fff;font-weight:700">Enable notifications</button><button type="button" id="heartTalkPushLater" style="border:1px solid #ffffff80;border-radius:20px;padding:9px 14px;background:transparent;color:#fff">Later</button></div></div></div>';
+ document.body.appendChild(prompt);
+ document.getElementById("heartTalkPushAllow").addEventListener("click",()=>enableHeartTalkNotifications());
+ document.getElementById("heartTalkPushLater").addEventListener("click",()=>{sessionStorage.setItem("hearttalk_push_prompt_dismissed","1");prompt.remove();});
+}
+async function syncHeartTalkPushAfterLogin(){
+ if(!currentUser)return;
+ if(Notification.permission==="granted"){
+  try{await registerHeartTalkPushToken();}catch(e){console.warn("HeartTalk push token refresh:",e);}
+  return;
+ }
+ showHeartTalkPushPrompt();
 }
 let authMode="signup", currentUser=null, discoverUsers=[], activeChatUser=null, messageChannel=null;
 async function loadOfferBanners(){const ids=['homeOfferBanners','walletOfferBanners'];const nodes=ids.map(id=>document.getElementById(id)).filter(Boolean);if(!nodes.length)return;const {data,error}=await supabaseClient.rpc('get_active_hearttalk_offers');if(error){console.error('HeartTalk offers:',error);nodes.forEach(n=>{n.style.display='none';n.innerHTML='';});return;}const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html=(Array.isArray(data)?data:[]).map(o=>{const type=String(o.offer_type||'special offer').replace(/_/g,' ');const value=o.value==null?'':Number(o.value).toLocaleString();const reward=type==='bonus coins'&&value?value+' bonus coins':value?value+' '+type:type;return '<div class="ht-offer-content"><strong>🎁 '+esc(o.title)+'</strong><p>'+esc(o.description||'A special HeartTalk offer is waiting for you.')+'</p>'+(reward?'<span class="ht-offer-reward">✨ '+esc(reward)+'</span>':'')+'<button type="button" class="ht-offer-open" onclick="openOfferStore(event)">View offer in Store →</button></div>';}).join('');nodes.forEach(n=>{n.innerHTML=html;n.style.display=html?'block':'none';});}
@@ -1556,8 +1587,8 @@ async function setHeartTalkReportStatus(reportId,status){
  notify("Report status updated: "+status);loadAdminDashboard();
 }
 
-supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;refreshHeartTalkAdminAccess();if(currentUser){if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling()}else{if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
-supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");startIncomingCallPolling();refreshHeartTalkAdminAccess();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover()}else{authRequiredAtStartup=true;document.body.classList.add("auth-required");document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
+supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;refreshHeartTalkAdminAccess();if(currentUser){if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling();setTimeout(syncHeartTalkPushAfterLogin,700)}else{document.getElementById("heartTalkPushPrompt")?.remove();if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
+supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");startIncomingCallPolling();refreshHeartTalkAdminAccess();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover();setTimeout(syncHeartTalkPushAfterLogin,900)}else{authRequiredAtStartup=true;document.body.classList.add("auth-required");document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
 </script>
 <script>
 document.addEventListener("DOMContentLoaded",()=>{if(!localStorage.getItem("hearttalk_language")&&currentUser)document.getElementById("languageModal")?.classList.add("show")});
