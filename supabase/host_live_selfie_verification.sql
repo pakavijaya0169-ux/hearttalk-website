@@ -208,3 +208,24 @@ begin
 end; $$;
 revoke all on function public.admin_get_host_video_path(uuid) from public,anon;
 grant execute on function public.admin_get_host_video_path(uuid) to authenticated;
+
+-- Live-room creation and host-role membership are restricted to approved hosts.
+drop policy if exists "Hosts can create live rooms" on public.live_rooms;
+create policy "Hosts can create live rooms"
+on public.live_rooms for insert to authenticated
+with check (
+  host_id=auth.uid()
+  and exists(select 1 from public.hosts h join public.host_applications a on a.user_id=h.user_id
+    join public.host_kyc_documents d on d.user_id=h.user_id and d.document_type='video_selfie' and d.status='approved'
+    where h.user_id=auth.uid() and h.host_status='active' and a.status='approved')
+);
+drop policy if exists "Hosts can add themselves as live hosts" on public.live_room_members;
+create policy "Hosts can add themselves as live hosts"
+on public.live_room_members for insert to authenticated
+with check (
+  user_id=auth.uid() and role='host'
+  and exists(select 1 from public.live_rooms r where r.id=room_id and r.host_id=auth.uid())
+  and exists(select 1 from public.hosts h join public.host_applications a on a.user_id=h.user_id
+    join public.host_kyc_documents d on d.user_id=h.user_id and d.document_type='video_selfie' and d.status='approved'
+    where h.user_id=auth.uid() and h.host_status='active' and a.status='approved')
+);
