@@ -99,7 +99,32 @@
  
 </section>
 <section id="withdrawalsTab" class="hidden"><div class="card"><h2>Host Withdrawals</h2><p class="muted small">Manage UPI withdrawal requests and verified host earnings.</p><div class="card" style="margin-top:16px"><div class="section-head"><div><h2>🏦 Manual UPI Host Withdrawals</h2><div class="muted small">Review verified earnings, transfer manually, record UTR.</div></div><button class="btn" onclick="loadManualPayouts()">↻ Refresh requests</button></div><div class="notice">Manual transfer is not automatic. Credit host cash earnings only after checking eligible paid-coin gifts, refunds and accounting records. Promotional bonus coins must never be credited as cash earnings.</div><div class="toolbar"><select class="control" id="manualPayoutFilter" onchange="loadManualPayouts()"><option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div><div id="manualPayoutStatus" class="muted small" style="margin:10px 0">Loading payout requests…</div><div id="manualPayoutList" class="empty">No payout requests loaded.</div><div class="card" style="margin-top:14px"><h3>➕ Credit verified host earnings</h3><p class="muted small">Only add INR after reconciliation. Source reference must be unique to prevent duplicate credits.</p><div class="toolbar"><input class="control" id="hostCreditUser" placeholder="Host Supabase User UUID"><input class="control" id="hostCreditAmount" type="number" min="1" step="0.01" placeholder="Amount ₹"><input class="control" id="hostCreditSource" placeholder="Unique source / reconciliation ID"><input class="control" id="hostCreditNote" placeholder="Admin note"><button class="btn primary" onclick="creditHostEarnings()">Credit verified earnings</button></div></div></div></div></section>
-<section id="notificationsTab" class="hidden"><div class="card"><h2>Admin Notifications</h2><p class="muted small">Withdrawal request alerts while this dashboard is open.</p><div class="notice">Browser notifications need permission. Background push while the browser is closed is not configured.</div><button class="btn primary" onclick="enableAdminBrowserNotifications()">Enable browser notifications</button> <span id="notificationPermissionStatus" class="muted small">Permission not checked</span><div class="section-head"><h3>Pending withdrawals</h3><button class="btn" onclick="loadAdminNotifications()">Refresh alerts</button></div><div class="metric" id="pendingWithdrawalAlerts">—</div><div id="adminNotificationList" class="empty">No alerts loaded.</div></div></section>
+<section id="notificationsTab" class="hidden">
+<div class="card">
+ <div class="section-head"><div><h2>🔔 Rich Push Notifications</h2><p class="muted small">Create image notifications, save drafts, schedule campaigns and review delivery history.</p></div><button class="btn" onclick="loadPushCampaigns()">↻ Refresh campaigns</button></div>
+ <div class="notice">Image files are uploaded to Supabase Storage. Scheduled and queued campaigns are saved in the database. Actual phone delivery requires the FCM sender function and device-token registration to be configured; this page will show that status honestly.</div>
+ <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0">
+  <article class="card"><div class="muted small">Scheduled</div><div class="metric" id="pushScheduledCount">—</div></article>
+  <article class="card"><div class="muted small">Queued to send</div><div class="metric" id="pushQueuedCount">—</div></article>
+  <article class="card"><div class="muted small">Sent</div><div class="metric" id="pushSentCount">—</div></article>
+ </div>
+ <h3>Create notification</h3>
+ <label class="field"><span>Notification title (max 120 characters)</span><input class="control" id="pushTitle" maxlength="120" placeholder="Example: A host is live now!"></label>
+ <label class="field"><span>Message (max 500 characters)</span><input class="control" id="pushBody" maxlength="500" placeholder="Write the notification message"></label>
+ <div class="toolbar"><select class="control" id="pushAudience"><option value="all">All users</option><option value="active">Active users</option><option value="hosts">Hosts</option><option value="selected">Selected users (FCM targeting setup required)</option></select>
+ <label class="control" style="display:flex;align-items:center;gap:8px">Image / banner <input id="pushImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
+ <button class="btn" type="button" onclick="uploadPushImage()">Upload image</button></div>
+ <div id="pushImagePreview" class="muted small">No image selected. Recommended: landscape banner, JPG/PNG/WebP, max 5 MB.</div>
+ <input id="pushImageUrl" type="hidden">
+ <div class="toolbar"><label class="field" style="min-width:210px;flex:1"><span>Schedule date</span><input class="control" id="pushScheduleDate" type="date"></label><label class="field" style="min-width:170px;flex:1"><span>Schedule time (India time)</span><input class="control" id="pushScheduleTime" type="time"></label></div>
+ <div class="toolbar"><button class="btn" onclick="savePushCampaign('draft')">Save draft</button><button class="btn primary" onclick="savePushCampaign('scheduled')">Schedule notification</button><button class="btn primary" onclick="savePushCampaign('queued')">Queue Send Now</button></div>
+ <div id="pushCampaignStatus" class="muted small" role="status">Ready.</div>
+ <div class="section-head" style="margin-top:24px"><h3>Campaign history</h3><button class="btn" onclick="loadPushCampaigns()">Refresh history</button></div>
+ <div id="pushCampaignList" class="empty">Loading campaigns…</div>
+</div>
+<div class="card" style="margin-top:16px"><div class="section-head"><h3>Pending host withdrawals</h3><button class="btn" onclick="loadAdminNotifications()">Refresh alerts</button></div><div class="metric" id="pendingWithdrawalAlerts">—</div><div id="adminNotificationList" class="empty">No alerts loaded.</div></div>
+<div class="card" style="margin-top:16px"><h3>Browser permission (admin device)</h3><p class="muted small">This only enables browser notifications on the device currently running the admin dashboard. It does not enable background notifications for HeartTalk users.</p><button class="btn" onclick="enableAdminBrowserNotifications()">Enable browser notifications</button> <span id="notificationPermissionStatus" class="muted small">Permission not checked</span></div>
+</section>
 </div></div>
 <p class="foot">HeartTalk Admin · Private access · Never share admin credentials or Supabase secret keys.</p>
 </section>
@@ -129,7 +154,7 @@ let sessionUser=null,usersCache=[],reportsCache=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
-function switchTab(tab){["users","manualRecharge","profiles","security","reports","support","errors","analytics","withdrawals","notifications","offers","commerce"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();}if(tab==="manualRecharge")loadManualUpiRecharges();if(tab==="withdrawals")loadManualPayouts();if(tab==="notifications")loadAdminNotifications();if(tab==="offers")loadOffers();if(tab==="commerce")loadCommerce();if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
+function switchTab(tab){["users","manualRecharge","profiles","security","reports","support","errors","analytics","withdrawals","notifications","offers","commerce"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();}if(tab==="manualRecharge")loadManualUpiRecharges();if(tab==="withdrawals")loadManualPayouts();if(tab==="notifications"){loadAdminNotifications();loadPushCampaigns();}if(tab==="offers")loadOffers();if(tab==="commerce")loadCommerce();if(tab==="profiles")loadProfileQueue();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -275,6 +300,59 @@ async function setAppErrorStatus(id,status){
  toast("Error status updated.");await loadAppErrors();
 }
 async function enableAdminBrowserNotifications(){if(!("Notification" in window)){toast("Notifications are not supported in this browser.");return;}const p=await Notification.requestPermission();$("notificationPermissionStatus").textContent="Permission: "+p;if(p==="granted")toast("Browser notifications enabled.");}
+let uploadedPushImageUrl="";
+async function uploadPushImage(){
+ const input=$("pushImageFile"),file=input?.files?.[0];if(!file){toast("Choose an image first.");return}
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)){toast("Choose JPG, PNG or WebP.");return}
+ if(file.size>5*1024*1024){toast("Image must be 5 MB or smaller.");return}
+ if(!sessionUser){toast("Admin sign-in required.");return}
+ const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
+ const path=sessionUser.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,9)+"."+ext;
+ const {error}=await db.storage.from("notification-images").upload(path,file,{contentType:file.type,upsert:false});
+ if(error){toast("Image upload failed: "+error.message+" · Run the rich push SQL migration first.");return}
+ const {data}=db.storage.from("notification-images").getPublicUrl(path);
+ uploadedPushImageUrl=data.publicUrl;$("pushImageUrl").value=uploadedPushImageUrl;
+ $("pushImagePreview").innerHTML='<img src="'+esc(uploadedPushImageUrl)+'" alt="Notification preview" style="display:block;max-width:260px;max-height:150px;object-fit:cover;border-radius:12px;margin:8px 0"><span class="muted small">Image uploaded successfully.</span>';
+ toast("Notification image uploaded.");
+}
+async function savePushCampaign(mode){
+ const title=$("pushTitle").value.trim(),body=$("pushBody").value.trim(),audience=$("pushAudience").value,image_url=$("pushImageUrl").value.trim()||null;
+ if(!title||!body){toast("Enter notification title and message.");return}
+ let scheduled_at=null;
+ if(mode==="scheduled"){
+  const d=$("pushScheduleDate").value,t=$("pushScheduleTime").value;
+  if(!d||!t){toast("Choose both schedule date and time.");return}
+  const local=new Date(d+"T"+t+":00");
+  if(Number.isNaN(local.getTime())||local.getTime()<=Date.now()){toast("Choose a future date and time.");return}
+  scheduled_at=local.toISOString();
+ }
+ if(!sessionUser){toast("Admin sign-in required.");return}
+ const status=mode==="scheduled"?"scheduled":mode==="queued"?"queued":"draft";
+ const {error}=await db.from("hearttalk_push_campaigns").insert({title,body,audience,image_url,scheduled_at,status,created_by:sessionUser.id});
+ if(error){toast("Could not save notification: "+error.message+" · Apply supabase/hearttalk_rich_push_notifications.sql first.");return}
+ $("pushCampaignStatus").textContent=status==="queued"?"Saved in send queue. FCM delivery is not active until the sender function and device tokens are configured.":status==="scheduled"?"Scheduled campaign saved. Automatic delivery needs the FCM scheduler to be deployed.":"Draft saved.";
+ toast(status==="queued"?"Added to send queue (FCM setup still required).":status==="scheduled"?"Notification scheduled.":"Draft saved.");
+ $("pushTitle").value="";$("pushBody").value="";$("pushImageFile").value="";$("pushImageUrl").value="";$("pushImagePreview").textContent="No image selected.";uploadedPushImageUrl="";
+ await loadPushCampaigns();
+}
+async function cancelPushCampaign(id){
+ if(!confirm("Cancel this notification campaign?"))return;
+ const {error}=await db.from("hearttalk_push_campaigns").update({status:"cancelled",updated_at:new Date().toISOString()}).eq("id",id).in("status",["draft","scheduled","queued"]);
+ if(error){toast("Could not cancel: "+error.message);return}
+ toast("Campaign cancelled.");await loadPushCampaigns();
+}
+async function loadPushCampaigns(){
+ const box=$("pushCampaignList");if(!box)return;
+ box.innerHTML='<div class="empty">Loading campaigns…</div>';
+ const {data,error}=await db.from("hearttalk_push_campaigns").select("id,title,body,image_url,audience,scheduled_at,status,delivery_count,failure_count,last_error,created_at,sent_at").order("created_at",{ascending:false}).limit(100);
+ if(error){box.innerHTML='<div class="notice">Apply supabase/hearttalk_rich_push_notifications.sql in Supabase SQL Editor. '+esc(error.message)+'</div>';return}
+ const rows=data||[];
+ $("pushScheduledCount").textContent=rows.filter(x=>x.status==="scheduled").length;
+ $("pushQueuedCount").textContent=rows.filter(x=>x.status==="queued").length;
+ $("pushSentCount").textContent=rows.filter(x=>x.status==="sent").length;
+ if(!rows.length){box.innerHTML='<div class="empty">No notification campaigns yet.</div>';return}
+ box.innerHTML=rows.map(x=>'<article class="report-row"><div class="user-main">'+(x.image_url?'<img src="'+esc(x.image_url)+'" alt="" style="width:110px;height:66px;object-fit:cover;border-radius:9px;float:right;margin:0 0 8px 12px">':'')+'<b>'+esc(x.title)+'</b><div class="user-meta">'+esc(x.audience)+' · <b>'+esc(x.status)+'</b> · '+new Date(x.created_at).toLocaleString()+'</div><p>'+esc(x.body)+'</p>'+(x.scheduled_at?'<div class="user-meta">Scheduled: '+new Date(x.scheduled_at).toLocaleString()+'</div>':'')+'<div class="user-meta">Delivered: '+Number(x.delivery_count||0)+' · Failed: '+Number(x.failure_count||0)+'</div>'+(x.last_error?'<div class="user-meta">Error: '+esc(x.last_error)+'</div>':'')+'</div><div class="toolbar">'+(["draft","scheduled","queued"].includes(x.status)?'<button class="btn danger" onclick="cancelPushCampaign(\''+x.id+'\')">Cancel</button>':'')+'</div></article>').join("");
+}
 async function loadAdminNotifications(){const box=$("adminNotificationList");const {data,error}=await db.rpc("admin_list_host_payout_requests",{p_status:"all"});if(error){box.innerHTML="<div class=\"notice\">"+esc(error.message)+"</div>";return;}const rows=Array.isArray(data)?data:[];const pending=rows.filter(x=>x.status==="pending");$("pendingWithdrawalAlerts").textContent=String(pending.length);if(!rows.length){box.innerHTML="<div class=\"empty\">No withdrawal requests yet.</div>";return;}box.innerHTML=rows.slice(0,20).map(x=>"<div class=\"report-row\"><b>"+esc(x.host_name||x.host_id)+"</b><div class=\"muted small\">₹"+(Number(x.amount_paise||0)/100).toFixed(2)+" · "+esc(x.status)+" · "+new Date(x.created_at).toLocaleString()+"</div></div>").join("");}
 async function loadManualUpiRecharges(){
  const box=$("manualRechargeList"),count=$("manualRechargeCount");if(!box)return;
