@@ -603,6 +603,9 @@ p{color:#77747e}
    <button type="button" onclick="toggleProfileMenu(false);showView('wallet')"><span>🪙</span><span><b>Wallet</b><small>Coins and rewards</small></span></button>
    <button type="button" onclick="toggleProfileMenu(false);showView('wallet')"><span>🔁</span><span><b>Transactions</b><small>View coin history</small></span></button>
   </div>
+  <div class="profile-drawer-group"><small>NOTIFICATIONS</small>
+   <button type="button" onclick="toggleProfileMenu(false);enableHeartTalkNotifications()"><span>🔔</span><span><b>Enable notifications</b><small>Calls, messages and HeartTalk offers</small></span></button>
+  </div>
   <div class="profile-drawer-group"><small>HELP & SUPPORT</small>
    <button type="button" onclick="toggleProfileMenu(false);notify('Customer support: hearttalk.support@gmail.com')"><span>🎧</span><span><b>Customer Support</b><small>Get help with HeartTalk</small></span></button>
   </div>
@@ -711,12 +714,41 @@ p{color:#77747e}
 <div class="modal" id="authModal"><div class="dialog"><button class="close" id="authCloseBtn" onclick="closeAuth()">×</button><div class="section-kicker">WELCOME TO HEARTTALK</div><h2 id="authTitle">Your email. Your HeartTalk.</h2><p id="authDescription" class="muted">Sign up or log in securely with your email and verification code.</p><div class="section-kicker" style="margin:12px 0">EMAIL VERIFICATION</div><div id="emailAuthFields"><label>Email address</label><input id="authEmail" type="email" inputmode="email" placeholder="Enter your email address" autocomplete="email"><button class="primary" id="emailSendOtp" style="width:100%;margin-top:12px" onclick="sendEmailOtp()">Resend / Send Code</button><div id="emailOtpFields" style="display:none;margin-top:12px"><label>Enter email verification code</label><input id="authEmailOtp" type="text" inputmode="numeric" maxlength="8" placeholder="Enter verification code" autocomplete="one-time-code"><button class="primary" id="emailVerifyOtp" style="width:100%;margin-top:12px" onclick="verifyEmailOtp()">Verify & Continue</button></div></div><p class="muted" style="font-size:12px;margin-top:14px">By continuing, you agree to use HeartTalk respectfully. Email verification is required.<br><a href="./legal.html#terms" target="_blank" rel="noopener">Terms</a> · <a href="./legal.html#privacy" target="_blank" rel="noopener">Privacy</a> · <a href="./legal.html#refunds" target="_blank" rel="noopener">Refunds</a></p></div></div>
 <div class="modal" id="languageModal"><div class="dialog" style="max-width:520px"><div class="section-kicker">Welcome to HeartTalk</div><h2>Select your language</h2><p>Show your language proudly and meet people who speak it.</p><div class="grid" style="grid-template-columns:repeat(3,1fr)"><button class="secondary" onclick="chooseHeartTalkLanguage('Telugu')">తెలుగు<br>Telugu</button><button class="secondary" onclick="chooseHeartTalkLanguage('Hindi')">हिन्दी<br>Hindi</button><button class="secondary" onclick="chooseHeartTalkLanguage('Tamil')">தமிழ்<br>Tamil</button><button class="secondary" onclick="chooseHeartTalkLanguage('English')">English</button><button class="secondary" onclick="chooseHeartTalkLanguage('Kannada')">ಕನ್ನಡ<br>Kannada</button><button class="secondary" onclick="chooseHeartTalkLanguage('Malayalam')">മലയാളം<br>Malayalam</button></div><p class="muted">You can change this later from settings.</p></div></div><div class="modal" id="manualUpiRechargeModal"><div class="dialog" style="max-width:460px"><button class="close" type="button" onclick="document.getElementById('manualUpiRechargeModal').classList.remove('show')">×</button><div class="section-kicker">MANUAL UPI RECHARGE</div><h2 id="manualUpiPackageTitle">Coin package</h2><p>Pay the exact amount below using any UPI app. Do not submit until your payment app shows success.</p><div style="text-align:center;background:#fff;border-radius:16px;padding:14px;margin:12px auto;max-width:260px"><div id="manualUpiQr" style="display:grid;place-items:center;min-height:220px"></div><b id="manualUpiAmount" style="display:block;color:#25172c;font-size:22px;margin-top:8px">₹0</b></div><p style="text-align:center">UPI ID: <b id="manualUpiId">pakavijaya0169-4@oksbi</b></p><a id="manualUpiPayLink" href="#" class="primary" style="display:block;text-align:center;text-decoration:none;margin:12px 0">Open UPI app to pay</a><label for="manualUpiUtr">UTR / UPI reference number</label><input id="manualUpiUtr" maxlength="30" inputmode="text" autocomplete="off" placeholder="Enter UTR after successful payment"><p id="manualUpiSubmitStatus" class="muted" aria-live="polite">Coins are credited only after admin bank verification.</p><button class="primary" id="manualUpiSubmitBtn" style="width:100%" type="button" onclick="submitManualUpiRecharge()">Submit UTR for verification</button></div></div><div id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
 <script>
 const SUPABASE_URL = "https://dognojmymhlaewrjqswz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_e9ugpv_1hT1kSOCHpLWk2w_lB-ccMJk";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const HEARTTALK_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDV4iEnxAIAKejGhAKMvXDrqvPPr4LCKas",
+  authDomain: "hearttalk0169.firebaseapp.com",
+  projectId: "hearttalk0169",
+  storageBucket: "hearttalk0169.firebasestorage.app",
+  messagingSenderId: "125077497164",
+  appId: "1:125077497164:web:ea097e0d317e5177acdbe9",
+  measurementId: "G-3YCTN9HBE1"
+};
+const HEARTTALK_VAPID_PUBLIC_KEY = "BNVUx4f0cZYrUT4_zyu-dDwLc1GCHIq59HS6Y_xQKQaVyiKaBUBOGSek0E7JN4SDMF20AyyFlglynstRGFQuIFM";
+let heartTalkFirebaseMessaging = null;
+try { if (window.firebase && firebase.messaging.isSupported()) { if (!firebase.apps.length) firebase.initializeApp(HEARTTALK_FIREBASE_CONFIG); heartTalkFirebaseMessaging = firebase.messaging(); } } catch (e) { console.warn("HeartTalk push setup:", e); }
+async function enableHeartTalkNotifications(){
+ if(!currentUser){openAuth();return;}
+ if(!("Notification" in window) || !("serviceWorker" in navigator)){notify("ఈ browser లో notifications support లేదు.");return;}
+ if(!heartTalkFirebaseMessaging){notify("Firebase notifications initialize కాలేదు. Page refresh చేసి మళ్లీ ప్రయత్నించండి.");return;}
+ try{
+  const permission=await Notification.requestPermission();
+  if(permission!=="granted"){notify("Notifications అనుమతి ఇవ్వలేదు. Browser settings లో Allow చేయండి.");return;}
+  const registration=await navigator.serviceWorker.register("./sw.js");
+  const token=await heartTalkFirebaseMessaging.getToken({vapidKey:HEARTTALK_VAPID_PUBLIC_KEY,serviceWorkerRegistration:registration});
+  if(!token)throw new Error("FCM token రాలేదు. HTTPS మరియు VAPID key verify చేయాలి.");
+  const {error}=await supabaseClient.from("hearttalk_push_tokens").upsert({user_id:currentUser.id,fcm_token:token,platform:"web",enabled:true,updated_at:new Date().toISOString()},{onConflict:"fcm_token"});
+  if(error)throw error;
+  notify("HeartTalk notifications enable అయ్యాయి!");
+ }catch(e){console.error("HeartTalk notification registration failed:",e);notify(e.message||"Notifications enable కాలేదు. Supabase push-token SQL అమలు అయ్యిందో చూడాలి.");}
+}
 let authMode="signup", currentUser=null, discoverUsers=[], activeChatUser=null, messageChannel=null;
 async function loadOfferBanners(){const ids=['homeOfferBanners','walletOfferBanners'];const nodes=ids.map(id=>document.getElementById(id)).filter(Boolean);if(!nodes.length)return;const {data,error}=await supabaseClient.rpc('get_active_hearttalk_offers');if(error){console.error('HeartTalk offers:',error);nodes.forEach(n=>{n.style.display='none';n.innerHTML='';});return;}const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html=(Array.isArray(data)?data:[]).map(o=>{const type=String(o.offer_type||'special offer').replace(/_/g,' ');const value=o.value==null?'':Number(o.value).toLocaleString();const reward=type==='bonus coins'&&value?value+' bonus coins':value?value+' '+type:type;return '<div class="ht-offer-content"><strong>🎁 '+esc(o.title)+'</strong><p>'+esc(o.description||'A special HeartTalk offer is waiting for you.')+'</p>'+(reward?'<span class="ht-offer-reward">✨ '+esc(reward)+'</span>':'')+'<button type="button" class="ht-offer-open" onclick="openOfferStore(event)">View offer in Store →</button></div>';}).join('');nodes.forEach(n=>{n.innerHTML=html;n.style.display=html?'block':'none';});}
 function openOfferStore(event){if(event){event.preventDefault();event.stopPropagation();}document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));const target=document.getElementById("walletView");if(target)target.classList.add("active");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view==="home"));try{loadWallet();loadHostEarnings();loadOfferBanners();}catch(e){console.error("Could not load wallet:",e);}window.scrollTo({top:0,behavior:"smooth"});requestAnimationFrame(()=>{const packages=document.getElementById("hearttalkCoinPackages");if(packages)packages.scrollIntoView({behavior:"smooth",block:"start"});else notify("Wallet opened, but coin packages are not available.");});}
