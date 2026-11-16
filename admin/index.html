@@ -111,6 +111,12 @@
  <h3>Create notification</h3>
  <label class="field"><span>Notification title (max 120 characters)</span><input class="control" id="pushTitle" maxlength="120" placeholder="Example: A host is live now!"></label>
  <label class="field"><span>Message (max 500 characters)</span><input class="control" id="pushBody" maxlength="500" placeholder="Write the notification message"></label>
+ <div class="card" style="margin:12px 0;background:#1c0d20;border:1px solid #8b3d80">
+  <h3>✨ AI Banner Generator</h3>
+  <p class="muted small">Describe the banner you want. AI will generate it and save it directly to HeartTalk notification images.</p>
+  <label class="field"><span>Image prompt</span><textarea class="control" id="pushImagePrompt" rows="3" maxlength="1800" placeholder="Example: HeartTalk welcome banner with a premium plum and sunset-pink design, warm glowing heart shapes and the words Welcome to HeartTalk"></textarea></label>
+  <div class="toolbar"><button class="btn primary" type="button" id="generatePushBannerBtn" onclick="generateHeartTalkBanner()">✨ Generate AI Banner</button><span id="pushAiImageStatus" class="muted small" role="status">Ready. Generated banners are saved to Supabase Storage.</span></div>
+ </div>
  <div class="toolbar"><select class="control" id="pushAudience"><option value="all">All users (Female + Male)</option><option value="female">Female users only</option><option value="male">Male users only</option></select>
  <label class="control" style="display:flex;align-items:center;gap:8px">Image / banner <input id="pushImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
  <button class="btn" type="button" onclick="uploadPushImage()">Upload image</button></div>
@@ -302,6 +308,29 @@ async function setAppErrorStatus(id,status){
 }
 async function enableAdminBrowserNotifications(){if(!("Notification" in window)){toast("Notifications are not supported in this browser.");return;}const p=await Notification.requestPermission();$("notificationPermissionStatus").textContent="Permission: "+p;if(p==="granted")toast("Browser notifications enabled.");}
 let uploadedPushImageUrl="";
+async function generateHeartTalkBanner(){
+ const prompt=$("pushImagePrompt")?.value.trim()||"";
+ if(prompt.length<8){toast("Please describe the banner in at least 8 characters.");return}
+ if(!sessionUser){toast("Admin sign-in required.");return}
+ const button=$("generatePushBannerBtn"),status=$("pushAiImageStatus");
+ button.disabled=true;button.textContent="Generating…";status.textContent="AI is creating your banner. Please wait…";
+ try{
+  const {data,error}=await db.functions.invoke("generate-hearttalk-banner",{body:{prompt}});
+  if(error)throw new Error(error.message||"Image generation function failed");
+  if(!data?.ok||!data?.image_url)throw new Error(data?.error||"No generated image URL returned");
+  uploadedPushImageUrl=data.image_url;
+  $("pushImageUrl").value=data.image_url;
+  $("pushImageFile").value="";
+  $("pushImagePreview").innerHTML='<img src="'+esc(data.image_url)+'" alt="AI generated HeartTalk banner" style="display:block;max-width:100%;width:420px;max-height:220px;object-fit:contain;border-radius:12px;margin:8px 0"><span class="muted small">AI banner generated and saved. It is selected for this notification.</span>';
+  buildPushPayload();
+  status.textContent="Banner generated and saved successfully.";
+  toast("AI banner ready. It is attached to this notification.");
+ }catch(e){
+  console.error("HeartTalk AI banner generation:",e);
+  status.textContent="Could not generate: "+(e.message||"Unknown error");
+  toast("AI banner failed: "+(e.message||"Check OpenAI API secret and billing."));
+ }finally{button.disabled=false;button.textContent="✨ Generate AI Banner"}
+}
 async function uploadPushImage(){
  const input=$("pushImageFile"),file=input?.files?.[0];if(!file){toast("Choose an image first.");return}
  if(!["image/jpeg","image/png","image/webp"].includes(file.type)){toast("Choose JPG, PNG or WebP.");return}
