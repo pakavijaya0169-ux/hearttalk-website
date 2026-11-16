@@ -111,11 +111,12 @@
  <h3>Create notification</h3>
  <label class="field"><span>Notification title (max 120 characters)</span><input class="control" id="pushTitle" maxlength="120" placeholder="Example: A host is live now!"></label>
  <label class="field"><span>Message (max 500 characters)</span><input class="control" id="pushBody" maxlength="500" placeholder="Write the notification message"></label>
- <div class="toolbar"><select class="control" id="pushAudience"><option value="all">All users</option><option value="active">Active users</option><option value="hosts">Hosts</option><option value="selected">Selected users (FCM targeting setup required)</option></select>
+ <div class="toolbar"><select class="control" id="pushAudience"><option value="all">All users (Female + Male)</option><option value="female">Female users only</option><option value="male">Male users only</option><option value="active">Active users</option><option value="hosts">Hosts</option><option value="selected">Selected users (FCM targeting setup required)</option></select>
  <label class="control" style="display:flex;align-items:center;gap:8px">Image / banner <input id="pushImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
  <button class="btn" type="button" onclick="uploadPushImage()">Upload image</button></div>
  <div id="pushImagePreview" class="muted small">No image selected. Recommended: landscape banner, JPG/PNG/WebP, max 5 MB.</div>
  <input id="pushImageUrl" type="hidden">
+ <div class="card" style="margin:12px 0;background:#1c0d20"><div class="section-head"><h3>JSON Payload Structure (FCM)</h3><button class="btn" type="button" onclick="copyPushPayload()">Copy JSON</button></div><p class="muted small">Preview automatically updates from title, message and image. Gender audience is applied by the sender function before sending; it is not an FCM payload field.</p><pre id="pushPayloadPreview" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#100812;border:1px solid #65305f;border-radius:12px;padding:14px;color:#f7d9ed;font-size:12px;max-height:300px;overflow:auto"></pre></div>
  <div class="toolbar"><label class="field" style="min-width:210px;flex:1"><span>Schedule date</span><input class="control" id="pushScheduleDate" type="date"></label><label class="field" style="min-width:170px;flex:1"><span>Schedule time (India time)</span><input class="control" id="pushScheduleTime" type="time"></label></div>
  <div class="toolbar"><button class="btn" onclick="savePushCampaign('draft')">Save draft</button><button class="btn primary" onclick="savePushCampaign('scheduled')">Schedule notification</button><button class="btn primary" onclick="savePushCampaign('queued')">Queue Send Now</button></div>
  <div id="pushCampaignStatus" class="muted small" role="status">Ready.</div>
@@ -311,10 +312,19 @@ async function uploadPushImage(){
  const {error}=await db.storage.from("notification-images").upload(path,file,{contentType:file.type,upsert:false});
  if(error){toast("Image upload failed: "+error.message+" · Run the rich push SQL migration first.");return}
  const {data}=db.storage.from("notification-images").getPublicUrl(path);
- uploadedPushImageUrl=data.publicUrl;$("pushImageUrl").value=uploadedPushImageUrl;
+ uploadedPushImageUrl=data.publicUrl;$("pushImageUrl").value=uploadedPushImageUrl;buildPushPayload();
  $("pushImagePreview").innerHTML='<img src="'+esc(uploadedPushImageUrl)+'" alt="Notification preview" style="display:block;max-width:260px;max-height:150px;object-fit:cover;border-radius:12px;margin:8px 0"><span class="muted small">Image uploaded successfully.</span>';
  toast("Notification image uploaded.");
 }
+function buildPushPayload(){
+ const title=$("pushTitle")?.value.trim()||"HeartTalk";
+ const body=$("pushBody")?.value.trim()||"You have a new update.";
+ const image=$("pushImageUrl")?.value.trim();
+ const payload={message:{token:"<FCM_DEVICE_TOKEN>",notification:{title,body,...(image?{image}: {})},data:{title,body,...(image?{image_url:image}:{}),url:"https://pakavijaya0169-ux.github.io/hearttalk-website/"},webpush:{notification:{title,body,icon:"https://pakavijaya0169-ux.github.io/hearttalk-website/icons/icon-192.svg",...(image?{image}: {})},fcm_options:{link:"https://pakavijaya0169-ux.github.io/hearttalk-website/"}}}};
+ const box=$("pushPayloadPreview");if(box)box.textContent=JSON.stringify(payload,null,2);return payload;
+}
+async function copyPushPayload(){const payload=JSON.stringify(buildPushPayload(),null,2);try{await navigator.clipboard.writeText(payload);toast("FCM JSON payload copied.");}catch(_){toast("Copy unavailable in this browser. Select the JSON preview and copy it.");}}
+["pushTitle","pushBody","pushImageUrl"].forEach(id=>$(id)?.addEventListener("input",buildPushPayload));
 async function savePushCampaign(mode){
  const title=$("pushTitle").value.trim(),body=$("pushBody").value.trim(),audience=$("pushAudience").value,image_url=$("pushImageUrl").value.trim()||null;
  if(!title||!body){toast("Enter notification title and message.");return}
