@@ -614,18 +614,18 @@ p{color:#77747e}
   </div>
   <div class="profile-drawer-group"><small>ACCOUNT & VERIFICATION</small>
    <button type="button" onclick="toggleProfileMenu(false);openAuth()"><span>🔐</span><span><b>Email / phone sign-in</b><small>Email sign-in · SMS OTP setup required</small></span></button>
-   <button type="button" onclick="toggleProfileMenu(false);notify('Optional profile verification is planned. No Aadhaar details are collected.')"><span>✓</span><span><b>Optional verified badge</b><small>Optional verification · Coming soon</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);notify('Verified badge ఇంకా ప్రారంభం కాలేదు. సురక్షితమైన KYC verification process సిద్ధమైన తర్వాత మాత్రమే enable చేస్తాం.')"><span>✓</span><span><b>Optional verified badge</b><small>Optional verification · Coming soon</small></span></button>
   </div>
   <div class="profile-drawer-group"><small>SAFETY & PRIVACY</small>
    <button type="button" onclick="toggleProfileMenu(false);loadBlockedUsers()"><span>🚫</span><span><b>Block & unblock</b><small>View or unblock members</small></span></button>
-   <button type="button" onclick="toggleProfileMenu(false);showView('discover');notify('Choose a member and tap Report on their profile.')"><span>🚩</span><span><b>Report abuse</b><small>Report suspicious profiles or behaviour</small></span></button>
-   <button type="button" onclick="toggleProfileMenu(false);openProfileSettings();notify('Privacy options are being added. Your location is not shared automatically.')"><span>🌙</span><span><b>Privacy controls</b><small>Account visibility and safety</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);showView('discover');notify('Discover లో member ఎంచుకుని Report నొక్కండి. మీ report Safety team queue కి వెళ్తుంది.')"><span>🚩</span><span><b>Report abuse</b><small>Report suspicious profiles or behaviour</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);openProfileSettings();loadBlockedUsers();notify('Privacy & Safety: ఇక్కడ blocked members చూడండి, అవసరమైతే unblock చేయండి.')"><span>🌙</span><span><b>Privacy controls</b><small>Account visibility and safety</small></span></button>
   </div>
   <div class="profile-drawer-group"><small>OTHER</small>
-   <button type="button" onclick="toggleProfileMenu(false);notify('Thank you! Send feedback to hearttalk.support@gmail.com')"><span>💬</span><span><b>Feedback</b><small>Share your suggestions</small></span></button>
-   <button type="button" onclick="toggleProfileMenu(false);notify('Privacy Policy page will be added here.')"><span>🛡️</span><span><b>Privacy Policy</b></span></button>
-   <button type="button" onclick="toggleProfileMenu(false);notify('Terms of Use page will be added here.')"><span>📄</span><span><b>Terms of Use</b></span></button>
-   <button type="button" onclick="toggleProfileMenu(false);notify('Community Guidelines will be added here.')"><span>👥</span><span><b>Community Guidelines</b></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);window.location.href='mailto:hearttalk.support@gmail.com?subject=HeartTalk%20Feedback'"><span>💬</span><span><b>Feedback</b><small>Share your suggestions</small></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);window.open('./legal.html#privacy','_blank','noopener')"><span>🛡️</span><span><b>Privacy Policy</b></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);window.open('./legal.html#terms','_blank','noopener')"><span>📄</span><span><b>Terms of Use</b></span></button>
+   <button type="button" onclick="toggleProfileMenu(false);window.open('./legal.html#community-guidelines','_blank','noopener')"><span>👥</span><span><b>Community Guidelines</b></span></button>
    <button type="button" onclick="toggleProfileMenu(false);openLanguageSettings()"><span>🌐</span><span><b>App Language</b><small>Choose your language</small></span></button>
    <button type="button" onclick="toggleProfileMenu(false);openProfileSettings()"><span>⚙️</span><span><b>Settings</b><small>Account preferences</small></span></button>
   </div>
