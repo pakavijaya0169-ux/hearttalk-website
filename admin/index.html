@@ -327,8 +327,17 @@ async function generateHeartTalkBanner(){
   toast("AI banner ready. It is attached to this notification.");
  }catch(e){
   console.error("HeartTalk AI banner generation:",e);
-  status.textContent="Could not generate: "+(e.message||"Unknown error");
-  toast("AI banner failed: "+(e.message||"Check OpenAI API secret and billing."));
+  let detail=e?.message||"Unknown error";
+  try{
+   if(e?.context && typeof e.context.json==="function"){
+    const payload=await e.context.clone().json();
+    detail=payload?.error||payload?.message||detail;
+   }else if(e?.context && typeof e.context.text==="function"){
+    const raw=await e.context.clone().text();if(raw)detail=raw.slice(0,700);
+   }
+  }catch(_){}
+  status.textContent="Could not generate: "+detail;
+  toast("AI banner failed: "+detail);
  }finally{button.disabled=false;button.textContent="✨ Generate AI Banner"}
 }
 async function uploadPushImage(){
