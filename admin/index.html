@@ -322,7 +322,7 @@ async function savePushCampaign(mode){
  if(mode==="scheduled"){
   const d=$("pushScheduleDate").value,t=$("pushScheduleTime").value;
   if(!d||!t){toast("Choose both schedule date and time.");return}
-  const local=new Date(d+"T"+t+":00");
+  const local=new Date(d+"T"+t+":00+05:30");
   if(Number.isNaN(local.getTime())||local.getTime()<=Date.now()){toast("Choose a future date and time.");return}
   scheduled_at=local.toISOString();
  }
