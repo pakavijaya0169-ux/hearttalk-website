@@ -2030,11 +2030,33 @@ function renderHeartTalkStore(){
  if(!items.length){grid.innerHTML='<div class="notice" style="grid-column:1/-1">No active items yet. Please check back soon.</div>';return;}
  grid.innerHTML=items.map((item,index)=>{
   const emoji=item.emoji||"🎁",price=htStoreTab==="gifts"?'<div class="ht-store-price">🪙 '+Number(item.coin_price||0)+' coins</div>':'<div class="muted" style="font-size:11px">'+escapeHtml(item.desc||"Preview item")+'</div>';
-  const action=htStoreTab==="gifts"?'<button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button>':'<button type="button" onclick="previewHeartTalkStoreItem('+index+')">Preview</button>';
+  const action=htStoreTab==="gifts"?'<button type="button" onclick="heartTalkStoreSendGift('+index+')">Send in chat</button>':'<button type="button" onclick="previewHeartTalkStoreItem('+index+')">Preview</button>';
   return '<article class="ht-store-item"><div class="ht-store-art" aria-hidden="true">'+emoji+'</div><h4>'+escapeHtml(item.title||"HeartTalk item")+'</h4>'+price+action+'</article>';
  }).join("");
 }
-function heartTalkStoreSendGift(){if(!currentUser){openAuth();return;}notify("Open a member chat, then choose the gift button to send it. Store preview does not deduct coins.");showView("chat");}
+async function heartTalkStoreSendGift(index){
+ if(!currentUser){openAuth();return;}
+ const item=htStoreGifts[index];
+ if(!item){notify("This gift is unavailable. Refresh the Store and try again.");return;}
+ if(!activeChatUser){
+  notify("Choose a member first. Connect is opening now.");
+  showView("discover");
+  return;
+ }
+ if(!item.gift_code){notify("Gift code is missing. Please refresh the Store.");return;}
+ if(!confirm("Send "+item.title+" to "+(activeChatUser.display_name||"this member")+" for "+Number(item.coin_price||0)+" coins?"))return;
+ try{
+  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser.id,selected_gift_code:item.gift_code});
+  if(error)throw error;
+  notify("Gift sent successfully.");
+  await loadWallet();
+  await loadHostEarnings();
+  await loadHeartTalkStore();
+ }catch(e){
+  console.error("HeartTalk gift send failed:",e);
+  notify(e.message||"Gift could not be sent. Check wallet balance and commerce SQL setup.");
+ }
+}
 function previewHeartTalkStoreItem(index){const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(item)notify(item.title+": preview only. Purchase and profile apply feature are not enabled yet.");}
 </script>
 <script>
@@ -2054,4 +2076,4 @@ async function shareHeartTalkInvite() {
   window.open(whatsappUrl, '_blank', 'noopener');
 }
 </script>
-\n</body></html>
+</body></html>
