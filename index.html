@@ -733,7 +733,7 @@ const HEARTTALK_FIREBASE_CONFIG = {
 };
 const HEARTTALK_VAPID_PUBLIC_KEY = "BNVUx4f0cZYrUT4_zyu-dDwLc1GCHIq59HS6Y_xQKQaVyiKaBUBOGSek0E7JN4SDMF20AyyFlglynstRGFQuIFM";
 let heartTalkFirebaseMessaging = null;
-try { if (window.firebase && firebase.messaging.isSupported()) { if (!firebase.apps.length) firebase.initializeApp(HEARTTALK_FIREBASE_CONFIG); heartTalkFirebaseMessaging = firebase.messaging(); } } catch (e) { console.warn("HeartTalk push setup:", e); }
+try { if (window.firebase && firebase.messaging) { if (!firebase.apps.length) firebase.initializeApp(HEARTTALK_FIREBASE_CONFIG); heartTalkFirebaseMessaging = firebase.messaging(); } } catch (e) { console.warn("HeartTalk push setup:", e); }
 async function enableHeartTalkNotifications(){
  if(!currentUser){openAuth();return;}
  if(!("Notification" in window) || !("serviceWorker" in navigator)){notify("ఈ browser లో notifications support లేదు.");return;}
