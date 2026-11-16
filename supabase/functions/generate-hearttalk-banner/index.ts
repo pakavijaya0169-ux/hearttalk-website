@@ -30,9 +30,18 @@ Deno.serve(async (req) => {
   });
   const { data: userData, error: userError } = await userClient.auth.getUser();
   if (userError || !userData.user) return json({ error: "Invalid sign-in session" }, 401);
-  const { data: role, error: roleError } = await admin.from("hearttalk_user_roles")
-    .select("role").eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
-  if (roleError || !role) return json({ error: "Admin role required" }, 403);
+  // Match the same admin-role check used by the HeartTalk Admin Dashboard.
+  // Read through the signed-in user's JWT so the dashboard and function use identical RLS-visible data.
+  const { data: role, error: roleError } = await userClient.from("hearttalk_user_roles")
+    .select("role").eq("user_id", userData.user.id).maybeSingle();
+  if (roleError) {
+    console.error("HeartTalk banner admin-role lookup failed:", roleError.message);
+    return json({ error: "Could not verify admin role: " + roleError.message }, 403);
+  }
+  if (role?.role !== "admin") {
+    console.error("HeartTalk banner request rejected: admin role missing for user", userData.user.id);
+    return json({ error: "This signed-in account does not have the HeartTalk admin role." }, 403);
+  }
 
   let input: { prompt?: string };
   try { input = await req.json(); } catch { return json({ error: "Invalid JSON request" }, 400); }
