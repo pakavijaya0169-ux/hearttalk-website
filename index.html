@@ -674,6 +674,7 @@ p{color:#77747e}
   <div class="toolbar"><input id="hostCommunityUserId" placeholder="Paste host User ID (UUID)" autocomplete="off"><button class="secondary" onclick="addHostCommunityMember()">Add host</button></div>
   <textarea id="hostCommunityAnnouncement" rows="2" maxlength="3000" placeholder="Write an official announcement for hosts…"></textarea>
   <button class="primary" onclick="postHostCommunityMessage('announcement')">Publish announcement</button>
+  <div id="hostVerificationAdminQueue" style="display:none;margin-top:16px"><h4>🎥 Host selfie review queue</h4><div id="hostVerificationAdminStatus" class="muted">Loading…</div><div id="hostVerificationAdminList"></div></div>
  </div>
  <div id="hostCommunityMessages" style="margin-top:14px"></div>
  <div id="hostCommunityDiscussionBox" style="display:none;margin-top:14px">
@@ -809,7 +810,7 @@ function showView(name){
  document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
  const coinButton=document.getElementById("homeCoinButton");if(coinButton)coinButton.style.display=name==="home"?"inline-flex":"none";
  window.scrollTo({top:0,behavior:"smooth"});
- if(name==="store")loadHeartTalkStore();if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();loadHostCommunity();}if(name==="wallet"){loadWallet();loadHostEarnings();loadHostVerificationStatus();loadOfferBanners();}if(name==="home")loadOfferBanners();if(name==="admin")loadAdminDashboard();
+ if(name==="store")loadHeartTalkStore();if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();loadHostCommunity();loadHostVerificationAdminQueue();}if(name==="wallet"){loadWallet();loadHostEarnings();loadHostVerificationStatus();loadOfferBanners();}if(name==="home")loadOfferBanners();if(name==="admin")loadAdminDashboard();
  if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
 }
 const HEARTTALK_UPI_ID="pakavijaya0169-4@oksbi";
@@ -1709,6 +1710,25 @@ async function recordHeartTalkHostSelfie(){
   const meta=await supabaseClient.from("host_kyc_documents").insert({user_id:currentUser.id,document_type:"video_selfie",storage_object_path:path,status:"pending"});if(meta.error){await supabaseClient.storage.from("host-verification").remove([path]);throw meta.error}
   status.textContent="✓ 3-second live selfie submitted securely. Admin review pending.";notify("Live selfie submitted.");await loadHostVerificationStatus();
  }catch(e){if(hostSelfieStream){hostSelfieStream.getTracks().forEach(t=>t.stop());hostSelfieStream=null}video.srcObject=null;video.style.display="none";status.textContent=e.message||"Submission failed.";notify(e.message||"Selfie submission failed.")}finally{btn.disabled=false}
+}
+async function loadHostVerificationAdminQueue(){
+ const wrap=document.getElementById('hostVerificationAdminQueue'),status=document.getElementById('hostVerificationAdminStatus'),list=document.getElementById('hostVerificationAdminList');if(!wrap||!currentUser)return;
+ const role=await supabaseClient.from('hearttalk_user_roles').select('role').eq('user_id',currentUser.id).maybeSingle();if(role.data?.role!=='admin'){wrap.style.display='none';return}
+ wrap.style.display='block';status.textContent='Loading host applications…';const r=await supabaseClient.rpc('admin_list_host_review_queue');if(r.error){status.textContent=r.error.message;return}
+ const rows=Array.isArray(r.data)?r.data:[];status.textContent=rows.length+' pending application(s).';list.innerHTML='';
+ for(const a of rows){const doc=(a.documents||[]).find(x=>x.document_type==='video_selfie');const card=document.createElement('article');card.className='panel';card.style.margin='10px 0';
+  const title=document.createElement('b');title.textContent=a.display_name||a.username||'Host applicant';card.appendChild(title);
+  const info=document.createElement('p');info.className='muted';info.textContent='Age '+(a.age||'—')+' · Gender declaration '+(a.gender||'—')+' · '+a.status+' · '+a.user_id;card.appendChild(info);
+  if(doc){const p=await supabaseClient.rpc('admin_get_host_video_path',{p_document_id:doc.id});if(!p.error&&p.data){const s=await supabaseClient.storage.from('host-verification').createSignedUrl(p.data,300);if(!s.error&&s.data?.signedUrl){const v=document.createElement('video');v.controls=true;v.playsInline=true;v.preload='metadata';v.src=s.data.signedUrl;v.style.cssText='width:100%;max-width:360px;border-radius:12px';card.appendChild(v)}}}
+  const state=document.createElement('p');state.className='muted';state.textContent='Selfie status: '+(doc?.status||'Not submitted');card.appendChild(state);
+  const actions=document.createElement('div');actions.className='toolbar';
+  const approve=document.createElement('button');approve.className='secondary';approve.textContent='Approve selfie + Host';approve.disabled=!doc||doc.status!=='pending';approve.onclick=()=>reviewHostSelfie(doc?.id,a.application_id,'approved');actions.appendChild(approve);
+  const reject=document.createElement('button');reject.className='secondary';reject.textContent='Reject';reject.disabled=!doc||doc.status!=='pending';reject.onclick=()=>reviewHostSelfie(doc?.id,a.application_id,'rejected');actions.appendChild(reject);card.appendChild(actions);list.appendChild(card);
+ }
+}
+async function reviewHostSelfie(docId,appId,decision){
+ if(!docId){notify('No selfie video submitted.');return}const note=prompt('Optional review note:',decision==='approved'?'Live selfie reviewed.':'Please contact support.');if(note===null)return;
+ try{const d=await supabaseClient.rpc('admin_review_host_kyc_document',{p_document_id:docId,p_decision:decision,p_review_note:note});if(d.error)throw d.error;const a=await supabaseClient.rpc('admin_review_host_application',{p_application_id:appId,p_decision:decision,p_review_note:note});if(a.error)throw a.error;notify(decision==='approved'?'Host verified and activated.':'Host application rejected.');await loadHostVerificationAdminQueue()}catch(e){notify(e.message||'Review failed.')}
 }
 let hostCommunityChannel=null;
 async function loadHostCommunity(){
