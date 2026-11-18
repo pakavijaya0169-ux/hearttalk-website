@@ -832,15 +832,15 @@ async function purchaseCoins(packageCode){
  document.getElementById("cashfreePackageAmount").textContent="₹"+pkg.amount.toLocaleString("en-IN");
  document.getElementById("cashfreePaymentStatus").textContent="Enter your mobile number and continue to Cashfree secure test checkout.";
  const phone=document.getElementById("cashfreeCustomerPhone");
- if(phone)phone.value=String(currentUser.phone||"").replace(/\\D/g,"").slice(-10);
+ if(phone)phone.value=String(currentUser.phone||"").replace(/\D/g,"").slice(-10);
  document.getElementById("cashfreeRechargeModal").classList.add("show");
 }
 async function startCashfreeTestPayment(){
  if(!currentUser){openAuth();return}
  if(!activeManualRechargePackage){notify("Select a coin package first.");return}
- const phone=document.getElementById("cashfreeCustomerPhone").value.replace(/\\D/g,"");
+ const phone=document.getElementById("cashfreeCustomerPhone").value.replace(/\D/g,"");
  const status=document.getElementById("cashfreePaymentStatus"),button=document.getElementById("cashfreePayButton");
- if(!/^[6-9]\\d{9}$/.test(phone)){status.textContent="Enter a valid 10-digit Indian mobile number.";return}
+ if(!/^[6-9]\d{9}$/.test(phone)){status.textContent="Enter a valid 10-digit Indian mobile number.";return}
  button.disabled=true;button.textContent="Creating secure test order…";status.textContent="Connecting to Cashfree sandbox…";
  try{
   const {data,error}=await supabaseClient.functions.invoke("create-cashfree-order",{body:{package_code:activeManualRechargePackage.code,customer_phone:phone}});
