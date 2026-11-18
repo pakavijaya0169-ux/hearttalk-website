@@ -257,9 +257,11 @@ grant execute on function public.hearttalk_send_gift(uuid,text) to authenticated
 create or replace function public.hearttalk_request_manual_upi_withdrawal(
  p_amount_paise bigint,p_upi_id text,p_account_holder_name text
 ) returns jsonb language plpgsql security definer set search_path='' as $$
-declare v_user uuid:=auth.uid(); v_available bigint; v_id uuid;
+declare v_user uuid:=auth.uid(); v_available bigint; v_id uuid; v_requests_enabled boolean;
 begin
  if v_user is null then raise exception 'Authentication required'; end if;
+ select requests_enabled into v_requests_enabled from public.hearttalk_payout_settings where id=true;
+ if coalesce(v_requests_enabled,false)=false then raise exception 'Host withdrawals are temporarily disabled pending compliance approval'; end if;
  if not public.hearttalk_is_approved_female_host(v_user) then raise exception 'Only approved female Hosts can withdraw'; end if;
  if p_amount_paise is null or p_amount_paise<50000 then raise exception 'Minimum withdrawal is ₹500'; end if;
  if p_upi_id is null or p_upi_id !~* '^[a-z0-9._-]{2,256}@[a-z][a-z0-9]{1,20}$' then raise exception 'Enter a valid UPI ID'; end if;
