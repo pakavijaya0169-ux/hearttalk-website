@@ -1317,7 +1317,7 @@ async function loadMessages(){
 
 function toggleChatPicker(id){const target=document.getElementById(id);if(!target)return;const opening=target.hidden;document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);target.hidden=!opening}
 function addChatEmoji(emoji){const input=document.getElementById("messageInput");if(!input)return;input.value+=emoji;input.focus()}
-async function sendChatSticker(emoji,label){if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
+async function sendChatSticker(emoji,label){if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.rpc("hearttalk_send_chat_message",{p_receiver_id:activeChatUser.id,p_message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
 function openGifSearch(){window.open("https://tenor.com/search/cute-love-gifs","_blank","noopener");notify("Tenor opened. Copy a direct .gif image link and paste it in chat.")}
 async function renderChatMessageContent(raw){
  const value=String(raw||"");
@@ -1364,7 +1364,7 @@ async function uploadChatMedia(file,kind){
  const up=await supabaseClient.storage.from("chat-media").upload(path,file,{contentType:file.type,upsert:false});
  if(up.error){notify("Upload failed: "+up.error.message+" (run chat-media SQL setup)");return}
  const marker="[[MEDIA]]"+kind+"|"+encodeURIComponent(path);
- const sent=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:marker});
+ const sent=await supabaseClient.rpc("hearttalk_send_chat_message",{p_receiver_id:activeChatUser.id,p_message:marker});
  if(sent.error){notify("Message failed: "+sent.error.message);return}
  notify(kind==="image"?"Photo sent 💗":"Voice message sent 🎙️");await loadMessages();await loadConversations();
 }
@@ -1422,7 +1422,7 @@ async function sendMessage(e){
   return;
  }
  try{if(await isHeartTalkBlocked(activeChatUser.id)){notify("This conversation is unavailable because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
- const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:content});
+ const {error}=await supabaseClient.rpc("hearttalk_send_chat_message",{p_receiver_id:activeChatUser.id,p_message:content});
  if(error){notify(error.message);return}
  input.value="";
  notify("Message sent 💗");
