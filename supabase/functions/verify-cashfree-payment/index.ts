@@ -9,7 +9,7 @@ Deno.serve(async(req)=>{
   if(req.method!=="POST") return reply({error:"Method not allowed"},405);
 
   try {
-    const jwt=(req.headers.get("Authorization")||"").replace(/^Bearer\\s+/i,"");
+    const jwt=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");
     const url=Deno.env.get("SUPABASE_URL");
     const anon=Deno.env.get("SUPABASE_ANON_KEY");
     const service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
