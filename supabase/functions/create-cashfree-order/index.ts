@@ -9,7 +9,7 @@ Deno.serve(async(req)=>{
   if(req.method!=="POST") return reply({error:"Method not allowed"},405);
 
   try {
-    const jwt=(req.headers.get("Authorization")||"").replace(/^Bearer\\s+/i,"");
+    const jwt=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");
     const url=Deno.env.get("SUPABASE_URL");
     const anon=Deno.env.get("SUPABASE_ANON_KEY");
     const service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -27,8 +27,8 @@ Deno.serve(async(req)=>{
 
     const body=await req.json().catch(()=>({}));
     const packageCode=typeof body.package_code==="string"?body.package_code.trim():"";
-    const phone=String(body.customer_phone||"").replace(/\\D/g,"");
-    if(!/^[6-9]\\d{9}$/.test(phone)) return reply({error:"Enter a valid 10-digit Indian mobile number."},400);
+    const phone=String(body.customer_phone||"").replace(/\D/g,"");
+    if(!/^[6-9]\d{9}$/.test(phone)) return reply({error:"Enter a valid 10-digit Indian mobile number."},400);
 
     const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:pkg,error:pkgError}=await admin.from("coin_packages")
