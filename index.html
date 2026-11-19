@@ -938,7 +938,7 @@ async function sendEmailOtp(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){notify("Enter a valid email address.");return}
  const b=document.getElementById("emailSendOtp");b.disabled=true;b.textContent="Sending...";
  try{
-  const {error}=await supabaseClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
+  const {error}=await supabaseClient.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:window.location.origin+window.location.pathname}});
   if(error)throw error;
   pendingEmail=email;document.getElementById("emailOtpFields").style.display="block";notify("Verification code sent. Check your email inbox and spam folder.");
  }catch(e){notify(e.message||"Could not send email code. Check Supabase email settings.");}
