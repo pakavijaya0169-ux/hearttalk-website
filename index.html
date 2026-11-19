@@ -2205,6 +2205,7 @@ wallpapers:{title:"Featured Wallpapers",banner:"Refresh your HeartTalk space",su
 };
 let heartTalkStoreTab="gifts";
 let htGiftSending=false;
+let htGiftRequestId=null;
 function setHeartTalkStoreTab(tab){if(!heartTalkStoreCatalog[tab])return;heartTalkStoreTab=tab;document.querySelectorAll("[data-store-tab]").forEach(b=>b.classList.toggle("active",b.dataset.storeTab===tab));renderHeartTalkStore();}
 function renderHeartTalkStore(){const d=heartTalkStoreCatalog[heartTalkStoreTab],g=document.getElementById("heartTalkStoreGrid");if(!g)return;document.getElementById("storeSectionTitle").textContent=d.title;document.getElementById("storeBannerTitle").textContent=d.banner;document.getElementById("storeBannerSub").textContent=d.sub;const w=document.getElementById("walletCoins"),c=document.getElementById("coinBalance");document.getElementById("storeCoinBalance").textContent=w?.textContent||c?.textContent||"0";g.innerHTML=d.items.map((x,i)=>'<article class="ht-store-item"><div class="ht-store-art">'+x[0]+'</div><h4>'+x[1]+'</h4><div class="ht-store-price">🪙 '+x[2]+' coins</div><button type="button" onclick="heartTalkStoreAction('+i+')" disabled="'+(htGiftSending&&heartTalkStoreTab==="gifts"?"disabled":"")+'">'+(heartTalkStoreTab==="gifts"?"Send Gift":heartTalkStoreTab==="frames"?"Preview Frame":"Preview Wallpaper")+'</button></article>').join("");}
 async function heartTalkStoreAction(i){
@@ -2218,7 +2219,7 @@ async function heartTalkStoreAction(i){
  htGiftSending=true;renderHeartTalkStore();
  try{
   const code=({"Chai":"chai","Maggi":"maggi","Congrats!":"congrats","Happy Birthday!":"birthday","I'm So Cool":"cool","Party Mode!":"party","Rose":"rose","Teddy Bear":"teddy","Heart":"heart","Diamond":"diamond","Royal Crown":"crown","Surprise Gift":"surprise"})[x[1]];
-  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:targetId,selected_gift_code:code});
+  if(!htGiftRequestId)htGiftRequestId=(crypto?.randomUUID?.()||("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,s=>{const r=Math.random()*16|0;return(s==="x"?r:(r&3|8)).toString(16)})));\n  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:targetId,selected_gift_code:code,p_request_id:htGiftRequestId});
   if(error)throw error;
   notify("Gift sent! Host earned "+data.host_earned_coins+" coins.");
   await loadWallet();await loadHostEarnings();renderHeartTalkStore();
