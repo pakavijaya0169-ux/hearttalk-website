@@ -2204,21 +2204,28 @@ frames:{title:"Popular Frames",banner:"Give your profile a new look",sub:"Choose
 wallpapers:{title:"Featured Wallpapers",banner:"Refresh your HeartTalk space",sub:"Premium backgrounds and themes.",items:[["🌌","Purple Galaxy",49],["🌸","Pink Blossom",49],["🌅","Sunset Love",49],["🌊","Ocean Dream",49],["🌃","City Lights",79],["🌈","Color Burst",49],["🪷","Lotus Calm",79],["💫","Starry Night",99],["💜","Royal Purple",79]]}
 };
 let heartTalkStoreTab="gifts";
+let htGiftSending=false;
 function setHeartTalkStoreTab(tab){if(!heartTalkStoreCatalog[tab])return;heartTalkStoreTab=tab;document.querySelectorAll("[data-store-tab]").forEach(b=>b.classList.toggle("active",b.dataset.storeTab===tab));renderHeartTalkStore();}
-function renderHeartTalkStore(){const d=heartTalkStoreCatalog[heartTalkStoreTab],g=document.getElementById("heartTalkStoreGrid");if(!g)return;document.getElementById("storeSectionTitle").textContent=d.title;document.getElementById("storeBannerTitle").textContent=d.banner;document.getElementById("storeBannerSub").textContent=d.sub;const w=document.getElementById("walletCoins"),c=document.getElementById("coinBalance");document.getElementById("storeCoinBalance").textContent=w?.textContent||c?.textContent||"0";g.innerHTML=d.items.map((x,i)=>'<article class="ht-store-item"><div class="ht-store-art">'+x[0]+'</div><h4>'+x[1]+'</h4><div class="ht-store-price">🪙 '+x[2]+' coins</div><button type="button" onclick="heartTalkStoreAction('+i+')">'+(heartTalkStoreTab==="gifts"?"Send Gift":heartTalkStoreTab==="frames"?"Preview Frame":"Preview Wallpaper")+'</button></article>').join("");}
+function renderHeartTalkStore(){const d=heartTalkStoreCatalog[heartTalkStoreTab],g=document.getElementById("heartTalkStoreGrid");if(!g)return;document.getElementById("storeSectionTitle").textContent=d.title;document.getElementById("storeBannerTitle").textContent=d.banner;document.getElementById("storeBannerSub").textContent=d.sub;const w=document.getElementById("walletCoins"),c=document.getElementById("coinBalance");document.getElementById("storeCoinBalance").textContent=w?.textContent||c?.textContent||"0";g.innerHTML=d.items.map((x,i)=>'<article class="ht-store-item"><div class="ht-store-art">'+x[0]+'</div><h4>'+x[1]+'</h4><div class="ht-store-price">🪙 '+x[2]+' coins</div><button type="button" onclick="heartTalkStoreAction('+i+')" disabled="'+(htGiftSending&&heartTalkStoreTab==="gifts"?"disabled":"")+’">'+(heartTalkStoreTab==="gifts"?"Send Gift":heartTalkStoreTab==="frames"?"Preview Frame":"Preview Wallpaper")+'</button></article>').join("");}
 async function heartTalkStoreAction(i){
  const x=heartTalkStoreCatalog[heartTalkStoreTab]?.items[i];if(!x)return;
  if(heartTalkStoreTab!=="gifts"){notify(x[1]+" frame/wallpaper preview is not activated yet.");return}
+ if(htGiftSending)return;
  if(!currentUser){openAuth();return}
- if(!activeChatUser){notify("First open a member's chat from Connect, then come back to Store to send a gift.");showView("discover");return}
+ const targetId=activeChatUser?.id||activeChatUser;
+ if(!targetId){notify("First open a member's chat from Connect, then come back to Store to send a gift.");showView("discover");return}
  if(!confirm("Send "+x[1]+" for "+x[2]+" coins?"))return;
+ htGiftSending=true;renderHeartTalkStore();
  try{
   const code=({"Chai":"chai","Maggi":"maggi","Congrats!":"congrats","Happy Birthday!":"birthday","I'm So Cool":"cool","Party Mode!":"party","Rose":"rose","Teddy Bear":"teddy","Heart":"heart","Diamond":"diamond","Royal Crown":"crown","Surprise Gift":"surprise"})[x[1]];
-  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser,selected_gift_code:code});
+  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:targetId,selected_gift_code:code});
   if(error)throw error;
   notify("Gift sent! Host earned "+data.host_earned_coins+" coins.");
   await loadWallet();await loadHostEarnings();renderHeartTalkStore();
- }catch(e){notify(e.message||"Gift could not be sent. Run commerce_foundation.sql first.");}
+ }catch(e){
+  console.error("HeartTalk gift send failed:",e);
+  notify(e.message||"Gift could not be sent. Run commerce_foundation.sql first.");
+ }finally{htGiftSending=false;renderHeartTalkStore();}
 }
 async function requestHostPayout(){
  const amount=Number(document.getElementById("hostPayoutAmount")?.value||0),upi=document.getElementById("hostPayoutUpi")?.value.trim(),holder=document.getElementById("hostPayoutHolder")?.value.trim(),status=document.getElementById("hostPayoutStatus"),button=document.getElementById("hostPayoutRequestBtn");
