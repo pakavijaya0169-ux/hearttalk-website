@@ -106,7 +106,9 @@ begin
     return new;
   end if;
 
-  v_minutes := greatest(1, ceil(extract(epoch from (coalesce(new.ended_at,now()) - new.started_at))/60.0)::integer);
+  v_minutes := floor(extract(epoch from (coalesce(new.ended_at,now()) - new.started_at))/60.0)::integer;
+  -- Only completed 60-second blocks are chargeable; partial minutes are free.
+  if v_minutes <= 0 then return new; end if;
   select case when new.call_type='video' then video_coins_per_minute
               else voice_coins_per_minute end
     into v_rate
