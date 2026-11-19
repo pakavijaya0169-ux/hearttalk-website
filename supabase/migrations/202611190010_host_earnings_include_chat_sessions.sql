@@ -11,7 +11,7 @@ begin
       (select count(*) from public.hearttalk_host_earnings where host_id=v_user)
       +(select count(*) from public.hearttalk_chat_session_earnings where host_id=v_user)
  into v_total,v_count;
- select coalesce(jsonb_agg(x),'[]'::jsonb) into v_recent from (
+ select coalesce(jsonb_agg(item),'[]'::jsonb) into v_recent from (
   select item from (
    select jsonb_build_object('gift_event_id',e.gift_event_id,'earned_coins',e.earned_coins,
     'created_at',e.created_at,'gift_title',c.title,'emoji',c.emoji) as item,e.created_at as sort_at
