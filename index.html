@@ -672,7 +672,7 @@ p{color:#77747e}
 <label class="ig-edit-field"><span>Name</span><input id="profileName" maxlength="80" placeholder="Your name"></label>
 <label class="ig-edit-field"><span>Username</span><input id="profileUsername" maxlength="24" placeholder="your_username" autocapitalize="none"></label>
 <label class="ig-edit-field"><span>Age (18+)</span><input id="profileAge" type="number" min="18" max="100" placeholder="18 or above"></label>
-<input id="profileGender" type="hidden" value="female">
+<label class="ig-edit-field"><span>Gender</span><select id="profileGender" onchange="setAvatarGender(this.value)"><option value="female">Female</option><option value="male">Male</option></select></label>
 <label class="ig-edit-field"><span>Country / State</span><input id="profileCountry" maxlength="80" placeholder="India, Telangana"></label>
 <label class="ig-edit-field"><span>Bio</span><textarea id="profileBio" rows="3" maxlength="500" placeholder="Tell people about yourself"></textarea></label>
 <button class="ig-edit-save" onclick="saveProfile()">Save changes</button><p id="profileMessage" class="muted"></p></div></div></section><section class="view" id="forumsView">
