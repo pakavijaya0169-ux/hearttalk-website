@@ -1208,15 +1208,22 @@ async function loadHomeHosts(){
  const box=document.getElementById("homeHostScroller");if(!box)return;
  box.innerHTML='<div class="notice">Loading hosts…</div>';
  if(!currentUser){box.innerHTML='<div class="home-host-empty">Log in to view hosts.</div>';return;}
- const [hostRows,profileRows,presenceRows]=await Promise.all([
-  supabaseClient.from("hosts").select("user_id").eq("host_status","active"),
-  supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,preferred_language,account_status").eq("account_status","active").gte("age",18),
-  supabaseClient.from("hearttalk_presence").select("user_id,last_seen").gte("last_seen",new Date(Date.now()-90000).toISOString())
- ]);
- if(hostRows.error||profileRows.error){box.innerHTML='<div class="home-host-empty">Hosts could not load: '+escapeHtml((hostRows.error||profileRows.error).message)+'</div>';return;}
- const ids=new Set((hostRows.data||[]).map(h=>h.user_id));const online=new Set((presenceRows.data||[]).map(p=>p.user_id));
- const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const code=languageCodes[preferred]||"en";homeHostUsers=(profileRows.data||[]).filter(p=>ids.has(p.id)&&p.id!==currentUser.id).map(p=>({...p,is_host:true,is_online:online.has(p.id)})).sort((a,b)=>Number(b.is_online)-Number(a.is_online)+Number((b.preferred_language||"").toLowerCase()===code)-Number((a.preferred_language||"").toLowerCase()===code));
- renderHomeHosts();
+ try{
+  const queryPromise=Promise.all([
+   supabaseClient.from("hosts").select("user_id").eq("host_status","active"),
+   supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,preferred_language,account_status").eq("account_status","active").gte("age",18),
+   supabaseClient.from("hearttalk_presence").select("user_id,last_seen").gte("last_seen",new Date(Date.now()-90000).toISOString())
+  ]);
+  const timeoutPromise=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Host loading timed out. Please refresh and try again.")),12000));
+  const [hostRows,profileRows,presenceRows]=await Promise.race([queryPromise,timeoutPromise]);
+  if(hostRows.error||profileRows.error){throw new Error((hostRows.error||profileRows.error).message);}
+  const ids=new Set((hostRows.data||[]).map(h=>h.user_id));const online=new Set((presenceRows.data||[]).map(p=>p.user_id));
+  const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const code=languageCodes[preferred]||"en";
+  homeHostUsers=(profileRows.data||[]).filter(p=>ids.has(p.id)&&p.id!==currentUser.id).map(p=>({...p,is_host:true,is_online:online.has(p.id)})).sort((a,b)=>Number(b.is_online)-Number(a.is_online)+Number((b.preferred_language||"").toLowerCase()===code)-Number((a.preferred_language||"").toLowerCase()===code));
+  renderHomeHosts();
+ }catch(err){
+  if(box)box.innerHTML='<div class="home-host-empty">'+escapeHtml(err?.message||"Hosts could not load. Please refresh.")+'</div>';
+ }
 }
 function renderHomeHosts(){
  const box=document.getElementById("homeHostScroller");if(!box)return;
