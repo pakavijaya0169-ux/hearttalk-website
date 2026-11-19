@@ -959,7 +959,7 @@ async function loadProfile(){
  if(session?.user)currentUser=session.user;
  if(!currentUser){const userResult=await supabaseClient.auth.getUser();currentUser=userResult.data?.user||null}
  if(!currentUser)return;
- const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender").eq("id",currentUser.id).maybeSingle();
+ const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender,preferred_language").eq("id",currentUser.id).maybeSingle();
  if(error){console.error("Profile load failed",error);notify("Profile load failed: "+error.message);return}
  const setValue=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value};
  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
@@ -1747,7 +1747,7 @@ supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUs
 </script>
 <script>
 document.addEventListener("DOMContentLoaded",()=>{if(!localStorage.getItem("hearttalk_language")&&currentUser)document.getElementById("languageModal")?.classList.add("show")});
-function chooseHeartTalkLanguage(lang){localStorage.setItem("hearttalk_language",lang);document.getElementById("languageModal")?.classList.remove("show");const label=document.getElementById("profileLanguageLabel");if(label)label.textContent=lang+" selected";notify("Language saved: "+lang)}
+async function chooseHeartTalkLanguage(lang){localStorage.setItem("hearttalk_language",lang);document.getElementById("languageModal")?.classList.remove("show");const label=document.getElementById("profileLanguageLabel");if(label)label.textContent=lang+" selected";if(currentUser){const map={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const {error}=await supabaseClient.from("profiles").update({preferred_language:map[lang]||"en"}).eq("id",currentUser.id);if(error){console.error("Language sync failed",error);notify("Language saved on this device, but account sync failed.");return}}notify("Language saved: "+lang)}
 document.addEventListener("DOMContentLoaded",()=>{const label=document.getElementById("profileLanguageLabel");if(label)label.textContent=(localStorage.getItem("hearttalk_language")||"Choose your language")});
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Service worker",e)))}
