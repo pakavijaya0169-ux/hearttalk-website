@@ -1819,10 +1819,11 @@ function ensureHostSelfiePrompt(){
 }
 async function promptHostSelfieAfterLogin(){
  ensureHostSelfiePrompt();const panel=document.getElementById("hostVerificationApplyPanel");if(!currentUser||!panel)return;
+ panel.style.display="none";
  const {data,error}=await supabaseClient.from("profiles").select("gender,age").eq("id",currentUser.id).maybeSingle();
  if(error||!data||String(data.gender||"").toLowerCase()!=="female"||Number(data.age)<18)return;
  await loadHostVerificationStatus();const status=document.getElementById("hostVerificationStatus");
- if(status&&(/verified and active|Application and selfie submitted|Application rejected/i).test(status.textContent))return;
+ if(status&&(/verified and active|Application and selfie submitted|Application rejected/i).test(status.textContent)){panel.style.display="none";return;}
  panel.style.display="flex";
 }
 
