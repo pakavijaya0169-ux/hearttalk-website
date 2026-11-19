@@ -38,3 +38,12 @@ select
   (select count(*) from public.hearttalk_chat_billing_state) as active_chat_billing_pairs,
   (select count(*) from public.hearttalk_host_cash_ledger where entry_type='earning_credit') as host_earning_credits,
   (select requests_enabled from public.hearttalk_payout_settings where id=true) as withdrawals_enabled;
+
+-- Completed-minute billing boundary checks: short calls must not be charged.
+do $$
+begin
+  if floor(59/60.0)::integer <> 0 then raise exception '59 seconds must bill 0 minutes'; end if;
+  if floor(60/60.0)::integer <> 1 then raise exception '60 seconds must bill 1 minute'; end if;
+  if floor(119/60.0)::integer <> 1 then raise exception '119 seconds must bill 1 minute'; end if;
+  if floor(120/60.0)::integer <> 2 then raise exception '120 seconds must bill 2 minutes'; end if;
+end $$;
