@@ -1737,8 +1737,8 @@ async function claimHeartTalkLoginBonus(){
  try{
   const {data,error}=await supabaseClient.rpc("hearttalk_claim_login_bonus");
   if(error)throw error;
-  const granted=Number(data||0);
-  if(granted===10){notify("🎁 Welcome! 10 login bonus coins added.");}
+  const granted=Number(data?.bonus_coins||0);
+  if(data?.credited===true && granted===10){notify("🎁 Welcome! 10 login bonus coins added.");}
   if(typeof loadWallet==="function")await loadWallet();
  }catch(e){console.error("HeartTalk login bonus claim failed:",e);notify("Login bonus could not be added yet. Please try again later.");}
 }
