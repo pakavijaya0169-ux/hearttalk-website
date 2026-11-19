@@ -1535,19 +1535,19 @@ async function startOutgoingCall(type){
   callStatus("Preparing "+type+" call...");
   const {data,error}=await supabaseClient.rpc("hearttalk_start_call",{target_user_id:target.id,requested_call_type:type});
   if(error)throw error;
-  activeCallId=data.call_id;callRingDeadline=Date.now()+50000;activeCallRole="caller";lastSignalId=0;pendingIce=[];
+  activeCallId=data.call_id;callRingDeadline=Date.now()+60000;activeCallRole="caller";lastSignalId=0;pendingIce=[];
   await createPeer();await getLocalMedia(type);
   const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
   await sendCallSignal("offer",peerConnection.localDescription.toJSON());
   document.getElementById("callTargetLabel").textContent="Calling "+target.display_name+" ("+type+")";if(remoteName)remoteName.textContent=target.display_name||"HeartTalk member";
-  showActiveCallUI(type,target.display_name||"HeartTalk member",false);callStatus("Calling "+target.display_name+"… waiting up to 50 seconds.");
+  showActiveCallUI(type,target.display_name||"HeartTalk member",false);callStatus("Calling "+target.display_name+"… waiting up to 60 seconds.");
   signalPollTimer=setInterval(pollCallSignals,1200);
   callPollTimer=setInterval(checkCallStatus,700);
  }catch(e){console.error("HeartTalk outgoing call failed",e);const detail=(e?.message||e?.details||e?.hint||String(e)).toString().slice(0,220);callStatus("Call failed: "+detail);notify(/busy|already.*call|another call/i.test(detail)?"User is on another call.": "Call failed: "+detail);await cleanupCall(false)}finally{callStarting=false;document.querySelectorAll('[onclick*="startOutgoingCall"]').forEach(b=>b.disabled=!!activeCallId)}
 }
 async function checkCallStatus(){
  if(!activeCallId)return;
- if(activeCallRole==="caller"&&callRingDeadline&&Date.now()>=callRingDeadline){await supabaseClient.rpc("hearttalk_expire_call",{target_call_id:activeCallId});callStatus("No answer after 50 seconds.");notify("No answer. Call disconnected.");await cleanupCall(false);return}
+ if(activeCallRole==="caller"&&callRingDeadline&&Date.now()>=callRingDeadline){await supabaseClient.rpc("hearttalk_expire_call",{target_call_id:activeCallId});callStatus("No answer after 60 seconds.");notify("No answer. Call disconnected.");await cleanupCall(false);return}
  const {data,error}=await supabaseClient.from("call_sessions").select("status,created_at").eq("id",activeCallId).maybeSingle();
  if(error||!data)return;
  if(data.status==="accepted"){callRingDeadline=null;callStatus("Connected. You can talk now.");setActiveCallConnected();}
