@@ -805,7 +805,7 @@ function showView(name){
  document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
  const coinButton=document.getElementById("homeCoinButton");if(coinButton)coinButton.style.display=name==="home"?"inline-flex":"none";
  window.scrollTo({top:0,behavior:"smooth"});
- if(name==="store")loadHeartTalkStore();if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();}if(name==="wallet"){loadWallet();loadHostEarnings();loadHostVerificationStatus();loadOfferBanners();}if(name==="home"){loadOfferBanners();loadDiscover();}if(name==="admin")loadAdminDashboard();
+ if(name==="store")loadHeartTalkStore();if(name==="discover")loadDiscover();if(name==="chat")loadConversations();if(name==="profile")loadProfile();if(name==="forums"){loadForumFeed();loadForumGroups();}if(name==="wallet"){loadWallet();loadHostEarnings();loadHostVerificationStatus();loadOfferBanners();}if(name==="home"){loadOfferBanners();loadHomeHosts();}if(name==="admin")loadAdminDashboard();
  if(!currentUser && ["discover","chat","profile"].includes(name)){notify("Please log in to use this feature.");openAuth();}
 }
 const HEARTTALK_UPI_ID="pakavijaya0169-4@oksbi";
@@ -1202,9 +1202,24 @@ function setDiscoverRoleFilter(filter){
  document.getElementById("discoverMembersTab")?.classList.toggle("active",discoverRoleFilter==="members");
  renderDiscover();
 }
+let homeHostUsers=[];
+async function loadHomeHosts(){
+ const box=document.getElementById("homeHostScroller");if(!box)return;
+ box.innerHTML='<div class="notice">Loading hosts…</div>';
+ if(!currentUser){box.innerHTML='<div class="home-host-empty">Log in to view hosts.</div>';return;}
+ const [hostRows,profileRows,presenceRows]=await Promise.all([
+  supabaseClient.from("hosts").select("user_id").eq("host_status","active"),
+  supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,preferred_language,account_status").eq("account_status","active").gte("age",18),
+  supabaseClient.from("hearttalk_presence").select("user_id,last_seen").gte("last_seen",new Date(Date.now()-90000).toISOString())
+ ]);
+ if(hostRows.error||profileRows.error){box.innerHTML='<div class="home-host-empty">Hosts could not load: '+escapeHtml((hostRows.error||profileRows.error).message)+'</div>';return;}
+ const ids=new Set((hostRows.data||[]).map(h=>h.user_id));const online=new Set((presenceRows.data||[]).map(p=>p.user_id));
+ const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const code=languageCodes[preferred]||"en";homeHostUsers=(profileRows.data||[]).filter(p=>ids.has(p.id)&&p.id!==currentUser.id).map(p=>({...p,is_host:true,is_online:online.has(p.id)})).sort((a,b)=>Number(b.is_online)-Number(a.is_online)+Number((b.preferred_language||"").toLowerCase()===code)-Number((a.preferred_language||"").toLowerCase()===code));
+ renderHomeHosts();
+}
 function renderHomeHosts(){
  const box=document.getElementById("homeHostScroller");if(!box)return;
- const hosts=discoverUsers.filter(u=>u.is_host).sort((a,b)=>Number(b.is_online)-Number(a.is_online));
+ const hosts=homeHostUsers.sort((a,b)=>Number(b.is_online)-Number(a.is_online));
  if(!hosts.length){box.innerHTML='<div class="home-host-empty">No approved hosts available yet.</div>';return;}
  box.innerHTML=hosts.map(u=>{
   const avatar=u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":"💗");
