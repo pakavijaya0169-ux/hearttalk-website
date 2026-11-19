@@ -1732,6 +1732,16 @@ async function setHeartTalkReportStatus(reportId,status){
  notify("Report status updated: "+status);loadAdminDashboard();
 }
 
+async function claimHeartTalkLoginBonus(){
+ if(!currentUser)return;
+ try{
+  const {data,error}=await supabaseClient.rpc("hearttalk_claim_login_bonus");
+  if(error)throw error;
+  const granted=Number(data||0);
+  if(granted===10){notify("🎁 Welcome! 10 login bonus coins added.");}
+  if(typeof loadWallet==="function")await loadWallet();
+ }catch(e){console.error("HeartTalk login bonus claim failed:",e);notify("Login bonus could not be added yet. Please try again later.");}
+}
 supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;refreshHeartTalkAdminAccess();if(currentUser){if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling();setTimeout(processCashfreeReturn,700);setTimeout(syncHeartTalkPushAfterLogin,700)}else{document.getElementById("heartTalkPushPrompt")?.remove();if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");startIncomingCallPolling();refreshHeartTalkAdminAccess();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover();await processCashfreeReturn();setTimeout(syncHeartTalkPushAfterLogin,900)}else{authRequiredAtStartup=true;document.body.classList.add("auth-required");document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
 </script>
