@@ -1170,8 +1170,8 @@ async function saveProfile(){
  notify("Profile saved successfully. 💗");await loadProfile();await loadDiscover();showView("profile");
 }
 async function loadDiscover(){
- const grid=document.getElementById("discoverGrid");if(!currentUser){grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';return}
- grid.innerHTML='<div class="notice">Loading community members...</div>';
+ const grid=document.getElementById("discoverGrid");if(!currentUser){if(grid)grid.innerHTML='<div class="notice">Log in to discover real HeartTalk members.</div>';discoverUsers=[];renderHomeHosts();return}
+ if(grid)grid.innerHTML='<div class="notice">Loading community members...</div>';
  let data=[],error=null,offset=0;
  while(true){
   const page=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status,preferred_language").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).range(offset,offset+499);
@@ -1180,14 +1180,14 @@ async function loadDiscover(){
   if(batch.length<500)break;
   offset+=500;
  }
- if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
+ if(error){if(grid)grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';discoverUsers=[];renderHomeHosts();return}
  const [mine,theirs,hostRows,presenceRows]=await Promise.all([
   supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),
   supabase.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id),
   supabaseClient.from("hosts").select("user_id").eq("host_status","active"),
   supabaseClient.from("hearttalk_presence").select("user_id,last_seen").gte("last_seen",new Date(Date.now()-90000).toISOString())
  ]);
- if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
+ if(mine.error||theirs.error){if(grid)grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';discoverUsers=[];renderHomeHosts();return}
  const hidden=new Set([...(mine.data||[]).map(x=>x.blocked_user_id),...(theirs.data||[]).map(x=>x.blocker_id)]);
  const hostIds=new Set(hostRows.error?[]:(hostRows.data||[]).map(x=>x.user_id));
  const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const preferredCode=languageCodes[preferred]||"en";const onlineIds=new Set(presenceRows.error?[]:(presenceRows.data||[]).map(x=>x.user_id));discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id),is_online:onlineIds.has(x.id)})).sort((a,b)=>(Number(b.is_host)-Number(a.is_host))+(Number(b.is_online)-Number(a.is_online))+(Number((b.preferred_language||"").toLowerCase()===preferredCode)-Number((a.preferred_language||"").toLowerCase()===preferredCode)));
