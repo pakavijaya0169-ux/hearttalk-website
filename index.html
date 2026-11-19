@@ -1177,16 +1177,17 @@ async function loadDiscover(){
   offset+=500;
  }
  if(error){grid.innerHTML='<div class="notice">Could not load profiles: '+escapeHtml(error.message)+'</div>';return}
- const [mine,theirs,hostRows]=await Promise.all([
+ const [mine,theirs,hostRows,presenceRows]=await Promise.all([
   supabaseClient.from("blocked_users").select("blocked_user_id").eq("blocker_id",currentUser.id),
-  supabaseClient.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id),
-  supabaseClient.from("hosts").select("user_id").eq("host_status","active")
+  supabase.from("blocked_users").select("blocker_id").eq("blocked_user_id",currentUser.id),
+  supabaseClient.from("hosts").select("user_id").eq("host_status","active"),
+  supabaseClient.from("hearttalk_presence").select("user_id,last_seen").gte("last_seen",new Date(Date.now()-90000).toISOString())
  ]);
  if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
  const hidden=new Set([...(mine.data||[]).map(x=>x.blocked_user_id),...(theirs.data||[]).map(x=>x.blocker_id)]);
  const hostIds=new Set(hostRows.error?[]:(hostRows.data||[]).map(x=>x.user_id));
- const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const preferredCode=languageCodes[preferred]||"en";discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id)})).sort((a,b)=>(Number(b.is_host)-Number(a.is_host))+(Number((b.preferred_language||"").toLowerCase()===preferredCode)-Number((a.preferred_language||"").toLowerCase()===preferredCode)));
- const count=document.getElementById("discoverActiveCount");if(count)count.textContent=discoverUsers.length.toLocaleString("en-IN")+" active member account(s) available";
+ const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const preferredCode=languageCodes[preferred]||"en";const onlineIds=new Set(presenceRows.error?[]:(presenceRows.data||[]).map(x=>x.user_id));discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id),is_online:onlineIds.has(x.id)})).sort((a,b)=>(Number(b.is_host)-Number(a.is_host))+(Number(b.is_online)-Number(a.is_online))+(Number((b.preferred_language||"").toLowerCase()===preferredCode)-Number((a.preferred_language||"").toLowerCase()===preferredCode)));
+ const count=document.getElementById("discoverActiveCount");if(count)count.textContent=discoverUsers.filter(x=>x.is_online).length.toLocaleString("en-IN")+" online · "+discoverUsers.length.toLocaleString("en-IN")+" members";
  renderDiscover()
 }
 let discoverRoleFilter="all";
@@ -1742,7 +1743,7 @@ async function claimHeartTalkLoginBonus(){
   if(typeof loadWallet==="function")await loadWallet();
  }catch(e){console.error("HeartTalk login bonus claim failed:",e);notify("Login bonus could not be added yet. Please try again later.");}
 }
-supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;refreshHeartTalkAdminAccess();if(currentUser){if(_event==='SIGNED_IN')setTimeout(claimHeartTalkLoginBonus,500);if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling();setTimeout(processCashfreeReturn,700);setTimeout(syncHeartTalkPushAfterLogin,700)}else{document.getElementById("heartTalkPushPrompt")?.remove();if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
+let heartTalkPresenceTimer=null;async function heartTalkPresenceHeartbeat(){if(!currentUser)return;try{await supabaseClient.from("hearttalk_presence").upsert({user_id:currentUser.id,last_seen:new Date().toISOString()},{onConflict:"user_id"});}catch(e){console.warn("Presence heartbeat:",e);}}function startHeartTalkPresence(){if(heartTalkPresenceTimer)clearInterval(heartTalkPresenceTimer);heartTalkPresenceHeartbeat();heartTalkPresenceTimer=setInterval(heartTalkPresenceHeartbeat,45000);}function stopHeartTalkPresence(){if(heartTalkPresenceTimer){clearInterval(heartTalkPresenceTimer);heartTalkPresenceTimer=null;}}window.addEventListener("beforeunload",stopHeartTalkPresence);supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser)startHeartTalkPresence();else stopHeartTalkPresence();refreshHeartTalkAdminAccess();if(currentUser){if(_event==='SIGNED_IN')setTimeout(claimHeartTalkLoginBonus,500);if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling();setTimeout(processCashfreeReturn,700);setTimeout(syncHeartTalkPushAfterLogin,700)}else{document.getElementById("heartTalkPushPrompt")?.remove();if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;authRequiredAtStartup=false;document.body.classList.remove("auth-required");startIncomingCallPolling();refreshHeartTalkAdminAccess();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;await loadProfile();await loadDiscover();await processCashfreeReturn();setTimeout(syncHeartTalkPushAfterLogin,900)}else{authRequiredAtStartup=true;document.body.classList.add("auth-required");document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
 </script>
 <script>
