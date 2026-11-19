@@ -2219,7 +2219,7 @@ async function heartTalkStoreAction(i){
  htGiftSending=true;renderHeartTalkStore();
  try{
   const code=({"Chai":"chai","Maggi":"maggi","Congrats!":"congrats","Happy Birthday!":"birthday","I'm So Cool":"cool","Party Mode!":"party","Rose":"rose","Teddy Bear":"teddy","Heart":"heart","Diamond":"diamond","Royal Crown":"crown","Surprise Gift":"surprise"})[x[1]];
-  if(!htGiftRequestId)htGiftRequestId=(crypto?.randomUUID?.()||("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,s=>{const r=Math.random()*16|0;return(s==="x"?r:(r&3|8)).toString(16)})));\n  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:targetId,selected_gift_code:code,p_request_id:htGiftRequestId});
+  if(!htGiftRequestId)htGiftRequestId=(globalThis.crypto?.randomUUID?.()||("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,s=>{const r=Math.random()*16|0;return(s==="x"?r:(r&3|8)).toString(16)})));\n  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:targetId,selected_gift_code:code,p_request_id:htGiftRequestId});
   if(error)throw error;
   notify("Gift sent! Host earned "+data.host_earned_coins+" coins.");
   await loadWallet();await loadHostEarnings();renderHeartTalkStore();
