@@ -1170,7 +1170,7 @@ async function loadDiscover(){
  grid.innerHTML='<div class="notice">Loading community members...</div>';
  let data=[],error=null,offset=0;
  while(true){
-  const page=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).range(offset,offset+499);
+  const page=await supabaseClient.from("profiles").select("id,display_name,username,age,country,bio,avatar_url,gender,account_status,preferred_language").eq("account_status","active").neq("id",currentUser.id).not("display_name","is",null).order("created_at",{ascending:false}).range(offset,offset+499);
   if(page.error){error=page.error;break;}
   const batch=page.data||[];data=data.concat(batch);
   if(batch.length<500)break;
@@ -1185,7 +1185,7 @@ async function loadDiscover(){
  if(mine.error||theirs.error){grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';return}
  const hidden=new Set([...(mine.data||[]).map(x=>x.blocked_user_id),...(theirs.data||[]).map(x=>x.blocker_id)]);
  const hostIds=new Set(hostRows.error?[]:(hostRows.data||[]).map(x=>x.user_id));
- discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id)}));
+ const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const preferredCode=languageCodes[preferred]||"en";discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id)})).sort((a,b)=>(Number(b.is_host)-Number(a.is_host))+(Number((b.preferred_language||"").toLowerCase()===preferredCode)-Number((a.preferred_language||"").toLowerCase()===preferredCode)));
  const count=document.getElementById("discoverActiveCount");if(count)count.textContent=discoverUsers.length.toLocaleString("en-IN")+" active member account(s) available";
  renderDiscover()
 }
