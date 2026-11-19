@@ -801,6 +801,7 @@ function openOfferStore(event){if(event){event.preventDefault();event.stopPropag
 function notify(s){const t=document.getElementById("toast");t.textContent=s;t.style.display="block";clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display="none",3200)}
 function showView(name){
  if(name==="admin"){notify("Admin dashboard is disabled.");return;}
+ if(htChatBillingSessionId&&name!=="chat")endHeartTalkChatBilling();
  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
  const target=document.getElementById(name+"View");if(target)target.classList.add("active");
  document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
@@ -1328,7 +1329,7 @@ async function callHeartTalkMember(id){
 async function startChat(userId){
  const user=discoverUsers.find(x=>x.id===userId);if(!user)return;
  try{if(await isHeartTalkBlocked(userId)){notify("You cannot message this member because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
- activeChatUser=user;showView("chat");await loadMessages();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
+ activeChatUser=user;showView("chat");await loadMessages();await startHeartTalkChatBilling();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadConversations(){
  const list=document.getElementById("conversationList");if(!currentUser){list.textContent="Login to view messages.";return}
@@ -1343,7 +1344,7 @@ async function openConversation(id){
  let p=discoverUsers.find(x=>x.id===id);
  if(!p){const r=await supabaseClient.from("profiles").select("id,display_name,age,country,bio").eq("id",id).maybeSingle();p=r.data}
  if(!p){notify("This profile is unavailable.");return}
- activeChatUser=p;await loadMessages();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
+ activeChatUser=p;await loadMessages();await startHeartTalkChatBilling();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadMessages(){
  if(!currentUser||!activeChatUser)return;
@@ -1461,7 +1462,7 @@ function containsIndianMobileNumber(value){
 }
 let htChatBillingSessionId=null,htChatBillingHostId=null,htChatBillingHeartbeatTimer=null,htChatBillingBusy=false;
 function isHeartTalkChatBillingActive(){return !!htChatBillingSessionId&&htChatBillingHostId===activeChatUser?.id}
-function updateHeartTalkChatBillingUI(){const start=document.getElementById("htChatBillingStart"),end=document.getElementById("htChatBillingEnd");if(start)start.style.display=isHeartTalkChatBillingActive()?"none":"inline-flex";if(end)end.style.display=isHeartTalkChatBillingActive()?"inline-flex":"none"}
+function updateHeartTalkChatBillingUI(){const start=document.getElementById("htChatBillingStart"),end=document.getElementById("htChatBillingEnd");if(start)start.style.display="none";if(end)end.style.display="none"}
 function stopHeartTalkChatBillingHeartbeat(){if(htChatBillingHeartbeatTimer){clearInterval(htChatBillingHeartbeatTimer);htChatBillingHeartbeatTimer=null}}
 async function heartTalkChatBillingHeartbeat(){if(!isHeartTalkChatBillingActive()||!currentUser)return;const {error}=await supabaseClient.rpc("hearttalk_chat_billing_heartbeat",{p_session_id:htChatBillingSessionId});if(error){console.warn("Chat billing heartbeat failed",error);notify("Billing heartbeat failed. End billing and restart before sending more.")}}
 async function startHeartTalkChatBilling(){if(!currentUser||!activeChatUser){notify("Open a conversation first.");return}if(htChatBillingBusy)return;if(htChatBillingSessionId&&htChatBillingHostId!==activeChatUser.id){notify("End current billing session first.");return}htChatBillingBusy=true;try{const {data,error}=await supabaseClient.rpc("hearttalk_start_chat_billing",{p_host_id:activeChatUser.id});if(error)throw error;htChatBillingSessionId=data?.session_id;htChatBillingHostId=activeChatUser.id;if(!htChatBillingSessionId)throw new Error("Billing session ID missing.");updateHeartTalkChatBillingUI();await heartTalkChatBillingHeartbeat();stopHeartTalkChatBillingHeartbeat();htChatBillingHeartbeatTimer=setInterval(heartTalkChatBillingHeartbeat,15000);notify("Billing started. Chat messages and media are included.")}catch(e){console.error("Chat billing start failed",e);notify(e.message||"Could not start billing")}finally{htChatBillingBusy=false}}
