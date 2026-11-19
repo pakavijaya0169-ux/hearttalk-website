@@ -3,6 +3,12 @@
 -- hearttalk_claim_login_bonus() after successful sign-in.
 begin;
 
+-- Allow the new ledger entry type (the base schema only permits purchase/spend/refund/admin_adjustment).
+alter table public.wallet_ledger drop constraint if exists wallet_ledger_entry_type_check;
+alter table public.wallet_ledger
+  add constraint wallet_ledger_entry_type_check
+  check (entry_type in ('purchase','spend','refund','admin_adjustment','login_bonus'));
+
 create unique index if not exists wallet_ledger_one_login_bonus_per_user
   on public.wallet_ledger(user_id)
   where entry_type = 'login_bonus';
