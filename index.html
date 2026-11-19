@@ -1221,7 +1221,7 @@ async function loadHomeHosts(){
 function renderHomeHosts(){
  const box=document.getElementById("homeHostScroller");if(!box)return;
  const hosts=homeHostUsers.sort((a,b)=>Number(b.is_online)-Number(a.is_online));
- if(!hosts.length){box.innerHTML='<div class="home-host-empty">No approved hosts available yet.</div>';return;}
+ if(!hosts.length){box.innerHTML='<div class="home-host-empty">No hosts online right now.</div>';return;}
  box.innerHTML=hosts.map(u=>{
   const avatar=u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":"💗");
   return '<article class="home-host-card"><div class="home-host-avatar">'+avatar+'</div><div class="home-host-name">'+escapeHtml(u.display_name||"Host")+'</div><div class="home-host-meta">'+(u.is_online?'<span class="home-host-online">● ONLINE</span>':'Offline')+' · '+escapeHtml(u.preferred_language||"")+'</div><div class="home-host-actions"><button onclick="startChat(\''+u.id+'\')">💬 Chat</button><button onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button></div></article>';
