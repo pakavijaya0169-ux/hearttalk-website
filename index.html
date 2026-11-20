@@ -1713,7 +1713,7 @@ function toggleCallCamera(){if(!localCallStream)return;cameraDisabled=!cameraDis
 function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function startIncomingCallPolling(){if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);if(currentUser)incomingCallPollTimer=setInterval(pollIncomingCalls,2000)}
 
-async function refreshHeartTalkAdminAccess(){
+async async function refreshHeartTalkAdminAccess(){
  const btn=document.getElementById("adminNavBtn");if(!btn)return;
  if(!currentUser){btn.style.display="none";return}
  const {data,error}=await supabaseClient.from("hearttalk_user_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
