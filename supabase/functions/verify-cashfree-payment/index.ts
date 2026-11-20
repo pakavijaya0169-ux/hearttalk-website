@@ -19,7 +19,7 @@ Deno.serve(async(req)=>{
 
     if(!jwt) return reply({error:"Please sign in first."},401);
     if(!url||!anon||!service||!clientId||!clientSecret||env!=="sandbox")
-      return reply({error:"Cashfree sandbox verification is not configured."},503);
+      return reply({error:"Cashfree verification is not configured."},503);
 
     const authClient=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:auth,error:authError}=await authClient.auth.getUser(jwt);
@@ -42,12 +42,12 @@ Deno.serve(async(req)=>{
       "x-client-id":clientId,
       "x-client-secret":clientSecret
     };
-    const base="https://sandbox.cashfree.com/pg";
+    const base=env==="production"?"https://api.cashfree.com/pg":"https://sandbox.cashfree.com/pg";
     const orderResponse=await fetch(base+"/orders/"+encodeURIComponent(orderId),{headers});
     const orderData=await orderResponse.json().catch(()=>({}));
     if(!orderResponse.ok){
       console.error("Cashfree order status fetch failed",orderResponse.status,orderData);
-      return reply({error:"Could not fetch Cashfree test order status."},502);
+      return reply({error:"Could not fetch Cashfree order status."},502);
     }
     if(orderData.order_status!=="PAID"){
       return reply({status:String(orderData.order_status||"PENDING").toLowerCase(),message:"Payment is not confirmed yet. No coins were credited."},200);
