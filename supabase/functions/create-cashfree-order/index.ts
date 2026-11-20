@@ -1,4 +1,4 @@
-// HeartTalk: create a Cashfree SANDBOX order using server-side package pricing.
+// HeartTalk: create a Cashfree order (sandbox or production) using server-side package pricing.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const cors = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, apikey, x-client-info, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
@@ -18,7 +18,7 @@ Deno.serve(async(req)=>{
     const env=(Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
 
     if(!jwt) return reply({error:"Please sign in first."},401);
-    if(!url||!anon||!service||!clientId||!clientSecret) return reply({error:"Cashfree TEST credentials are not configured in Supabase Edge Function Secrets."},503);
+    if(!url||!anon||!service||!clientId||!clientSecret) return reply({error:"Cashfree credentials are not configured in Supabase Edge Function Secrets."},503);
     if(env!=="sandbox" && env!=="production") return reply({error:"CASHFREE_ENV must be sandbox or production."},503);
 
     const authClient=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -69,8 +69,8 @@ Deno.serve(async(req)=>{
     });
     const result=await response.json().catch(()=>({}));
     if(!response.ok||!result.payment_session_id||result.order_id!==orderId){
-      console.error("Cashfree sandbox order creation failed",response.status,result);
-      return reply({error:"Cashfree could not create the test order. Check sandbox credentials and Cashfree account settings."},502);
+      console.error("Cashfree order creation failed",response.status,result);
+      return reply({error:"Cashfree could not create the payment order. Check credentials, environment, and account settings."},502);
     }
 
     const {error:insertError}=await admin.from("payment_orders").insert({
@@ -97,6 +97,6 @@ Deno.serve(async(req)=>{
     });
   } catch(error) {
     console.error("create-cashfree-order:",error);
-    return reply({error:"Unable to start Cashfree test payment."},500);
+    return reply({error:"Unable to start Cashfree payment."},500);
   }
 });
