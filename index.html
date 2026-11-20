@@ -1193,7 +1193,7 @@ async function loadDiscover(){
  if(mine.error||theirs.error){if(grid)grid.innerHTML='<div class="notice">Safety tools need setup. Run supabase/safety.sql in Supabase SQL Editor.</div>';discoverUsers=[];renderHomeHosts();return}
  const hidden=new Set([...(mine.data||[]).map(x=>x.blocked_user_id),...(theirs.data||[]).map(x=>x.blocker_id)]);
  const hostIds=new Set(hostRows.error?[]:(hostRows.data||[]).map(x=>x.user_id));
- const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const preferredCode=languageCodes[preferred]||"en";const onlineIds=new Set(presenceRows.error?[]:(presenceRows.data||[]).map(x=>x.user_id));discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id),is_online:onlineIds.has(x.id)})).sort((a,b)=>(Number(b.is_host)-Number(a.is_host))+(Number(b.is_online)-Number(a.is_online))+(Number((b.preferred_language||"").toLowerCase()===preferredCode)-Number((a.preferred_language||"").toLowerCase()===preferredCode)));
+ const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const preferredCode=languageCodes[preferred]||"en";const onlineIds=new Set(presenceRows.error?[]:(presenceRows.data||[]).map(x=>x.user_id));discoverUsers=(data||[]).filter(x=>x.display_name&&x.age>=18&&!hidden.has(x.id)).map(x=>({...x,is_host:hostIds.has(x.id),is_online:onlineIds.has(x.id)})).sort((a,b)=>{const hostRank=Number(b.is_host)-Number(a.is_host);if(hostRank)return hostRank;const onlineRank=Number(b.is_online)-Number(a.is_online);if(onlineRank)return onlineRank;return heartTalkLanguageRank(b.preferred_language,preferred)-heartTalkLanguageRank(a.preferred_language,preferred);});
  const count=document.getElementById("discoverActiveCount");if(count)count.textContent=discoverUsers.filter(x=>x.is_online).length.toLocaleString("en-IN")+" online · "+discoverUsers.length.toLocaleString("en-IN")+" members";
  renderDiscover();renderHomeHosts();
 }
@@ -1205,6 +1205,7 @@ function setDiscoverRoleFilter(filter){
  document.getElementById("discoverMembersTab")?.classList.toggle("active",discoverRoleFilter==="members");
  renderDiscover();
 }
+function heartTalkLanguageRank(profileLanguage,preferredLanguage){const map={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const code=map[preferredLanguage]||"en";return String(profileLanguage||"").toLowerCase()===code?1:0;}
 let homeHostUsers=[];
 async function loadHomeHosts(){
  const box=document.getElementById("homeHostScroller");if(!box)return;
@@ -1221,7 +1222,7 @@ async function loadHomeHosts(){
   if(hostRows.error||profileRows.error){throw new Error((hostRows.error||profileRows.error).message);}
   const ids=new Set((hostRows.data||[]).map(h=>h.user_id));const online=new Set((presenceRows.data||[]).map(p=>p.user_id));
   const preferred=localStorage.getItem("hearttalk_language")||"English";const languageCodes={Telugu:"te",Hindi:"hi",Tamil:"ta",English:"en",Kannada:"kn",Malayalam:"ml"};const code=languageCodes[preferred]||"en";
-  homeHostUsers=(profileRows.data||[]).filter(p=>ids.has(p.id)&&p.id!==currentUser.id).map(p=>({...p,is_host:true,is_online:online.has(p.id)})).sort((a,b)=>Number(b.is_online)-Number(a.is_online)+Number((b.preferred_language||"").toLowerCase()===code)-Number((a.preferred_language||"").toLowerCase()===code));
+  homeHostUsers=(profileRows.data||[]).filter(p=>ids.has(p.id)&&p.id!==currentUser.id).map(p=>({...p,is_host:true,is_online:online.has(p.id)})).sort((a,b)=>{const onlineRank=Number(b.is_online)-Number(a.is_online);if(onlineRank)return onlineRank;return heartTalkLanguageRank(b.preferred_language,preferred)-heartTalkLanguageRank(a.preferred_language,preferred);});
   renderHomeHosts();
  }catch(err){
   if(box)box.innerHTML='<div class="home-host-empty">'+escapeHtml(err?.message||"Hosts could not load. Please refresh.")+'</div>';
@@ -1229,7 +1230,7 @@ async function loadHomeHosts(){
 }
 function renderHomeHosts(){
  const box=document.getElementById("homeHostScroller");if(!box)return;
- const hosts=homeHostUsers.sort((a,b)=>Number(b.is_online)-Number(a.is_online));
+ const preferred=localStorage.getItem("hearttalk_language")||"English";const hosts=homeHostUsers.sort((a,b)=>{const onlineRank=Number(b.is_online)-Number(a.is_online);if(onlineRank)return onlineRank;return heartTalkLanguageRank(b.preferred_language,preferred)-heartTalkLanguageRank(a.preferred_language,preferred);});
  if(!hosts.length){box.innerHTML='<div class="home-host-empty">No hosts online right now.</div>';return;}
  box.innerHTML=hosts.map(u=>{
   const avatar=u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":"💗");
