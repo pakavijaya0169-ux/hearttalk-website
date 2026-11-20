@@ -18,11 +18,11 @@ Deno.serve(async(req)=>{
     const raw=await req.text();
     const signature=req.headers.get("x-webhook-signature")||"";
     const timestamp=req.headers.get("x-webhook-timestamp")||"";
-    const secret=Deno.env.get("CASHFREE_WEBHOOK_SECRET")||"";
+    const secret=Deno.env.get("CASHFREE_CLIENT_SECRET")||"";
     const url=Deno.env.get("SUPABASE_URL"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const clientId=Deno.env.get("CASHFREE_CLIENT_ID"),clientSecret=Deno.env.get("CASHFREE_CLIENT_SECRET");
     const env=(Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
-    if(!secret||!url||!service||!clientId||!clientSecret||!(env==="sandbox"||env==="production"))return reply({error:"Webhook secrets or environment are not configured"},503);
+    if(!url||!service||!clientId||!clientSecret||!(env==="sandbox"||env==="production"))return reply({error:"Cashfree API secrets or environment are not configured"},503);
     if(!timestamp||!signature||!(await verifySignature(raw,timestamp,signature,secret)))return reply({error:"Invalid Cashfree webhook signature"},401);
     const event=JSON.parse(raw);
     const orderId=String(event?.data?.order?.order_id||event?.data?.order_id||event?.order_id||"");
