@@ -716,7 +716,7 @@ p{color:#77747e}
  </div>
 </section>
 <section class="view" id="recentsView"><div class="section-kicker">Your activity</div><h2>Recent calls</h2><div class="panel"><div style="font-size:38px;text-align:center">📞</div><h3 style="text-align:center">Your call history</h3><p style="text-align:center">Incoming, outgoing and missed calls will appear here.</p><div class="toolbar" style="justify-content:center"><button class="secondary" onclick="showView('calls')">Go to calls</button></div></div></section>
-<section class="view" id="walletView"><div id="walletOfferBanners" class="ht-offer-banner"></div><div class="section-kicker">HeartTalk rewards</div><h2>My wallet 🪙</h2><div class="panel" style="background:linear-gradient(120deg,#fff0d1,#ffe5f0)"><div class="muted">Available coins</div><div style="font-size:42px;font-weight:850;color:#33202b">🪙 <span id="walletCoins">0</span></div><p id="walletStatus">Log in to view your wallet.</p></div><div class="grid"><div class="panel"><h3>🎁 Daily reward</h3><p>Daily rewards are not enabled yet.</p><button class="secondary" disabled>Coming soon</button></div><div class="panel"><h3>💳 Transactions</h3><div id="walletTransactions"><p class="muted">Your transactions will appear here.</p></div></div></div></section>
+<section class="view" id="walletView"><div id="walletOfferBanners" class="ht-offer-banner"></div><div class="section-kicker">HeartTalk rewards</div><h2>My wallet 🪙</h2><div class="panel" style="background:linear-gradient(120deg,#fff0d1,#ffe5f0)"><div class="muted">Available coins</div><div style="font-size:42px;font-weight:850;color:#33202b">🪙 <span id="walletCoins">0</span></div><p id="walletStatus">Log in to view your wallet.</p></div><div class="panel"><h3>🪙 Recharge Coins</h3><p class="muted">Choose a package. Prices and coins are loaded from the active server catalogue.</p><div id="hearttalkCoinPackages" class="grid"><p class="muted">Loading coin packages…</p></div></div><div class="grid"><div class="panel"><h3>🎁 Daily reward</h3><p>Daily rewards are not enabled yet.</p><button class="secondary" disabled>Coming soon</button></div><div class="panel"><h3>💳 Transactions</h3><div id="walletTransactions"><p class="muted">Your transactions will appear here.</p></div></div></div></section>
 <section class="view" id="storeView">
 <div class="ht-store-head"><div><span class="section-kicker">HEARTTALK PREMIUM</span><h2>💎 HeartTalk Store</h2><p>Gifts, profile frames and wallpapers.</p></div><div class="ht-store-balance">🪙 <b id="storeCoinBalance">0</b></div></div>
 <div class="ht-store-tabs"><button class="active" data-store-tab="gifts" onclick="setHeartTalkStoreTab('gifts')">🎁 GIFTS</button><button data-store-tab="frames" onclick="setHeartTalkStoreTab('frames')">🖼️ FRAMES</button><button data-store-tab="wallpapers" onclick="setHeartTalkStoreTab('wallpapers')">🌄 WALLPAPERS</button></div>
@@ -813,17 +813,26 @@ function showView(name){
 }
 const HEARTTALK_UPI_ID="pakavijaya0169-4@oksbi";
 const HEARTTALK_UPI_NAME="Paka Vijaya";
-const HEARTTALK_PACKAGES={welcome:{title:"Welcome Pack",amount:20,paidCoins:20,bonusCoins:5,coins:25},popular:{title:"Popular Pack",amount:99,paidCoins:99,bonusCoins:15,coins:114},super:{title:"Super Pack",amount:299,paidCoins:299,bonusCoins:60,coins:359},mega:{title:"Mega Pack",amount:999,paidCoins:999,bonusCoins:250,coins:1249}};
 let activeManualRechargePackage=null;
+async function loadHeartTalkCoinPackages(){
+ const box=document.getElementById("hearttalkCoinPackages");if(!box)return;
+ box.innerHTML="<p class=\"muted\">Loading coin packages…</p>";
+ const {data,error}=await supabaseClient.from("coin_packages").select("package_code,title,coins,amount_paise,paid_coins,bonus_coins").eq("active",true).order("sort_order",{ascending:true});
+ if(error){console.warn("HeartTalk coin catalogue:",error);box.innerHTML="<p class=\"muted\">Coin packages could not be loaded. Please try again later.</p>";return;}
+ const packages=Array.isArray(data)?data:[];
+ if(!packages.length){box.innerHTML="<p class=\"muted\">No coin packages are currently available.</p>";return;}
+ box.innerHTML=packages.map(p=>{const code=String(p.package_code||"").replace(/[^a-zA-Z0-9_-]/g,"");const title=escapeHtml(p.title||"Coin Pack");const coins=Number(p.coins||0);const amount=Number(p.amount_paise||0)/100;const paid=Number(p.paid_coins||coins);const bonus=Number(p.bonus_coins||Math.max(0,coins-paid));return "<div class=\"panel\" style=\"text-align:center\"><h3>"+title+"</h3><div style=\"font-size:25px;font-weight:800\">🪙 "+coins.toLocaleString("en-IN")+"</div><p>₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2})+"</p><small class=\"muted\">"+paid.toLocaleString("en-IN")+" paid"+(bonus?" + "+bonus.toLocaleString("en-IN")+" bonus":"")+"</small><button class=\"primary\" type=\"button\" style=\"width:100%;margin-top:10px\" onclick=\"purchaseCoins(\\\'"+code+"\\\)\">Recharge</button></div>";}).join("");
+}
 async function purchaseCoins(packageCode){
  if(!currentUser){openAuth();return}
- const pkg=HEARTTALK_PACKAGES[packageCode];if(!pkg){notify("This coin package is unavailable.");return}
- activeManualRechargePackage={code:packageCode,...pkg};
- document.getElementById("cashfreePackageTitle").textContent=pkg.title+" · "+pkg.coins.toLocaleString("en-IN")+" coins ("+pkg.paidCoins+" paid + "+pkg.bonusCoins+" bonus)";
- document.getElementById("cashfreePackageAmount").textContent="₹"+pkg.amount.toLocaleString("en-IN");
- document.getElementById("cashfreePaymentStatus").textContent="Enter your mobile number and continue to Cashfree secure test checkout.";
- const phone=document.getElementById("cashfreeCustomerPhone");
- if(phone)phone.value=String(currentUser.phone||"").replace(/\D/g,"").slice(-10);
+ const {data:pkg,error}=await supabaseClient.from("coin_packages").select("package_code,title,coins,amount_paise,paid_coins,bonus_coins").eq("package_code",packageCode).eq("active",true).maybeSingle();
+ if(error||!pkg){notify("This coin package is unavailable.");return}
+ const amount=Number(pkg.amount_paise||0)/100;
+ activeManualRechargePackage={code:pkg.package_code,title:pkg.title,coins:Number(pkg.coins||0),paidCoins:Number(pkg.paid_coins||pkg.coins||0),bonusCoins:Number(pkg.bonus_coins||0),amount};
+ document.getElementById("cashfreePackageTitle").textContent=pkg.title+" · "+Number(pkg.coins||0).toLocaleString("en-IN")+" coins";
+ document.getElementById("cashfreePackageAmount").textContent="₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2});
+ document.getElementById("cashfreePaymentStatus").textContent="Enter your mobile number and continue to Cashfree secure checkout.";
+ const phone=document.getElementById("cashfreeCustomerPhone");if(phone)phone.value=String(currentUser.phone||"").replace(/\D/g,"").slice(-10);
  document.getElementById("cashfreeRechargeModal").classList.add("show");
 }
 async function startCashfreeTestPayment(){
@@ -916,6 +925,7 @@ async function loadManualRechargeHistory(){
  box.innerHTML=rows.length?rows.map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eee"><div><b>'+escapeHtml(r.package_title)+' · ₹'+(Number(r.amount_paise)/100).toFixed(2)+'</b><div class="muted">UTR '+escapeHtml(r.utr)+' · '+new Date(r.created_at).toLocaleString()+'</div></div><b>'+escapeHtml(r.status)+'</b></div>').join(""):'<p class="muted">No manual UPI recharge requests yet.</p>';
 }
 async function loadWallet(){
+ loadHeartTalkCoinPackages();
  const balance=document.getElementById("walletCoins"),status=document.getElementById("walletStatus"),list=document.getElementById("walletTransactions");
  if(!balance||!status||!list)return;
  if(!currentUser){balance.textContent="0";status.textContent="Please log in to view your wallet.";list.innerHTML='<p class="muted">Log in to view transactions.</p>';return}
