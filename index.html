@@ -816,12 +816,18 @@ const HEARTTALK_UPI_NAME="Paka Vijaya";
 let activeManualRechargePackage=null;
 async function loadHeartTalkCoinPackages(){
  const box=document.getElementById("hearttalkCoinPackages");if(!box)return;
- box.innerHTML="<p class=\"muted\">Loading coin packages…</p>";
+ box.innerHTML="<p class=\\"muted\\">Loading coin packages…</p>";
  const {data,error}=await supabaseClient.from("coin_packages").select("package_code,title,coins,amount_paise,paid_coins,bonus_coins").eq("active",true).order("sort_order",{ascending:true});
- if(error){console.warn("HeartTalk coin catalogue:",error);box.innerHTML="<p class=\"muted\">Coin packages could not be loaded. Please try again later.</p>";return;}
+ if(error){console.warn("HeartTalk coin catalogue:",error);box.innerHTML="<p class=\\"muted\\">Coin packages could not be loaded. Please try again later.</p>";return;}
  const packages=Array.isArray(data)?data:[];
- if(!packages.length){box.innerHTML="<p class=\"muted\">No coin packages are currently available.</p>";return;}
- box.innerHTML=packages.map(p=>{const code=String(p.package_code||"").replace(/[^a-zA-Z0-9_-]/g,"");const title=escapeHtml(p.title||"Coin Pack");const coins=Number(p.coins||0);const amount=Number(p.amount_paise||0)/100;const paid=Number(p.paid_coins||coins);const bonus=Number(p.bonus_coins||Math.max(0,coins-paid));return "<div class=\"panel\" style=\"text-align:center\"><h3>"+title+"</h3><div style=\"font-size:25px;font-weight:800\">🪙 "+coins.toLocaleString("en-IN")+"</div><p>₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2})+"</p><small class=\"muted\">"+paid.toLocaleString("en-IN")+" paid"+(bonus?" + "+bonus.toLocaleString("en-IN")+" bonus":"")+"</small><button class=\"primary\" type=\"button\" style=\"width:100%;margin-top:10px\" onclick=\"purchaseCoins(\\\'"+code+"\\\)\">Recharge</button></div>";}).join("");
+ if(!packages.length){box.innerHTML="<p class=\\"muted\\">No coin packages are currently available.</p>";return;}
+ box.innerHTML=packages.map(p=>{
+  const code=String(p.package_code||"").replace(/[^a-zA-Z0-9_-]/g,"");
+  const title=escapeHtml(p.title||"Coin Pack");
+  const coins=Number(p.coins||0),amount=Number(p.amount_paise||0)/100;
+  const paid=Number(p.paid_coins||coins),bonus=Number(p.bonus_coins||Math.max(0,coins-paid));
+  return "<div class=\\"panel\\"> <h3>"+title+"</h3><div style=\\"font-size:25px;font-weight:800\\">🪙 "+coins.toLocaleString("en-IN")+"</div><p>₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2})+"</p><small class=\\"muted\\">"+paid.toLocaleString("en-IN")+" paid"+(bonus?" + "+bonus.toLocaleString("en-IN")+" bonus":"")+"</small><button class=\\"primary\\" type=\\"button\\" onclick=\\"purchaseCoins('"+code+"')\\">Recharge</button></div>";
+ }).join("");
 }
 async function purchaseCoins(packageCode){
  if(!currentUser){openAuth();return}
