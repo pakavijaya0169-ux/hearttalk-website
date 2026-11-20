@@ -1982,15 +1982,15 @@ async function startLiveKitRoom(roomId,isHost){
   room.on(LivekitClient.RoomEvent.Disconnected,()=>{if(liveKitRoom===room)liveKitRoom=null});
   await room.connect(tokenData.url,tokenData.token);
   liveKitRoom=room;activeLiveRoom=roomId;liveIsHost=isHost;
-  if(isHost){await room.localParticipant.enableCameraAndMicrophone();await supabaseClient.from("live_rooms").update({status:"live"}).eq("id",roomId).eq("host_id",currentUser.id);await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"host",left_at:null},{onConflict:"room_id,user_id"});}
-  else{await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"viewer",left_at:null},{onConflict:"room_id,user_id"});}
+  if(isHost){await room.localParticipant.enableCameraAndMicrophone();const membership=await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"host",left_at:null},{onConflict:"room_id,user_id"});if(membership.error)throw membership.error;await supabaseClient.from("live_rooms").update({status:"live"}).eq("id",roomId).eq("host_id",currentUser.id);}
+  else{const membership=await supabaseClient.from("live_room_members").upsert({room_id:roomId,user_id:currentUser.id,role:"viewer",left_at:null},{onConflict:"room_id,user_id"});if(membership.error)throw membership.error;}
   document.getElementById("liveStage").style.display="block";document.getElementById("liveStageTitle").textContent=roomInfo.data?.title||"HeartTalk Live";
   document.getElementById("liveStageInfo").textContent=isHost?"You are hosting · "+room.remoteParticipants.size+" viewers":"Joined live · "+room.remoteParticipants.size+" other participants";
   document.getElementById("liveEndBtn").style.display=isHost?"inline-block":"none";document.getElementById("liveMicBtn").disabled=!isHost;document.getElementById("liveCamBtn").disabled=!isHost;
   room.localParticipant.videoTrackPublications.forEach(p=>{if(p.track)attachLiveTrack(p.track,room.localParticipant,true)});
   room.remoteParticipants.forEach(p=>p.trackPublications.forEach(pub=>{if(pub.track)attachLiveTrack(pub.track,p)}));
   subscribeLiveChat(roomId);updateLiveParticipantInfo();loadLiveRooms();
- }catch(e){console.error(e);notify("Live connection failed: "+e.message+". LiveKit secure token service must be configured.");}
+ }catch(e){console.error(e);if(liveKitRoom){await liveKitRoom.disconnect().catch(()=>{});liveKitRoom=null;}activeLiveRoom=null;liveIsHost=false;document.getElementById("liveStage").style.display="none";notify(e.message||"Live connection failed. Check LiveKit configuration.");}
 }
 function attachLiveTrack(track,participant,isLocal=false){
  const grid=document.getElementById("liveVideoGrid");if(!grid)return;
