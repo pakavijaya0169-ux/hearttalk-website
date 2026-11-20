@@ -19,7 +19,7 @@ Deno.serve(async(req)=>{
 
     if(!jwt) return reply({error:"Please sign in first."},401);
     if(!url||!anon||!service||!clientId||!clientSecret) return reply({error:"Cashfree TEST credentials are not configured in Supabase Edge Function Secrets."},503);
-    if(env!=="sandbox") return reply({error:"This function is restricted to Cashfree sandbox mode."},503);
+    if(env!=="sandbox" && env!=="production") return reply({error:"CASHFREE_ENV must be sandbox or production."},503);
 
     const authClient=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:auth,error:authError}=await authClient.auth.getUser(jwt);
@@ -38,7 +38,7 @@ Deno.serve(async(req)=>{
 
     const orderId="ht_"+crypto.randomUUID().replace(/-/g,"");
     const amount=(Number(pkg.amount_paise)/100).toFixed(2);
-    const api="https://sandbox.cashfree.com/pg/orders";
+    const api=(env==="production"?"https://api.cashfree.com/pg":"https://sandbox.cashfree.com/pg")+"/orders";
     const payload={
       order_id:orderId,
       order_amount:Number(amount),
@@ -92,7 +92,7 @@ Deno.serve(async(req)=>{
       payment_session_id:result.payment_session_id,
       amount_paise:pkg.amount_paise,
       coins:pkg.coins,
-      environment:"sandbox"
+      environment:env
     });
   } catch(error) {
     console.error("create-cashfree-order:",error);
