@@ -1823,7 +1823,7 @@ function ensureHostSelfiePrompt(){
  panel.innerHTML='<div style="background:#30183f;border:1px solid #71356e;border-radius:18px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow:auto;color:#fff"><button onclick="document.getElementById(\'hostVerificationApplyPanel\').style.display=\'none\'" style="float:right;background:none;color:white;border:0;font-size:24px">×</button><h2>Host verification</h2><p>To apply as a HeartTalk Host, complete a short live selfie video verification (3 seconds).</p><p id="hostVerificationStatus">Checking eligibility…</p><label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input id="hostVerificationConsent" type="checkbox"><span>I consent to secure video selfie verification for Host application.</span></label><button id="hostVerificationApplyBtn" class="primary" onclick="applyForHeartTalkHost()" style="width:100%">Apply as Host</button><button id="hostSelfieRecordBtn" class="primary" onclick="recordHeartTalkHostSelfie()" style="width:100%;margin-top:10px" disabled>Record 3-second selfie</button><video id="hostSelfiePreview" playsinline muted style="display:none;width:100%;margin-top:12px;border-radius:12px"></video><p id="hostSelfieProgress"></p></div>';
  document.body.appendChild(panel);
 }
-async function promptHostSelfieAfterLogin(){
+async async function promptHostSelfieAfterLogin(){
  ensureHostSelfiePrompt();const panel=document.getElementById("hostVerificationApplyPanel");if(!currentUser||!panel)return;
  panel.style.display="none";
  const {data,error}=await supabaseClient.from("profiles").select("gender,age").eq("id",currentUser.id).maybeSingle();
