@@ -18,7 +18,7 @@ revoke all on public.hearttalk_live_room_gift_events from public,anon,authentica
 grant select on public.hearttalk_live_room_gift_events to authenticated;
 drop policy if exists "Active live room participants view gifts" on public.hearttalk_live_room_gift_events;
 create policy "Active live room participants view gifts" on public.hearttalk_live_room_gift_events for select to authenticated
-using(exists(select 1 from public.live_room_members m where m.room_id=room_id and m.user_id=auth.uid() and m.left_at is null));
+using(exists(select 1 from public.live_room_members m where m.room_id=hearttalk_live_room_gift_events.room_id and m.user_id=auth.uid() and m.left_at is null));
 
 create or replace function public.hearttalk_send_live_room_gift(p_room_id uuid,p_gift_code text,p_request_id uuid)
 returns jsonb language plpgsql security definer set search_path='' as $$
