@@ -49,7 +49,8 @@ Deno.serve(async(req)=>{
         ...(auth.user.email?{customer_email:auth.user.email}:{})
       },
       order_meta:{
-        return_url:"https://pakavijaya0169-ux.github.io/hearttalk-website/?cashfree_return=1&order_id={order_id}"
+        return_url:"https://pakavijaya0169-ux.github.io/hearttalk-website/?cashfree_return=1&order_id={order_id}",
+        notify_url:url+"/functions/v1/cashfree-webhook"
       },
       order_note:"HeartTalk "+pkg.title+" coin package"
     };
