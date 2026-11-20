@@ -839,7 +839,8 @@ async function startCashfreeTestPayment(){
   if(!data?.payment_session_id||!data?.order_id)throw new Error(data?.error||"Cashfree did not return a payment session.");
   if(typeof window.Cashfree!=="function")throw new Error("Cashfree Checkout SDK did not load. Refresh the page and try again.");
   sessionStorage.setItem("ht_cashfree_pending_order",data.order_id);
-  const paymentMode=data.environment==="production"?"production":"sandbox";\n  const cashfree=window.Cashfree({mode:paymentMode});
+  const paymentMode=data.environment==="production"?"production":"sandbox";
+  const cashfree=window.Cashfree({mode:paymentMode});
   const result=await cashfree.checkout({paymentSessionId:data.payment_session_id,redirectTarget:"_self"});
   if(result?.error){sessionStorage.removeItem("ht_cashfree_pending_order");throw new Error(result.error.message||"Cashfree checkout could not be opened.");}
  }catch(e){
