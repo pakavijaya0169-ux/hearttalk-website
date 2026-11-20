@@ -18,8 +18,8 @@ Deno.serve(async(req)=>{
     const env=(Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
 
     if(!jwt) return reply({error:"Please sign in first."},401);
-    if(!url||!anon||!service||!clientId||!clientSecret||env!=="sandbox")
-      return reply({error:"Cashfree verification is not configured."},503);
+    if(!url||!anon||!service||!clientId||!clientSecret||!(env==="sandbox"||env==="production"))
+      return reply({error:"Cashfree verification is not configured for the selected environment."},503);
 
     const authClient=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:auth,error:authError}=await authClient.auth.getUser(jwt);
