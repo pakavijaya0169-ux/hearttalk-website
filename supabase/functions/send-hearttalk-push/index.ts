@@ -66,15 +66,19 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const adminClient = createClient(supabaseUrl, serviceKey);
-  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || serviceKey, {
-    global: { headers: { Authorization: auth } },
-  });
-
-  const { data: userData, error: userError } = await userClient.auth.getUser();
-  if (userError || !userData.user) return json({ error: "Invalid session" }, 401);
-  const { data: role, error: roleError } = await adminClient
-    .from("hearttalk_user_roles").select("role").eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
-  if (roleError || !role) return json({ error: "Admin role required" }, 403);
+  const scheduledSecret = Deno.env.get("SCHEDULED_PUSH_SECRET") || "";
+  const bearer = auth.slice(7);
+  const isScheduler = !!scheduledSecret && bearer.length === scheduledSecret.length && (() => { let mismatch=0; for(let i=0;i<bearer.length;i++) mismatch|=bearer.charCodeAt(i)^scheduledSecret.charCodeAt(i); return mismatch===0; })();
+  if (!isScheduler) {
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || serviceKey, {
+      global: { headers: { Authorization: auth } },
+    });
+    const { data: userData, error: userError } = await userClient.auth.getUser();
+    if (userError || !userData.user) return json({ error: "Invalid session" }, 401);
+    const { data: role, error: roleError } = await adminClient
+      .from("hearttalk_user_roles").select("role").eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
+    if (roleError || !role) return json({ error: "Admin role required" }, 403);
+  }
 
   let body: { campaign_id?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
