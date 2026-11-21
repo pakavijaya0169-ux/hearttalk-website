@@ -4,7 +4,7 @@
 [functions.send-hearttalk-push]
 verify_jwt = false
 
-[functions.dispatch-scheduled-hearttalk-push]
+[functions.dispatch-scheduled-push]
 verify_jwt = false
 
 [functions.send-hearttalk-call-push]
