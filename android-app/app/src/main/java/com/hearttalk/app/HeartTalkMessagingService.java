@@ -59,6 +59,7 @@ public class HeartTalkMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(String token) {
         super.onNewToken(token);
-        // Token registration with the signed-in HeartTalk account is added in the next integration step.
+        // Keep the latest FCM token locally; MainActivity passes it to the signed-in web session.
+        getSharedPreferences("hearttalk_push", MODE_PRIVATE).edit().putString("fcm_token", token).apply();
     }
 }
