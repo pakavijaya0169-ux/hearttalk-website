@@ -81,19 +81,25 @@ Deno.serve(async (req) => {
   if (!body.campaign_id) return json({ error: "campaign_id is required" }, 400);
 
   const { data: campaign, error: campaignError } = await adminClient
-    .from("hearttalk_push_campaigns").select("id,title,body,image_url,audience,status")
+    .from("hearttalk_push_campaigns").select("id,title,body,image_url,audience,status,scheduled_at")
     .eq("id", body.campaign_id).maybeSingle();
   if (campaignError || !campaign) return json({ error: campaignError?.message || "Campaign not found" }, 404);
   if (!["queued", "scheduled"].includes(campaign.status)) return json({ error: "Campaign must be queued or scheduled before sending" }, 409);
+  if (campaign.status === "scheduled" && (!campaign.scheduled_at || new Date(campaign.scheduled_at).getTime() > Date.now())) {
+    return json({ error: "Scheduled campaign is not due yet.", scheduled_at: campaign.scheduled_at }, 409);
+  }
 
   const audience = campaign.audience as string;
   if (!["all", "female", "male"].includes(audience)) {
     return json({ error: "This sender currently supports All users, Female users and Male users. Choose one of these audiences." }, 400);
   }
 
-  const { error: markError } = await adminClient.from("hearttalk_push_campaigns")
-    .update({ status: "sending", last_error: null, updated_at: new Date().toISOString() }).eq("id", campaign.id);
+  // Atomic claim prevents concurrent invocations from sending the same campaign twice.
+  const { data: claimed, error: markError } = await adminClient.from("hearttalk_push_campaigns")
+    .update({ status: "sending", last_error: null, updated_at: new Date().toISOString() })
+    .eq("id", campaign.id).in("status", ["queued", "scheduled"]).select("id").maybeSingle();
   if (markError) return json({ error: markError.message }, 500);
+  if (!claimed) return json({ error: "Campaign was already claimed or its status changed." }, 409);
 
   try {
     let allowedUserIds: string[] | null = null;
