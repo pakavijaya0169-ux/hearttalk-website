@@ -23,7 +23,8 @@ Deno.serve(async(req)=>{
     const clientId=Deno.env.get("CASHFREE_CLIENT_ID"),clientSecret=Deno.env.get("CASHFREE_CLIENT_SECRET");
     const env=(Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
     if(!url||!service||!clientId||!clientSecret||!(env==="sandbox"||env==="production"))return reply({error:"Cashfree API secrets or environment are not configured"},503);
-    if(!timestamp||!signature||!(await verifySignature(raw,timestamp,signature,secret)))return reply({error:"Invalid Cashfree webhook signature"},401);
+    if(!secret)return reply({error:"Webhook signing secret is not configured"},503);
+    if(!/^\\d{10,15}$/.test(timestamp)||!signature||!(await verifySignature(raw,timestamp,signature,secret))return reply({error:"Invalid Cashfree webhook signature"},401);
     const event=JSON.parse(raw);
     const orderId=String(event?.data?.order?.order_id||event?.data?.order_id||event?.order_id||"");
     if(!/^ht_[a-f0-9]{32}$/.test(orderId))return reply({error:"Invalid order identifier"},400);
