@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.send-hearttalk-call-push]
 verify_jwt = true
+
+[functions.dispatch-scheduled-hearttalk-push]
+verify_jwt = false
