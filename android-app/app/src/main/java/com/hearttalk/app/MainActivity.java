@@ -17,6 +17,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -48,6 +49,13 @@ public class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                String token = getSharedPreferences("hearttalk_push", MODE_PRIVATE).getString("fcm_token", null);
+                if (token != null && url != null && url.startsWith(appUrl)) {
+                    view.evaluateJavascript("if(window.heartTalkRegisterNativeFcmToken){window.heartTalkRegisterNativeFcmToken(" + JSONObject.quote(token) + ");}", null);
+                }
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return handleExternalPaymentUrl(request.getUrl().toString());
             }
