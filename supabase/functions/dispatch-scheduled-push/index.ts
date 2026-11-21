@@ -7,7 +7,7 @@ function constantTimeEqual(a:string,b:string){if(a.length!==b.length)return fals
 Deno.serve(async(req)=>{
   if(req.method!=="POST")return json({error:"POST required"},405);
   const secret=Deno.env.get("SCHEDULED_PUSH_SECRET")||"";
-  const bearer=(req.headers.get("Authorization")||"").replace(/^Bearer\\s+/i,"");
+  const bearer=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");
   if(!secret||!constantTimeEqual(bearer,secret))return json({error:"Unauthorized"},401);
   const url=Deno.env.get("SUPABASE_URL"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(!url||!service)return json({error:"Server configuration missing"},503);
