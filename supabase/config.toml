@@ -1,0 +1,8 @@
+# Supabase local/deployment function settings for HeartTalk.
+# These endpoints implement their own authorization checks: admin JWT for manual sends,
+# and SCHEDULED_PUSH_SECRET for scheduled dispatcher/sender calls.
+[functions.send-hearttalk-push]
+verify_jwt = false
+
+[functions.dispatch-scheduled-hearttalk-push]
+verify_jwt = false
