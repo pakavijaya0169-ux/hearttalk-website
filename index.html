@@ -1617,6 +1617,8 @@ async function startOutgoingCall(type){
   const {data,error}=await supabaseClient.rpc("hearttalk_start_call",{target_user_id:target.id,requested_call_type:type});
   if(error)throw error;
   activeCallId=data.call_id;callRingDeadline=Date.now()+60000;activeCallRole="caller";lastSignalId=0;pendingIce=[];
+  // Best-effort background push to the callee; call signaling remains realtime/poll based.
+  supabaseClient.functions.invoke("send-hearttalk-call-push",{body:{call_id:data.call_id}}).then(({error})=>{if(error)console.warn("Incoming call push delivery:",error)});
   await createPeer();await getLocalMedia(type);
   const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
   await sendCallSignal("offer",peerConnection.localDescription.toJSON());
