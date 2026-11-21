@@ -501,13 +501,14 @@ async function loadPaymentDashboard(){
  const {data,error}=await db.rpc("admin_list_manual_upi_recharges",{p_status:"all"});
  if(error){errorBox.textContent="Manual UPI recharge SQL setup required. "+error.message;errorBox.classList.remove("hidden");list.innerHTML='<div class="empty">No manual UPI data available until the SQL migration is applied.</div>';return}
  const rows=Array.isArray(data)?data:[];
+ const {data:giftMetrics,error:giftMetricsError}=await db.rpc("admin_get_live_gift_metrics");
  const approved=rows.filter(x=>x.status==="approved"),pending=rows.filter(x=>x.status==="pending");
  const money=approved.reduce((sum,x)=>sum+Number(x.amount_paise||0),0);
  const coins=approved.reduce((sum,x)=>sum+Number(x.coins||0),0);
  const n=v=>Number(v||0).toLocaleString("en-IN");
  $("pRevenue").textContent="₹"+(money/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
  $("pCount").textContent=n(approved.length);$("pCoins").textContent=n(coins);
- $("pPending").textContent=n(pending.length);$("pHostCoins").textContent="—";$("pGiftCount").textContent="—";
+ $("pPending").textContent=n(pending.length);$("pHostCoins").textContent=giftMetricsError?"—":n(giftMetrics?.host_earned_coins);$("pGiftCount").textContent=giftMetricsError?"—":n(giftMetrics?.gift_count);
  list.innerHTML=rows.length?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:620px"><thead><tr><th style="text-align:left;padding:10px">User</th><th style="text-align:left;padding:10px">Package</th><th style="text-align:right;padding:10px">Amount</th><th style="text-align:right;padding:10px">Coins</th><th style="text-align:left;padding:10px">UTR</th><th style="text-align:left;padding:10px">Status</th></tr></thead><tbody>'+rows.slice(0,100).map(x=>'<tr style="border-top:1px solid var(--line)"><td style="padding:10px">'+esc(x.user_name||x.email||x.user_id)+'</td><td style="padding:10px">'+esc(x.package_title)+'</td><td style="padding:10px;text-align:right">₹'+(Number(x.amount_paise||0)/100).toFixed(2)+'</td><td style="padding:10px;text-align:right">'+n(x.coins)+'</td><td style="padding:10px">'+esc(x.utr)+'</td><td style="padding:10px">'+esc(x.status)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">No manual UPI recharge requests yet.</div>';
 }
 async function loadAnalytics(){
