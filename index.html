@@ -825,12 +825,13 @@ async function loadHeartTalkCoinPackages(){
  if(error){console.warn("HeartTalk coin catalogue:",error);box.innerHTML="<p class=\"muted\">Coin packages could not be loaded. Please try again later.</p>";return;}
  const packages=Array.isArray(data)?data:[];
  if(!packages.length){box.innerHTML="<p class=\"muted\">No coin packages are currently available.</p>";return;}
+ const bonus=5;
  box.innerHTML=packages.map(p=>{
   const code=String(p.package_code||"").replace(/[^a-zA-Z0-9_-]/g,"");
   const title=escapeHtml(p.title||"Coin Pack");
-  const coins=Number(p.coins||0),amount=Number(p.amount_paise||0)/100;
-  const bonus=({welcome:5,popular:15,super:60,mega:250})[p.package_code]||0,paid=Math.max(0,coins-bonus);
-  return "<div class=\"panel\"> <h3>"+title+"</h3><div style=\"font-size:25px;font-weight:800\">🪙 "+coins.toLocaleString("en-IN")+"</div><p>₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2})+"</p><small class=\"muted\">"+paid.toLocaleString("en-IN")+" paid"+(bonus?" + "+bonus.toLocaleString("en-IN")+" bonus":"")+"</small><button class=\"primary\" type=\"button\" onclick=\"purchaseCoins('"+code+"')\">Recharge</button></div>";
+  const coins=Number(p.coins||0),amount=Number(p.amount_paise||0)/100,paid=Math.max(0,coins-bonus);
+  const popular=p.package_code==="basic";
+  return "<div class=\"panel\" style=\"position:relative;border:1px solid #e7c5df\">"+(popular?"<span style=\"display:inline-block;background:#8b3d83;color:#fff;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700\">POPULAR</span>":"")+"<h3>"+title+"</h3><div style=\"font-size:25px;font-weight:800\">🪙 "+coins.toLocaleString("en-IN")+" Coins</div><p style=\"font-size:18px;font-weight:750\">₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2})+"</p><span style=\"display:inline-block;background:#ffe3f0;color:#87345f;border-radius:16px;padding:5px 10px;font-size:12px;font-weight:700\">+5 Bonus Coins</span><p class=\"muted\">"+paid.toLocaleString("en-IN")+" Base Coins + 5 Free</p><button class=\"primary\" type=\"button\" onclick=\"purchaseCoins('"+code+"')\">Recharge</button></div>";
  }).join("");
 }
 async function purchaseCoins(packageCode){
@@ -838,7 +839,7 @@ async function purchaseCoins(packageCode){
  const {data:pkg,error}=await supabaseClient.from("coin_packages").select("package_code,title,coins,amount_paise").eq("package_code",packageCode).eq("active",true).maybeSingle();
  if(error||!pkg){notify("This coin package is unavailable.");return}
  const amount=Number(pkg.amount_paise||0)/100;
- activeManualRechargePackage={code:pkg.package_code,title:pkg.title,coins:Number(pkg.coins||0),paidCoins:Math.max(0,Number(pkg.coins||0)-(({welcome:5,popular:15,super:60,mega:250})[pkg.package_code]||0)),bonusCoins:(({welcome:5,popular:15,super:60,mega:250})[pkg.package_code]||0),amount};
+ activeManualRechargePackage={code:pkg.package_code,title:pkg.title,coins:Number(pkg.coins||0),paidCoins:Math.max(0,Number(pkg.coins||0)-5),bonusCoins:5,amount};
  document.getElementById("cashfreePackageTitle").textContent=pkg.title+" · "+Number(pkg.coins||0).toLocaleString("en-IN")+" coins";
  document.getElementById("cashfreePackageAmount").textContent="₹"+amount.toLocaleString("en-IN",{maximumFractionDigits:2});
  document.getElementById("cashfreePaymentStatus").textContent="Enter your mobile number and continue to Cashfree secure checkout.";
