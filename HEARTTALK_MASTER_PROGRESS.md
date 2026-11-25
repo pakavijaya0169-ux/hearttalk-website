@@ -53,10 +53,10 @@ Relevant commits:
 - Repository secret `SUPABASE_ACCESS_TOKEN` was configured by the user. Do not request or expose its value.
 - Workflow was corrected to use `--yes` and Supabase CLI version `2.58.5`.
 - Latest workflow commits: `c800a52b9c370a157af6c11e1afe7780f4733af4` (adds `create-cashfree-order` deployment step), `2411d1235f9cbe651696e4179c9300224e88faa8` (adds workflow-file push trigger).
-- GitHub Actions run ID: `45538444752`
-- Run URL: https://github.com/pakavijaya0169-ux/hearttalk-website/actions/runs/45538444752
-- Previously verified result: all job steps succeeded for deployment of Supabase Edge Function `cashfree-webhook` (run `45538444752`).
-- Verified: workflow run `45539058729` completed with `success`; both `Deploy cashfree-webhook` and `Deploy create-cashfree-order` steps succeeded. Run URL: https://github.com/pakavijaya0169-ux/hearttalk-website/actions/runs/45539058729. A later manual run `45539190029` was still in progress at last check; the successful push-triggered run already confirms both deployment steps.
+- Earlier verified runs: `45538444752` (`cashfree-webhook`) and `45539058729` (`cashfree-webhook` + `create-cashfree-order`).
+- Latest workflow commit: `660d7d77bed95b1df51f2c44a3476e18ea17cb12`.
+- Latest deployment run: `45539338698` — https://github.com/pakavijaya0169-ux/hearttalk-website/actions/runs/45539338698.
+- **Verified success on 2026-11-25:** all three deployment steps succeeded in run `45539338698`: `cashfree-webhook`, `create-cashfree-order`, and `verify-cashfree-payment`. The overall `deploy` job completed with conclusion `success`.
 
 ### Cashfree webhook code/config notes
 - Webhook handler was fixed so `clientSecret` is declared before use.
@@ -78,7 +78,7 @@ Relevant commits:
   - Production: `https://api.cashfree.com/pg/orders`
 - GitHub version of `verify-cashfree-payment` also supports sandbox and production and verifies payment server-side before crediting coins.
 - Frontend invokes `create-cashfree-order` and starts Cashfree checkout using the returned environment.
-- The previously deployed Supabase `create-cashfree-order` was confirmed by user screenshot to be an older sandbox-only version returning HTTP 503 whenever `CASHFREE_ENV` is not sandbox. Deploying the current GitHub code is therefore a priority.
+- The earlier sandbox-only `create-cashfree-order` deployment has been superseded by the successful deployment in run `45539338698`.
 - User previously reported `CASHFREE_ENV=production`. The actual credential environment and approval status still need verification; do not assume live credentials are valid.
 
 ### Account / approval
@@ -90,13 +90,12 @@ Relevant commits:
 
 ## Next work — do in this order
 
-1. Inspect current GitHub workflow and Edge Function source files.
-2. **Completed:** latest `create-cashfree-order` and `cashfree-webhook` deployed successfully via GitHub Actions run `45539058729`.
-3. Inspect and deploy latest `verify-cashfree-payment` to Supabase.
-4. Verify deployed function versions and environment configuration without exposing secrets.
-5. Confirm Cashfree sandbox credentials and perform a sandbox order/payment test.
-6. Verify that coins are credited only after server-side payment verification, and duplicate webhook/payment events cannot credit coins twice.
-7. Only after Cashfree confirms live Payment Gateway approval and live credentials, plan a controlled production test.
+1. **Completed:** latest `cashfree-webhook`, `create-cashfree-order`, and `verify-cashfree-payment` deployed successfully to Supabase via GitHub Actions run `45539338698` (all three deploy steps individually verified successful).
+2. Verify that the required database migration/RPC `credit_verified_cashfree_coin_purchase` is applied in the target Supabase project; its presence in the repository alone does not prove it is applied remotely.
+3. Inspect the frontend checkout return flow and confirm it invokes `verify-cashfree-payment` with the correct order ID.
+4. Confirm Cashfree sandbox credentials/environment and perform a sandbox-only order/payment test.
+5. Verify coins are credited only after server-side payment verification, and duplicate webhook/payment events cannot credit coins twice.
+6. Only after Cashfree confirms live Payment Gateway approval and live credentials, plan a controlled production test.
 
 ## Other product decisions / requirements to preserve
 - Host/platform revenue share: host 60%, platform 40% (latest agreed).
@@ -113,4 +112,4 @@ Relevant commits:
 - Do not run production payment tests without explicit confirmation of provider approval and correct live credentials.
 
 ## Handoff instruction for the next ChatGPT conversation
-Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. Continue with **Step 2: deploy the latest `create-cashfree-order` Edge Function**, unless a newer verified project update changes the priority. Ask the user only for a click/confirmation that is genuinely required; do not ask them to repeat project details already recorded here.
+Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. All three Cashfree Edge Functions are deployed successfully (run `45539338698`). Continue by checking whether the required database migration/RPC is applied and inspecting the frontend payment verification flow. Then perform sandbox-only testing. Do not ask the user to repeat project details already recorded here.
