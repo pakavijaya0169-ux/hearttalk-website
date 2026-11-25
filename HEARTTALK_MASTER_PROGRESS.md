@@ -92,7 +92,7 @@ Relevant commits:
 
 1. **Completed:** latest `cashfree-webhook`, `create-cashfree-order`, and `verify-cashfree-payment` deployed successfully to Supabase via GitHub Actions run `45539338698` (all three deploy steps individually verified successful).
 2. **Code review completed:** frontend return URL invokes `verify-cashfree-payment` with the order ID after the signed-in session initializes; the Edge Function checks the authenticated owner, Cashfree PAID order, amount/currency, successful payment, then calls the service-role-only RPC.
-3. **Remote database status not yet verified:** migration `202611180001_cashfree_test_mode.sql` defines `credit_verified_cashfree_coin_purchase`, but repository presence does not prove it has been applied to the Supabase database.
+3. **Verified on 2026-11-25:** user ran a read-only query in the Supabase Production SQL Editor; it returned `credit_verified_cashfree_coin_purchase` as a `FUNCTION`. This confirms the RPC exists in the production database. The exact deployed definition/privileges still need review.
 4. **Production readiness blockers:** Cashfree Payment Gateway live approval, live API credentials, correct webhook signing secret (`CASHFREE_WEBHOOK_SECRET`), `CASHFREE_ENV=production`, and remote RPC migration status must be confirmed before a real charge.
 5. Do not test real money until all blockers are verified. Then perform one small controlled live payment and verify exactly-once wallet credit.
 
