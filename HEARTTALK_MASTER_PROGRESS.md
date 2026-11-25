@@ -96,6 +96,13 @@ Relevant commits:
 4. **Production readiness blockers:** Cashfree Payment Gateway live approval, live API credentials, correct webhook signing secret (`CASHFREE_WEBHOOK_SECRET`), `CASHFREE_ENV=production`, and remote RPC migration status must be confirmed before a real charge.
 5. Do not test real money until all blockers are verified. Then perform one small controlled live payment and verify exactly-once wallet credit.
 
+### Manual UPI QR host withdrawal implementation (2026-11-25)
+- Added migration `supabase/migrations/202611250001_manual_upi_qr_host_withdrawals.sql`; it updates `hearttalk_get_manual_upi_withdrawals()` to return host UPI ID and account holder name with each request. Existing request RPC reserves earnings in `hearttalk_host_cash_ledger` at creation; rejection releases the reserve; paid requests require an approved status and unique UTR.
+- Updated host withdrawal history to display a fixed-amount UPI QR for active pending/approved requests, using UPI ID, exact INR amount, account holder name, and a request-specific transaction reference.
+- Updated admin withdrawal queue to display the QR only after approval; admin scans/pays manually, enters bank/UPI UTR, then marks the request paid.
+- QR is a payment intent, not an automatic transfer or a technical one-time payment token. HeartTalk prevents duplicate request finalization and duplicate UTR; it cannot prevent a payer from scanning the same UPI QR repeatedly. Admin must verify actual bank debit/credit and use the correct unique UTR.
+- **Not yet live:** migration must be run in Supabase SQL Editor and the GitHub Pages deployment must finish before using the QR flow. No withdrawal has been paid or tested.
+
 ## Other product decisions / requirements to preserve
 - Host/platform revenue share: host 60%, platform 40% (latest agreed).
 - Call pricing discussed: audio 2 coins/minute; video 5 coins/minute.
