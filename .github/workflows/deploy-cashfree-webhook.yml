@@ -2,6 +2,9 @@ name: Deploy Cashfree Edge Functions
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/deploy-cashfree-webhook.yml"
 
 jobs:
   deploy:
