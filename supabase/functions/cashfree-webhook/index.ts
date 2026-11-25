@@ -18,16 +18,17 @@ Deno.serve(async(req)=>{
     const raw=await req.text();
     const signature=req.headers.get("x-webhook-signature")||"";
     const timestamp=req.headers.get("x-webhook-timestamp")||"";
-    const secret=clientSecret||"";
     const url=Deno.env.get("SUPABASE_URL"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const clientId=Deno.env.get("CASHFREE_CLIENT_ID"),clientSecret=Deno.env.get("CASHFREE_CLIENT_SECRET");
+    const secret=Deno.env.get("CASHFREE_WEBHOOK_SECRET")||clientSecret||"";
     const env=(Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
     if(!url||!service||!clientId||!clientSecret||!(env==="sandbox"||env==="production"))return reply({error:"Cashfree API secrets or environment are not configured"},503);
     if(!secret)return reply({error:"CASHFREE_CLIENT_SECRET is not configured."},503);
     if(!/^\d{10,15}$/.test(timestamp)||!signature||!(await verifySignature(raw,timestamp,signature,secret)))return reply({error:"Invalid Cashfree webhook signature"},401);
     const event=JSON.parse(raw);
     const orderId=String(event?.data?.order?.order_id||event?.data?.order_id||event?.order_id||"");
-    if(!/^ht_[a-f0-9]{32}$/.test(orderId))return reply({error:"Invalid order identifier"},400);
+    // Cashfree endpoint test events may not contain a HeartTalk order ID; acknowledge and ignore them.
+    if(!/^ht_[a-f0-9]{32}$/.test(orderId))return reply({status:"ignored",reason:"No HeartTalk order ID in event"},200);
     const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:order,error:orderError}=await admin.from("payment_orders").select("user_id,provider,amount_paise,currency,coins,status").eq("provider_order_id",orderId).eq("provider","cashfree").maybeSingle();
     if(orderError||!order)return reply({error:"Order not found"},404);
