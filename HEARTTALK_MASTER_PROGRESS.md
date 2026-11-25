@@ -121,3 +121,10 @@ Relevant commits:
 
 ## Handoff instruction for the next ChatGPT conversation
 Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. All three Cashfree Edge Functions are deployed successfully (run `45539338698`). Frontend verification invocation has been inspected. Next verify the remote RPC migration and Cashfree live approval/credentials/webhook signing secret before any live charge. Never expose secrets or run a production payment without those checks.
+
+
+### Google sign-in implementation (2026-11-25)
+- Added a **Continue with Google** button to the main HeartTalk email-auth modal in `index.html`, preserving the existing email OTP login.
+- Added Supabase Auth OAuth call using provider `google` and redirect back to the current HeartTalk page. This adds the frontend flow only.
+- **Required manual configuration before Google login can succeed:** enable Google provider in Supabase Authentication > Providers, add Google OAuth Client ID/Secret from Google Cloud, and allow the deployed website redirect URL in Supabase Authentication URL Configuration. Do not put OAuth client secret in frontend code.
+- GitHub Pages deployment must complete after the commit; then test Google sign-in on website and APK WebView.
