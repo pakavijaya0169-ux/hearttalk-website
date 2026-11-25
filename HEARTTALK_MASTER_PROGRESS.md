@@ -101,7 +101,9 @@ Relevant commits:
 - Updated host withdrawal history to display a fixed-amount UPI QR for active pending/approved requests, using UPI ID, exact INR amount, account holder name, and a request-specific transaction reference.
 - Updated admin withdrawal queue to display the QR only after approval; admin scans/pays manually, enters bank/UPI UTR, then marks the request paid.
 - QR is a payment intent, not an automatic transfer or a technical one-time payment token. HeartTalk prevents duplicate request finalization and duplicate UTR; it cannot prevent a payer from scanning the same UPI QR repeatedly. Admin must verify actual bank debit/credit and use the correct unique UTR.
-- **Not yet live:** migration must be run in Supabase SQL Editor and the GitHub Pages deployment must finish before using the QR flow. No withdrawal has been paid or tested.
+- **Deployment verified:** GitHub Pages run `45550755796` completed with `success` for commit `d977812d962d14948b38aaa67e6979b1efc5c6b4`.
+- **User confirmed:** the new migration `202611250001_manual_upi_qr_host_withdrawals.sql` was run successfully in Supabase Production SQL Editor.
+- **Still needs functional verification:** test a valid host withdrawal request, confirm QR amount/UPI details, approve it in admin, record a real UTR only after an actual transfer, and verify the balance/reservation lifecycle. No withdrawal has been paid or tested.
 
 ## Other product decisions / requirements to preserve
 - Host/platform revenue share: host 60%, platform 40% (latest agreed).
