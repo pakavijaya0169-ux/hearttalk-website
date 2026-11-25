@@ -49,14 +49,14 @@ Relevant commits:
 - `3a49584e6f914e8ba97af54c87e690d46bae5c5e` — public read policy migration
 
 ### Cashfree webhook deployment automation
-- GitHub Actions workflow added: `.github/workflows/deploy-cashfree-webhook.yml`
+- GitHub Actions workflow: `.github/workflows/deploy-cashfree-webhook.yml` (updated to deploy both `cashfree-webhook` and `create-cashfree-order`; supports manual `workflow_dispatch` and push changes to the workflow file).
 - Repository secret `SUPABASE_ACCESS_TOKEN` was configured by the user. Do not request or expose its value.
 - Workflow was corrected to use `--yes` and Supabase CLI version `2.58.5`.
-- Latest relevant workflow commit: `a24473f6d5e45770f772f523b1be3fb00f81593d`
+- Latest workflow commits: `c800a52b9c370a157af6c11e1afe7780f4733af4` (adds `create-cashfree-order` deployment step), `2411d1235f9cbe651696e4179c9300224e88faa8` (adds workflow-file push trigger).
 - GitHub Actions run ID: `45538444752`
 - Run URL: https://github.com/pakavijaya0169-ux/hearttalk-website/actions/runs/45538444752
-- Verified result: all job steps succeeded, including deployment of Supabase Edge Function `cashfree-webhook`.
-- This confirms only `cashfree-webhook` was deployed by that run. It does NOT confirm other functions were deployed.
+- Previously verified result: all job steps succeeded for deployment of Supabase Edge Function `cashfree-webhook` (run `45538444752`).
+- The updated workflow has not yet been verified running. Latest GitHub Actions list showed only Pages runs; manually run the Cashfree workflow from the Actions tab, then verify both deploy steps succeed.
 
 ### Cashfree webhook code/config notes
 - Webhook handler was fixed so `clientSecret` is declared before use.
@@ -91,7 +91,7 @@ Relevant commits:
 ## Next work — do in this order
 
 1. Inspect current GitHub workflow and Edge Function source files.
-2. Deploy latest `create-cashfree-order` from GitHub to Supabase using the existing GitHub Actions workflow/secret. Verify the Actions run succeeds.
+2. User must open [GitHub Actions](https://github.com/pakavijaya0169-ux/hearttalk-website/actions/workflows/deploy-cashfree-webhook.yml) and click **Run workflow** once. Then verify both deployment steps succeed.
 3. Inspect and deploy latest `verify-cashfree-payment` to Supabase.
 4. Verify deployed function versions and environment configuration without exposing secrets.
 5. Confirm Cashfree sandbox credentials and perform a sandbox order/payment test.
