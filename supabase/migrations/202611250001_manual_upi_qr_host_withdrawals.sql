@@ -46,7 +46,3 @@ $$;
 
 revoke all on function public.hearttalk_get_manual_upi_withdrawals() from public, anon;
 grant execute on function public.hearttalk_get_manual_upi_withdrawals() to authenticated;
-
--- Keep the QR reference deterministic and unique per withdrawal request.
-create unique index if not exists hearttalk_host_payout_qr_reference_unique
-on public.hearttalk_host_payout_requests (id);
