@@ -91,11 +91,10 @@ Relevant commits:
 ## Next work — do in this order
 
 1. **Completed:** latest `cashfree-webhook`, `create-cashfree-order`, and `verify-cashfree-payment` deployed successfully to Supabase via GitHub Actions run `45539338698` (all three deploy steps individually verified successful).
-2. Verify that the required database migration/RPC `credit_verified_cashfree_coin_purchase` is applied in the target Supabase project; its presence in the repository alone does not prove it is applied remotely.
-3. Inspect the frontend checkout return flow and confirm it invokes `verify-cashfree-payment` with the correct order ID.
-4. Confirm Cashfree sandbox credentials/environment and perform a sandbox-only order/payment test.
-5. Verify coins are credited only after server-side payment verification, and duplicate webhook/payment events cannot credit coins twice.
-6. Only after Cashfree confirms live Payment Gateway approval and live credentials, plan a controlled production test.
+2. **Code review completed:** frontend return URL invokes `verify-cashfree-payment` with the order ID after the signed-in session initializes; the Edge Function checks the authenticated owner, Cashfree PAID order, amount/currency, successful payment, then calls the service-role-only RPC.
+3. **Remote database status not yet verified:** migration `202611180001_cashfree_test_mode.sql` defines `credit_verified_cashfree_coin_purchase`, but repository presence does not prove it has been applied to the Supabase database.
+4. **Production readiness blockers:** Cashfree Payment Gateway live approval, live API credentials, correct webhook signing secret (`CASHFREE_WEBHOOK_SECRET`), `CASHFREE_ENV=production`, and remote RPC migration status must be confirmed before a real charge.
+5. Do not test real money until all blockers are verified. Then perform one small controlled live payment and verify exactly-once wallet credit.
 
 ## Other product decisions / requirements to preserve
 - Host/platform revenue share: host 60%, platform 40% (latest agreed).
@@ -112,4 +111,4 @@ Relevant commits:
 - Do not run production payment tests without explicit confirmation of provider approval and correct live credentials.
 
 ## Handoff instruction for the next ChatGPT conversation
-Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. All three Cashfree Edge Functions are deployed successfully (run `45539338698`). Continue by checking whether the required database migration/RPC is applied and inspecting the frontend payment verification flow. Then perform sandbox-only testing. Do not ask the user to repeat project details already recorded here.
+Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. All three Cashfree Edge Functions are deployed successfully (run `45539338698`). Frontend verification invocation has been inspected. Next verify the remote RPC migration and Cashfree live approval/credentials/webhook signing secret before any live charge. Never expose secrets or run a production payment without those checks.
