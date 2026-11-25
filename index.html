@@ -716,7 +716,24 @@ p{color:#77747e}
  </div>
 </section>
 <section class="view" id="recentsView"><div class="section-kicker">Your activity</div><h2>Recent calls</h2><div class="panel"><div style="font-size:38px;text-align:center">📞</div><h3 style="text-align:center">Your call history</h3><p style="text-align:center">Incoming, outgoing and missed calls will appear here.</p><div class="toolbar" style="justify-content:center"><button class="secondary" onclick="showView('calls')">Go to calls</button></div></div></section>
-<section class="view" id="walletView"><div id="walletOfferBanners" class="ht-offer-banner"></div><div class="section-kicker">HeartTalk rewards</div><h2>My wallet 🪙</h2><div class="panel" style="background:linear-gradient(120deg,#fff0d1,#ffe5f0)"><div class="muted">Available coins</div><div style="font-size:42px;font-weight:850;color:#33202b">🪙 <span id="walletCoins">0</span></div><p id="walletStatus">Log in to view your wallet.</p></div><div class="panel"><h3>🪙 Recharge Coins</h3><p class="muted">Choose a package. Prices and coins are loaded from the active server catalogue.</p><div id="hearttalkCoinPackages" class="grid"><p class="muted">Loading coin packages…</p></div></div><div class="grid"><div class="panel"><h3>🎁 Daily reward</h3><p>Daily rewards are not enabled yet.</p><button class="secondary" disabled>Coming soon</button></div><div class="panel"><h3>💳 Transactions</h3><div id="walletTransactions"><p class="muted">Your transactions will appear here.</p></div></div></div></section>
+<section class="view" id="walletView"><div id="walletOfferBanners" class="ht-offer-banner"></div><div class="section-kicker">HeartTalk rewards</div><h2>My wallet 🪙</h2><div class="panel" style="background:linear-gradient(120deg,#fff0d1,#ffe5f0)"><div class="muted">Available coins</div><div style="font-size:42px;font-weight:850;color:#33202b">🪙 <span id="walletCoins">0</span></div><p id="walletStatus">Log in to view your wallet.</p></div><div class="panel"><h3>🪙 Recharge Coins</h3><p class="muted">Choose a package. Prices and coins are loaded from the active server catalogue.</p><div id="hearttalkCoinPackages" class="grid"><p class="muted">Loading coin packages…</p></div></div><div class="grid"><div class="panel"><h3>🎁 Daily reward</h3><p>Daily rewards are not enabled yet.</p><button class="secondary" disabled>Coming soon</button></div><div class="panel"><h3>💳 Transactions</h3><div id="walletTransactions"><p class="muted">Your transactions will appear here.</p></div></div></div>
+<div class="panel" id="hostWithdrawalPanel" style="display:none;margin-top:18px">
+ <div class="section-kicker">HOST CREATOR EARNINGS</div>
+ <h3>💸 Host Earnings & Withdraw</h3>
+ <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+  <div class="panel"><small class="muted">Gift earnings</small><b id="hostEarnedCoins" style="display:block;font-size:22px">0</b><span id="hostEarnedINR" class="muted">0 coins</span></div>
+  <div class="panel"><small class="muted">Available to withdraw</small><b id="hostAvailableINR" style="display:block;font-size:22px">₹0.00</b></div>
+ </div>
+ <p id="hostPayoutStatus" class="muted">Loading withdrawal eligibility…</p>
+ <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+  <label>Amount (₹)<input id="hostPayoutAmount" type="number" min="500" step="1" placeholder="Minimum ₹500"></label>
+  <label>UPI ID<input id="hostPayoutUpi" type="text" maxlength="120" placeholder="name@bank"></label>
+ </div>
+ <label>UPI account holder name<input id="hostPayoutHolder" type="text" maxlength="100" placeholder="Name on UPI account"></label>
+ <button class="primary" id="hostPayoutRequestBtn" type="button" onclick="requestHostPayout()" disabled>Request Withdrawal</button>
+ <div id="hostPayoutRequests" style="margin-top:14px"></div>
+ <h4>Gift earnings history</h4><div id="hostEarningsHistory" class="muted">Loading…</div>
+</div></section>
 <section class="view" id="storeView">
 <div class="ht-store-head"><div><span class="section-kicker">HEARTTALK PREMIUM</span><h2>💎 HeartTalk Store</h2><p>Gifts, profile frames and wallpapers.</p></div><div class="ht-store-balance">🪙 <b id="storeCoinBalance">0</b></div></div>
 <div class="ht-store-tabs"><button class="active" data-store-tab="gifts" onclick="setHeartTalkStoreTab('gifts')">🎁 GIFTS</button><button data-store-tab="frames" onclick="setHeartTalkStoreTab('frames')">🖼️ FRAMES</button><button data-store-tab="wallpapers" onclick="setHeartTalkStoreTab('wallpapers')">🌄 WALLPAPERS</button></div>
@@ -2302,9 +2319,13 @@ async function loadManualUpiWithdrawals(){
  }).join(""):'No withdrawal requests yet.';
 }
 async function loadHostEarnings(){
+ const panel=document.getElementById("hostWithdrawalPanel");
  const total=document.getElementById("hostEarnedCoins"),count=document.getElementById("hostGiftCount"),history=document.getElementById("hostEarningsHistory");
- if(!total||!count||!history)return;
- if(!currentUser){total.textContent="0";count.textContent="0";history.textContent="Log in to view host earnings.";return}
+ if(!panel||!total||!history)return;
+ if(!currentUser){panel.style.display="none";return;}
+ const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("gender").eq("id",currentUser.id).maybeSingle();
+ if(profileError||String(profile?.gender||"").toLowerCase()!=="female"){panel.style.display="none";return;}
+ panel.style.display="block";
  history.textContent="Loading host earnings…";
  const {data,error}=await supabaseClient.rpc("hearttalk_get_host_earnings");
  if(error){history.textContent="Host earnings setup pending. Run supabase/commerce_foundation.sql in Supabase SQL Editor.";return}
