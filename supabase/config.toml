@@ -12,3 +12,7 @@ verify_jwt = true
 
 [functions.dispatch-scheduled-hearttalk-push]
 verify_jwt = false
+
+# Cashfree calls this endpoint server-to-server without a Supabase user JWT.
+[functions.cashfree-webhook]
+verify_jwt = false
