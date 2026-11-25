@@ -2277,19 +2277,29 @@ async function requestHostPayout(){
  if(button)button.disabled=true;if(status)status.textContent="Submitting withdrawal request…";
  try{const {data,error}=await supabaseClient.rpc("hearttalk_request_manual_upi_withdrawal",{p_amount_paise:amount*100,p_upi_id:upi,p_account_holder_name:holder});if(error)throw error;
  document.getElementById("hostPayoutAmount").value="";document.getElementById("hostPayoutUpi").value="";document.getElementById("hostPayoutHolder").value="";
- notify("Withdrawal request submitted. Admin review is pending.");await loadHostEarnings();
+ notify("Withdrawal request submitted. Your fixed-amount UPI QR is ready below. Amount is reserved until admin marks it paid or rejects it.");await loadHostEarnings();
  }catch(e){if(status)status.textContent=e.message||"Withdrawal request could not be submitted.";notify(e.message||"Withdrawal request failed.");if(button)button.disabled=false;}
+}
+function heartTalkUpiQrUrl(upiId,holder,amountPaise,requestId){
+ const params=new URLSearchParams({pa:upiId,pn:holder||"HeartTalk Host",am:(Number(amountPaise)/100).toFixed(2),cu:"INR",tn:"HeartTalk withdrawal",tr:"HT"+String(requestId).replace(/-/g,"").slice(0,24)});
+ const payload="upi://pay?"+params.toString();
+ return "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data="+encodeURIComponent(payload);
 }
 async function loadManualUpiWithdrawals(){
  const box=document.getElementById("hostPayoutRequests"),button=document.getElementById("hostPayoutRequestBtn"),status=document.getElementById("hostPayoutStatus");if(!box)return;
  if(!currentUser){box.textContent="Log in to view withdrawal history.";if(button)button.disabled=true;return}
  const {data,error}=await supabaseClient.rpc("hearttalk_get_manual_upi_withdrawals");
- if(error){box.textContent="Withdrawal setup pending. Apply the manual UPI withdrawal SQL migration.";if(button)button.disabled=true;return}
+ if(error){box.textContent="Withdrawal setup pending. Apply the latest manual UPI QR withdrawal migration.";if(button)button.disabled=true;return}
  const available=Number(data.available_amount_paise||0),availableEl=document.getElementById("hostAvailableINR");
  if(availableEl)availableEl.textContent="₹"+(available/100).toFixed(2);
  if(button)button.disabled=available<50000;
- if(status)status.textContent=available>=50000?"You can request ₹500 or more. Requests are reviewed manually.":"Minimum ₹500 available earnings required. Pending requests reserve their amount.";
- const rows=data.requests||[];box.innerHTML=rows.length?'<b>Withdrawal history</b>'+rows.map(x=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>₹'+(Number(x.amount_paise)/100).toFixed(2)+' · '+escapeHtml(x.status)+'</b><small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+(x.utr?' · UTR '+escapeHtml(x.utr):'')+(x.admin_note?' · '+escapeHtml(x.admin_note):'')+'</small></div>').join(""):'No withdrawal requests yet.';
+ if(status)status.textContent=available>=50000?"You can request ₹500 or more. Request amount is reserved until paid or rejected.":"Minimum ₹500 available earnings required. Pending requests reserve their amount.";
+ const rows=data.requests||[];
+ box.innerHTML=rows.length?'<b>Withdrawal history</b>'+rows.map(x=>{
+  const active=["pending","approved"].includes(String(x.status).toLowerCase());
+  const qr=active&&x.upi_id?'<div style="margin-top:10px;padding:12px;background:#fff;border-radius:12px;display:inline-block;text-align:center"><img alt="Fixed amount UPI withdrawal QR" width="190" height="190" loading="lazy" src="'+heartTalkUpiQrUrl(x.upi_id,x.account_holder_name,x.amount_paise,x.id)+'"><div style="color:#222;font-size:12px;font-weight:700">Scan to pay ₹'+(Number(x.amount_paise)/100).toFixed(2)+'</div><div style="color:#555;font-size:10px">Request '+escapeHtml(String(x.id).slice(0,8))+'</div></div>':'';
+  return '<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>₹'+(Number(x.amount_paise)/100).toFixed(2)+' · '+escapeHtml(x.status)+'</b><small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+(x.utr?' · UTR '+escapeHtml(x.utr):'')+(x.admin_note?' · '+escapeHtml(x.admin_note):'')+'</small>'+qr+'</div>';
+ }).join(""):'No withdrawal requests yet.';
 }
 async function loadHostEarnings(){
  const total=document.getElementById("hostEarnedCoins"),count=document.getElementById("hostGiftCount"),history=document.getElementById("hostEarningsHistory");
