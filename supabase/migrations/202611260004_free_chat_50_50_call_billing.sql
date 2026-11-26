@@ -77,7 +77,7 @@ begin
  if v_call.status not in ('ringing','accepted') then
   return jsonb_build_object('updated',false,'status',v_call.status,'charged_coins',v_call.charged_coins,'host_earned_coins',v_call.host_earned_coins,'billing_status',v_call.billing_status);
  end if;
- update public.call_sessions set status=final_status,ended_at=now() where id=target_call_id and status in ('ringing','accepted');
+ update public.call_sessions set status=case when final_status='busy' then 'missed' else final_status end,ended_at=now() where id=target_call_id and status in ('ringing','accepted');
  if final_status<>'ended' or v_call.status<>'accepted' or v_call.started_at is null then
   return jsonb_build_object('updated',true,'status',final_status,'charged_coins',0,'billing_status','not_billable');
  end if;
@@ -112,6 +112,18 @@ begin
 end; $$;
 revoke all on function public.hearttalk_end_call(uuid,text) from public,anon;
 grant execute on function public.hearttalk_end_call(uuid,text) to authenticated;
+
+-- Ensure the idempotency table exists even if the earlier migration was not applied
+-- in this environment. This is safe and preserves existing request records.
+create table if not exists public.hearttalk_gift_requests (
+ sender_id uuid not null references auth.users(id) on delete cascade,
+ request_id uuid not null,
+ result jsonb not null,
+ created_at timestamptz not null default now(),
+ primary key(sender_id,request_id)
+);
+alter table public.hearttalk_gift_requests enable row level security;
+revoke all on public.hearttalk_gift_requests from public,anon,authenticated;
 
 -- Keep the 3-argument idempotent gift RPC used by the live frontend.
 -- 50/50 applies to new gifts only; historical events are not rewritten.
