@@ -889,31 +889,46 @@ async function startCashfreePayment(){
 }
 async function processCashfreeReturn(){
  const url=new URL(window.location.href);
- const orderId=url.searchParams.get("order_id");
- if(url.searchParams.get("cashfree_return")!=="1"||!orderId||!currentUser)return;
+ const orderId=url.searchParams.get("order_id")||sessionStorage.getItem("ht_cashfree_pending_order");
+ const isReturn=url.searchParams.get("cashfree_return")==="1"||!!sessionStorage.getItem("ht_cashfree_pending_order");
+ if(!isReturn||!orderId||!currentUser)return;
  if(sessionStorage.getItem("ht_cashfree_verifying_order")===orderId)return;
  sessionStorage.setItem("ht_cashfree_verifying_order",orderId);
  const status=document.getElementById("cashfreePaymentStatus");
+ let credited=false,lastMessage="Payment is still being confirmed by Cashfree.";
  try{
-  if(status)status.textContent="Verifying your Cashfree payment securely…";
-  const {data,error}=await supabaseClient.functions.invoke("verify-cashfree-payment",{body:{order_id:orderId}});
-  if(error)throw error;
-  const resultStatus=String(data?.status||"").toLowerCase();
-  if(resultStatus==="credited"||resultStatus==="already_credited"){
-   notify("Payment verified. "+Number(data.coins||0)+" coins added to your wallet.");
-   document.getElementById("cashfreeRechargeModal")?.classList.remove("show");
-   showView("wallet");await loadWallet();
-  }else{
-   notify(data?.message||"Payment is not confirmed yet. No coins were added.");
-   if(status)status.textContent=data?.message||"Payment is pending. Check again later; do not pay again.";
+  if(status)status.textContent="Verifying payment securely…";
+  // Cashfree can confirm the payment just after redirect/webhook; poll the server briefly.
+  for(let attempt=0;attempt<20;attempt++){
+   const {data,error}=await supabaseClient.functions.invoke("verify-cashfree-payment",{body:{order_id:orderId}});
+   if(error)throw error;
+   const state=String(data?.status||"").toLowerCase();
+   if(state==="credited"||state==="already_credited"){
+    credited=true;
+    notify("Payment successful. "+Number(data.coins||0)+" coins credited to your wallet.");
+    document.getElementById("cashfreeRechargeModal")?.classList.remove("show");
+    showView("wallet");
+    await loadWallet();
+    break;
+   }
+   lastMessage=data?.message||"Payment is not confirmed yet. Checking again…";
+   if(status)status.textContent=lastMessage+" ("+(attempt+1)+"/20)";
+   if(state==="needs_review"&&attempt>=5)break;
+   if(attempt<19)await new Promise(resolve=>setTimeout(resolve,3000));
+  }
+  if(!credited){
+   if(status)status.textContent=lastMessage+" Your order is saved; return to Wallet and refresh to retry. Do not pay again.";
+   notify("Payment confirmation is taking longer. Do not pay again; Wallet will retry verification.");
+   showView("wallet");
+   await loadWallet();
   }
  }catch(e){
   console.error("Cashfree return verification:",e);
-  notify(e.message||"Could not verify payment. Do not pay again until the order is checked.");
-  if(status)status.textContent=e.message||"Verification failed. Keep this order ID for support: "+orderId;
+  if(status)status.textContent=e.message||"Verification failed. Your order is saved; do not pay again.";
+  notify("Could not confirm payment yet. Do not pay again; open Wallet to retry.");
  }finally{
   sessionStorage.removeItem("ht_cashfree_verifying_order");
-  sessionStorage.removeItem("ht_cashfree_pending_order");
+  if(credited)sessionStorage.removeItem("ht_cashfree_pending_order");
   url.searchParams.delete("cashfree_return");url.searchParams.delete("order_id");
   window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
  }
@@ -964,6 +979,30 @@ async function recoverPendingCashfreeCredits(){
   if(state==="needs_review")notify("Your payment is being checked. Do not pay again; contact HeartTalk support if it remains pending.");
   return false;
  }catch(e){console.error("Cashfree pending-order recovery:",e);return false;}
+}
+let heartTalkWalletChannel=null;
+async function refreshWalletDisplayOnly(){
+ if(!currentUser)return;
+ const balance=document.getElementById("walletCoins"),status=document.getElementById("walletStatus"),list=document.getElementById("walletTransactions");
+ if(!balance||!status||!list)return;
+ const [b,l]=await Promise.all([
+  supabaseClient.rpc("get_wallet_balance"),
+  supabaseClient.from("wallet_ledger").select("amount,entry_type,reference_id,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50)
+ ]);
+ if(b.error||l.error)return;
+ const total=Number(b.data||0),rows=l.data||[];
+ balance.textContent=String(total);
+ status.textContent=rows.length+" recent ledger entr"+(rows.length===1?"y":"ies")+" · balance from the complete ledger";
+ const coin=document.getElementById("coinBalance");if(coin)coin.textContent=String(total);
+ const profileCoin=document.getElementById("profileCoinBalance");if(profileCoin)profileCoin.textContent=String(total);
+ list.innerHTML=rows.length?rows.map(row=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee"><div><b>'+escapeHtml(String(row.entry_type||"transaction").replace(/_/g," "))+'</b><div class="muted">'+new Date(row.created_at).toLocaleString()+'</div></div><b style="white-space:nowrap;color:'+(row.amount>0?'#129b75':'#d72c78')+'">'+(row.amount>0?"+":"")+Number(row.amount)+' coins</b></div>').join(""):'<p class="muted">No wallet transactions yet.</p>';
+}
+function startHeartTalkWalletRealtime(){
+ if(!currentUser)return;
+ if(heartTalkWalletChannel)supabaseClient.removeChannel(heartTalkWalletChannel);
+ heartTalkWalletChannel=supabaseClient.channel("hearttalk-wallet-"+currentUser.id)
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"wallet_ledger",filter:"user_id=eq."+currentUser.id},()=>refreshWalletDisplayOnly())
+  .subscribe();
 }
 async function loadWallet(){
  loadHeartTalkCoinPackages();
@@ -1852,7 +1891,7 @@ async function claimHeartTalkLoginBonus(){
   if(typeof loadWallet==="function")await loadWallet();
  }catch(e){console.error("HeartTalk login bonus claim failed:",e);notify("Login bonus could not be added yet. Please try again later.");}
 }
-let heartTalkPresenceTimer=null;async function heartTalkPresenceHeartbeat(){if(!currentUser)return;try{await supabaseClient.from("hearttalk_presence").upsert({user_id:currentUser.id,last_seen:new Date().toISOString()},{onConflict:"user_id"});}catch(e){console.warn("Presence heartbeat:",e);}}function startHeartTalkPresence(){if(heartTalkPresenceTimer)clearInterval(heartTalkPresenceTimer);heartTalkPresenceHeartbeat();heartTalkPresenceTimer=setInterval(heartTalkPresenceHeartbeat,45000);}function stopHeartTalkPresence(){if(heartTalkPresenceTimer){clearInterval(heartTalkPresenceTimer);heartTalkPresenceTimer=null;}}window.addEventListener("beforeunload",stopHeartTalkPresence);supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){setTimeout(syncHeartTalkNativePushToken,600);startHeartTalkPresence();loadHomeHosts().catch(e=>console.error("Home hosts loader:",e));}if(_event==='SIGNED_IN')setTimeout(promptHostSelfieAfterLogin,1200);else stopHeartTalkPresence();if(currentUser){if(_event==='SIGNED_IN')setTimeout(claimHeartTalkLoginBonus,500);if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling();setTimeout(processCashfreeReturn,700);setTimeout(syncHeartTalkPushAfterLogin,700)}else{document.getElementById("heartTalkPushPrompt")?.remove();if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
+let heartTalkPresenceTimer=null;async function heartTalkPresenceHeartbeat(){if(!currentUser)return;try{await supabaseClient.from("hearttalk_presence").upsert({user_id:currentUser.id,last_seen:new Date().toISOString()},{onConflict:"user_id"});}catch(e){console.warn("Presence heartbeat:",e);}}function startHeartTalkPresence(){if(heartTalkPresenceTimer)clearInterval(heartTalkPresenceTimer);heartTalkPresenceHeartbeat();heartTalkPresenceTimer=setInterval(heartTalkPresenceHeartbeat,45000);}function stopHeartTalkPresence(){if(heartTalkPresenceTimer){clearInterval(heartTalkPresenceTimer);heartTalkPresenceTimer=null;}}window.addEventListener("beforeunload",stopHeartTalkPresence);supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;if(currentUser){startHeartTalkWalletRealtime();setTimeout(syncHeartTalkNativePushToken,600);startHeartTalkPresence();loadHomeHosts().catch(e=>console.error("Home hosts loader:",e));}if(_event==='SIGNED_IN')setTimeout(promptHostSelfieAfterLogin,1200);else stopHeartTalkPresence();if(currentUser){if(_event==='SIGNED_IN')setTimeout(claimHeartTalkLoginBonus,500);if(document.getElementById("storeView")?.classList.contains("active"))loadHeartTalkStore();startIncomingCallPolling();setTimeout(processCashfreeReturn,700);setTimeout(syncHeartTalkPushAfterLogin,700)}else{document.getElementById("heartTalkPushPrompt")?.remove();if(incomingCallPollTimer)clearInterval(incomingCallPollTimer);incomingCallPollTimer=null;window.pendingIncomingCallId=null;stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");cleanupCall(true)}});
 supabaseClient.auth.getSession().then(async({data})=>{if(data.session){currentUser=data.session.user;startHeartTalkPresence();authRequiredAtStartup=false;setTimeout(promptHostSelfieAfterLogin,1200);document.body.classList.remove("auth-required");startIncomingCallPolling();document.getElementById("authTop").textContent="Log out";document.getElementById("authTop").onclick=logout;loadHomeHosts().catch(e=>console.error("Home hosts loader:",e));await loadProfile();await loadDiscover();await enforceHeartTalkOnboarding();await processCashfreeReturn();setTimeout(syncHeartTalkPushAfterLogin,900)}else{authRequiredAtStartup=true;document.body.classList.add("auth-required");document.getElementById("authModal").classList.add("show");setAuthMethod("phone");const close=document.getElementById("authCloseBtn");if(close)close.style.display="none";}});
 </script>
 <script>
