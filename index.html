@@ -1917,7 +1917,7 @@ let hostSelfieStream=null;
 function ensureHostSelfiePrompt(){
  if(document.getElementById("hostVerificationApplyPanel"))return;
  const panel=document.createElement("div");panel.id="hostVerificationApplyPanel";panel.style.cssText="display:none;position:fixed;inset:0;z-index:9999;background:#000b;align-items:center;justify-content:center;padding:16px";
- panel.innerHTML='<div style="background:#30183f;border:1px solid #71356e;border-radius:18px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow:auto;color:#fff"><button onclick="document.getElementById(\'hostVerificationApplyPanel\').style.display=\'none\'" style="float:right;background:none;color:white;border:0;font-size:24px">×</button><h2>Host verification</h2><p>To apply as a HeartTalk Host, complete a short live selfie video verification (3 seconds).</p><p id="hostVerificationStatus">Checking eligibility…</p><label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input id="hostVerificationConsent" type="checkbox"><span>I consent to secure video selfie verification for Host application.</span></label><button id="hostVerificationApplyBtn" class="primary" onclick="applyForHeartTalkHost()" style="width:100%">Apply as Host</button><button id="hostSelfieRecordBtn" class="primary" onclick="recordHeartTalkHostSelfie()" style="width:100%;margin-top:10px" disabled>Record 3-second selfie</button><video id="hostSelfiePreview" playsinline muted style="display:none;width:100%;margin-top:12px;border-radius:12px"></video><p id="hostSelfieProgress"></p></div>';
+ panel.innerHTML='<div style="background:#30183f;border:1px solid #71356e;border-radius:18px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow:auto;color:#fff"><h2>Selfie verification</h2><p>To activate Host features, record a live 3-second selfie video. Your normal User account remains available while verification is pending.</p><p id="hostVerificationStatus">Preparing secure verification…</p><label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input id="hostVerificationConsent" type="checkbox"><span>I agree to record and securely submit this 3-second video selfie for Host identity verification.</span></label><button id="hostSelfieRecordBtn" class="primary" onclick="startHeartTalkHostVerification()" style="width:100%;margin-top:10px" disabled>Continue to camera</button><video id="hostSelfiePreview" playsinline muted style="display:none;width:100%;margin-top:12px;border-radius:12px"></video><p id="hostSelfieProgress"></p></div>';
  document.body.appendChild(panel);
 }
 async function promptHostSelfieAfterLogin(){
@@ -1926,7 +1926,7 @@ async function promptHostSelfieAfterLogin(){
  const {data,error}=await supabaseClient.from("profiles").select("gender,age").eq("id",currentUser.id).maybeSingle();
  if(error||!data||String(data.gender||"").toLowerCase()!=="female"||Number(data.age)<18)return;
  await loadHostVerificationStatus();const status=document.getElementById("hostVerificationStatus");
- if(status&&(/verified and active|Application and selfie submitted|Application rejected/i).test(status.textContent)){panel.style.display="none";return;}
+ if(status&&(/verified and active|Application and selfie submitted|Application rejected|review pending/i).test(status.textContent)){panel.style.display="none";return;}
  panel.style.display="flex";
 }
 
@@ -1943,12 +1943,26 @@ async function loadHostVerificationStatus(){
  const doc=d.data&&d.data[0];if(h.data&&h.data.host_status==="active"&&a.data&&a.data.status==="approved"&&doc&&doc.status==="approved"){box.textContent="✓ Host verified and active.";if(apply)apply.style.display="none";if(record)record.disabled=true;return}
  if(a.data&&(a.data.status==="pending"||a.data.status==="under_review")){box.textContent=doc&&doc.status==="pending"?"Application and selfie submitted. Admin review pending.":"Application received. Record your 3-second live selfie.";if(apply)apply.style.display="none";if(record)record.disabled=!!doc&&doc.status==="pending";return}
  if(a.data&&a.data.status==="rejected"){box.textContent="Application rejected. "+(a.data.review_note||"Contact support.");if(apply)apply.disabled=true;if(record)record.disabled=true;return}
- box.textContent="Not applied yet. Apply first, then record your live selfie.";if(apply)apply.style.display="";if(record)record.disabled=true;
+ box.textContent="Female account detected. Give consent and continue to the live selfie camera.";if(apply)apply.style.display="none";if(record){record.style.display="";record.disabled=!document.getElementById("hostVerificationConsent")?.checked;}
 }
 async function applyForHeartTalkHost(){
  if(!currentUser){openAuth();return}if(!document.getElementById("hostVerificationConsent").checked){notify("Please accept the selfie verification consent.");return}
  const b=document.getElementById("hostVerificationApplyBtn");b.disabled=true;
  try{const r=await supabaseClient.rpc("submit_host_application",{p_preferred_language:localStorage.getItem("hearttalk_language")==="Telugu"?"te":"en",p_intro:"Host application with 3-second live selfie verification."});if(r.error)throw r.error;notify("Application created. Record your 3-second live selfie now.");await loadHostVerificationStatus();document.getElementById("hostSelfieRecordBtn").disabled=false}catch(e){notify(e.message||"Could not submit Host application.")}finally{b.disabled=false}
+}
+async function startHeartTalkHostVerification(){
+ if(!currentUser){openAuth();return}
+ const consent=document.getElementById("hostVerificationConsent"),btn=document.getElementById("hostSelfieRecordBtn");
+ if(!consent?.checked){notify("Please provide consent before camera recording.");return}
+ btn.disabled=true;
+ try{
+  const profile=await supabaseClient.from("profiles").select("gender,age").eq("id",currentUser.id).single();
+  if(profile.error)throw profile.error;
+  if(String(profile.data.gender||"").toLowerCase()!=="female"||Number(profile.data.age)<18)throw new Error("Host verification is available only to eligible adults.");
+  const app=await supabaseClient.rpc("submit_host_application",{p_preferred_language:localStorage.getItem("hearttalk_language")==="Telugu"?"te":"en",p_intro:"Automatic female onboarding with mandatory 3-second live selfie verification."});
+  if(app.error)throw app.error;
+  await recordHeartTalkHostSelfie();
+ }catch(e){notify(e.message||"Could not start Host verification.");btn.disabled=false}
 }
 async function recordHeartTalkHostSelfie(){
  if(!currentUser){openAuth();return}if(!document.getElementById("hostVerificationConsent").checked){notify("Please accept the consent.");return}
