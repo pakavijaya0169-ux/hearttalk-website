@@ -106,7 +106,7 @@ Relevant commits:
 - **Still needs functional verification:** test a valid host withdrawal request, confirm QR amount/UPI details, approve it in admin, record a real UTR only after an actual transfer, and verify the balance/reservation lifecycle. No withdrawal has been paid or tested.
 
 ## Other product decisions / requirements to preserve
-- Host/platform revenue share: host 60%, platform 40% (latest agreed).
+- **Current business rule (2026-11-26):** eligible User↔approved Host call and gift revenue share is Host 50%, HeartTalk 50%. This supersedes older 60/40 and 70/30 notes for new eligible earnings.
 - Call pricing discussed: audio 2 coins/minute; video 5 coins/minute.
 - Login bonus: 10 coins.
 - Product goals include chat, audio/video calls, live streaming, wallet/coins, gifts, admin dashboard, host earnings, withdrawals, moderation and safety.
@@ -144,3 +144,13 @@ Read this file first, then inspect the live GitHub repository and latest GitHub 
 - **Not yet live/verified:** user must run the new migration in Supabase SQL Editor, then test the Admin Live Operations tab. Do not claim its RPCs are active until SQL execution succeeds.
 - **Important limitation:** admin end-call changes `call_sessions.status`; clients poll status and should exit. Admin end-room updates `live_rooms` and member `left_at`; LiveKit provider-side teardown still needs verification.
 - Next implementation after Step 1 verification: Step 2 Financial Control Center with read-only reconciliation first, then guarded adjustments/exports; do not change existing wallet, host ledger, or withdrawal history.
+
+
+### Business rules implementation — free chat and 50/50 call/gift split (2026-11-26)
+- Added migration `supabase/migrations/202611260004_free_chat_50_50_call_billing.sql` (commits `dda39312971514f3fe9a3f13d1c8c1ffb7b711a4`, amended `7d58961a937c599da0ef0fcbdea5ac9fd84aeb4a`).
+- Chat end-billing now records elapsed time but charges 0 coins and awards 0 new chat earnings. Existing chat sessions, earnings, wallet entries, and cash ledger history are preserved. The trigger that would turn future chat earnings into withdrawable cash is removed; historical rows are not deleted.
+- Eligible call billing is server-side in `hearttalk_end_call`: male User is payer regardless of who initiated; only an approved/active Host with approved live-selfie can earn. Voice = 2 coins per started minute; video = 5 coins per started minute; partial minutes round up. If User balance is insufficient, the call still ends but no coins are charged or earned; billing status is marked for review.
+- New call earnings are recorded once per call and converted into Host cash ledger at the existing ₹0.50 per Host earning coin. Gift RPC keeps the existing 3-argument idempotency key used by the frontend and applies 50/50 to new gifts.
+- **Not live yet:** user must run the new migration in Supabase SQL Editor. No production DB changes have been executed by this GitHub commit alone.
+- **Important verification still required:** confirm exact production schema/permissions, run migration, then test both call directions (male calls Host and Host calls male), audio/video durations, insufficient balance, duplicate end-call retry, free chat, gift retry, and verify the cash ledger/withdrawal balance. Existing balances and withdrawal records must remain unchanged.
+- Cashfree Payment Gateway remains the coin-recharge provider already integrated through `create-cashfree-order`, `verify-cashfree-payment`, and `cashfree-webhook`. Production readiness still depends on provider live approval, live credentials, actual webhook signing secret, and production environment. Cashfree Payouts remains restricted; do not represent payout transfers as enabled.
