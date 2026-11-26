@@ -5,6 +5,9 @@ on:
   push:
     paths:
       - ".github/workflows/deploy-cashfree-webhook.yml"
+      - "supabase/functions/cashfree-webhook/**"
+      - "supabase/functions/create-cashfree-order/**"
+      - "supabase/functions/verify-cashfree-payment/**"
 
 jobs:
   deploy:
