@@ -951,12 +951,44 @@ async function loadManualRechargeHistory(){
  const rows=Array.isArray(data)?data:[];
  box.innerHTML=rows.length?rows.map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eee"><div><b>'+escapeHtml(r.package_title)+' · ₹'+(Number(r.amount_paise)/100).toFixed(2)+'</b><div class="muted">UTR '+escapeHtml(r.utr)+' · '+new Date(r.created_at).toLocaleString()+'</div></div><b>'+escapeHtml(r.status)+'</b></div>').join(""):'<p class="muted">No manual UPI recharge requests yet.</p>';
 }
+async function recoverPendingCashfreeCredits(){
+ if(!currentUser)return false;
+ const {data:pending,error}=await supabaseClient.from("payment_orders")
+  .select("provider_order_id")
+  .eq("user_id",currentUser.id)
+  .eq("provider","cashfree")
+  .eq("status","created")
+  .gte("created_at",new Date(Date.now()-7*24*60*60*1000).toISOString())
+  .order("created_at",{ascending:false})
+  .limit(5);
+ if(error){console.warn("Pending Cashfree order lookup:",error);return false;}
+ let credited=false;
+ for(const order of (pending||[])){
+  const id=String(order.provider_order_id||"");
+  if(!/^ht_[a-f0-9]{32}$/.test(id))continue;
+  const key="ht_cashfree_recovery_"+id;
+  if(sessionStorage.getItem(key)==="checking")continue;
+  sessionStorage.setItem(key,"checking");
+  try{
+   const {data,error:verifyError}=await supabaseClient.functions.invoke("verify-cashfree-payment",{body:{order_id:id}});
+   if(verifyError)throw verifyError;
+   const state=String(data?.status||"").toLowerCase();
+   if(state==="credited"||state==="already_credited"){
+    credited=true;
+    notify("Cashfree payment verified. "+Number(data.coins||0)+" coins credited.");
+   }
+  }catch(e){console.warn("Cashfree recovery verification failed for",id,e);}
+  finally{sessionStorage.removeItem(key);}
+ }
+ return credited;
+}
 async function loadWallet(){
  loadHeartTalkCoinPackages();
  const balance=document.getElementById("walletCoins"),status=document.getElementById("walletStatus"),list=document.getElementById("walletTransactions");
  if(!balance||!status||!list)return;
  if(!currentUser){balance.textContent="0";status.textContent="Please log in to view your wallet.";list.innerHTML='<p class="muted">Log in to view transactions.</p>';return}
  status.textContent="Loading wallet…";list.innerHTML='<p class="muted">Loading transactions…</p>';
+ await recoverPendingCashfreeCredits();
  const [balanceResult,ledgerResult]=await Promise.all([
   supabaseClient.rpc("get_wallet_balance"),
   supabaseClient.from("wallet_ledger").select("amount,entry_type,reference_id,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50)
