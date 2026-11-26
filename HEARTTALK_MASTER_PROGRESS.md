@@ -1,6 +1,6 @@
 # HEARTTALK — MASTER PROGRESS
 
-Last updated: 2026-11-25
+Last updated: 2026-11-26
 Repository: https://github.com/pakavijaya0169-ux/hearttalk-website
 Live website: https://pakavijaya0169-ux.github.io/hearttalk-website/
 Supabase project: `dognojmymhlaewrjqswz`
@@ -107,8 +107,10 @@ Relevant commits:
 
 ## Other product decisions / requirements to preserve
 - **Current business rule (2026-11-26):** eligible User↔approved Host call and gift revenue share is Host 50%, HeartTalk 50%. This supersedes older 60/40 and 70/30 notes for new eligible earnings.
-- Call pricing discussed: audio 2 coins/minute; video 5 coins/minute.
-- Login bonus: 10 coins.
+- Chat is completely free: 0 coin deductions and 0 new Host earnings. Preserve all historical chat earnings and cash-ledger rows.
+- Call pricing: audio 2 coins per started minute; video 5 coins per started minute. Male User pays for calls in either direction; Host wallet is never charged.
+- New eligible call/gift revenue split: 50% Host / 50% HeartTalk. This supersedes prior 60/40 and 70/30 splits for new earnings.
+- Login bonus: 10 coins for male Users only; female Hosts receive 0 login bonus. Recharge UI/packages are visible only to male Users; Hosts cannot recharge.
 - Product goals include chat, audio/video calls, live streaming, wallet/coins, gifts, admin dashboard, host earnings, withdrawals, moderation and safety.
 - User wants horizontal scrolling host profiles on the home screen and language-based host discovery.
 - App store positioning must accurately describe social communication/friendship. Do not disguise a dating or paid-host model if that is what the actual functionality amounts to; review platform policies carefully.
@@ -120,7 +122,7 @@ Relevant commits:
 - Do not run production payment tests without explicit confirmation of provider approval and correct live credentials.
 
 ## Handoff instruction for the next ChatGPT conversation
-Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. All three Cashfree Edge Functions are deployed successfully (run `45539338698`). Frontend verification invocation has been inspected. Next verify the remote RPC migration and Cashfree live approval/credentials/webhook signing secret before any live charge. Never expose secrets or run a production payment without those checks.
+Read this file first, then inspect the live GitHub repository and latest GitHub Actions runs before changing anything. All three Cashfree Edge Functions are deployed successfully (run `45539338698`). Frontend verification invocation has been inspected. The 2026-11-26 business-rules migration execution result is unconfirmed; verify the SQL Editor result and inspect production schema before further billing work. Verify Cashfree live approval/credentials/webhook signing secret before any live charge. Never expose secrets or run a production payment without those checks.
 
 
 ### Google sign-in implementation (2026-11-25)
@@ -149,8 +151,9 @@ Read this file first, then inspect the live GitHub repository and latest GitHub 
 ### Business rules implementation — free chat and 50/50 call/gift split (2026-11-26)
 - Added migration `supabase/migrations/202611260004_free_chat_50_50_call_billing.sql` (commits `dda39312971514f3fe9a3f13d1c8c1ffb7b711a4`, amended `7d58961a937c599da0ef0fcbdea5ac9fd84aeb4a`).
 - Chat end-billing now records elapsed time but charges 0 coins and awards 0 new chat earnings. Existing chat sessions, earnings, wallet entries, and cash ledger history are preserved. The trigger that would turn future chat earnings into withdrawable cash is removed; historical rows are not deleted.
-- Eligible call billing is server-side in `hearttalk_end_call`: male User is payer regardless of who initiated; only an approved/active Host with approved live-selfie can earn. Voice = 2 coins per started minute; video = 5 coins per started minute; partial minutes round up. If User balance is insufficient, the call still ends but no coins are charged or earned; billing status is marked for review.
+- Eligible call billing is server-side in `hearttalk_end_call`: male User is payer regardless of who initiated; only an approved/active Host with approved live-selfie can earn. Voice = 2 coins per started minute; video = 5 coins per started minute; partial minutes round up. If User balance is insufficient at call end, the call still ends but no coins are charged or earned; billing status is marked `insufficient_coins`. This end-of-call-only check is a known billing risk; implement pre-call balance reservation/authorization before production.
 - New call earnings are recorded once per call and converted into Host cash ledger at the existing ₹0.50 per Host earning coin. Gift RPC keeps the existing 3-argument idempotency key used by the frontend and applies 50/50 to new gifts.
-- **Not live yet:** user must run the new migration in Supabase SQL Editor. No production DB changes have been executed by this GitHub commit alone.
-- **Important verification still required:** confirm exact production schema/permissions, run migration, then test both call directions (male calls Host and Host calls male), audio/video durations, insufficient balance, duplicate end-call retry, free chat, gift retry, and verify the cash ledger/withdrawal balance. Existing balances and withdrawal records must remain unchanged.
+- **Execution status:** user reported running this migration in Supabase SQL Editor, but the SQL Editor result has not yet been confirmed. Do not mark it applied until the user shares `Success. No rows returned` or the actual error output. A GitHub commit alone does not change the production database.
+- **Important verification still required:** confirm exact production schema/permissions and migration result, then test both call directions (male calls Host and Host calls male), audio/video durations, insufficient balance, duplicate end-call retry, free chat, gift retry, and verify the cash ledger/withdrawal balance. Existing balances and withdrawal records must remain unchanged.
+- **Known migration review blocker:** the current migration references `public.hearttalk_gift_requests` but does not create it. The table is created by earlier migration `202611190006_gift_duplicate_charge_protection.sql`; verify it exists in the target Supabase database before considering the new migration complete. Also verify `hearttalk_chat_sessions.status` permits `no_charge`, and confirm trigger/schema assumptions before further production changes.
 - Cashfree Payment Gateway remains the coin-recharge provider already integrated through `create-cashfree-order`, `verify-cashfree-payment`, and `cashfree-webhook`. Production readiness still depends on provider live approval, live credentials, actual webhook signing secret, and production environment. Cashfree Payouts remains restricted; do not represent payout transfers as enabled.
