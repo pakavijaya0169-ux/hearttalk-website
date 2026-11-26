@@ -1,0 +1,73 @@
+-- HeartTalk Cashfree credit RPC: rely on EXECUTE privilege, not JWT GUC checks.
+-- SECURITY DEFINER + EXECUTE granted only to service_role is the authorization boundary.
+-- Safe to re-run. Existing wallet/payment rows are not modified.
+
+create or replace function public.credit_verified_cashfree_coin_purchase(
+  p_provider_order_id text,
+  p_provider_payment_id text,
+  p_amount_paise bigint,
+  p_currency text
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_order public.payment_orders%rowtype;
+begin
+  if p_provider_order_id is null or p_provider_payment_id is null
+     or p_amount_paise is null or p_currency is null then
+    raise exception 'Payment verification details are incomplete';
+  end if;
+
+  select * into v_order
+  from public.payment_orders
+  where provider_order_id = p_provider_order_id
+    and provider = 'cashfree'
+  for update;
+
+  if not found then
+    raise exception 'Cashfree payment order not found';
+  end if;
+
+  if v_order.status = 'paid'
+     and v_order.provider_payment_id = p_provider_payment_id then
+    return jsonb_build_object('status', 'already_credited', 'coins', v_order.coins);
+  end if;
+
+  if v_order.status <> 'created' then
+    raise exception 'Payment order is not payable';
+  end if;
+
+  if v_order.amount_paise <> p_amount_paise
+     or v_order.currency <> p_currency then
+    raise exception 'Payment amount or currency mismatch';
+  end if;
+
+  insert into public.payment_transactions(
+    user_id, provider, provider_transaction_id, amount_paise, currency, status
+  ) values (
+    v_order.user_id, 'cashfree', p_provider_payment_id,
+    p_amount_paise, p_currency, 'succeeded'
+  );
+
+  insert into public.wallet_ledger(user_id, amount, entry_type, reference_id)
+  values (
+    v_order.user_id, v_order.coins, 'purchase',
+    'cashfree:' || p_provider_payment_id
+  );
+
+  update public.payment_orders
+  set status = 'paid',
+      provider_payment_id = p_provider_payment_id,
+      paid_at = now()
+  where id = v_order.id;
+
+  return jsonb_build_object('status', 'credited', 'coins', v_order.coins);
+end;
+$$;
+
+revoke all on function public.credit_verified_cashfree_coin_purchase(text, text, bigint, text)
+  from public, anon, authenticated;
+grant execute on function public.credit_verified_cashfree_coin_purchase(text, text, bigint, text)
+  to service_role;
