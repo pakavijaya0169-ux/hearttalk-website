@@ -128,3 +128,19 @@ Read this file first, then inspect the live GitHub repository and latest GitHub 
 - Added Supabase Auth OAuth call using provider `google` and redirect back to the current HeartTalk page. This adds the frontend flow only.
 - **Required manual configuration before Google login can succeed:** enable Google provider in Supabase Authentication > Providers, add Google OAuth Client ID/Secret from Google Cloud, and allow the deployed website redirect URL in Supabase Authentication URL Configuration. Do not put OAuth client secret in frontend code.
 - GitHub Pages deployment must complete after the commit; then test Google sign-in on website and APK WebView.
+
+### Admin dashboard audit + Step 1 implementation (2026-11-26)
+- Inspected the current `admin/index.html`, the admin foundation/completion migrations, support/error center, analytics SQL, rich push campaign SQL, call session schema, live-room schema, live-room membership schema, chat billing migration, and call/live-room policy migrations.
+- Existing Admin modules found: User Registry, Coin Recharge, Profile Review, Host Approvals, Security & RBAC, Reports + audit history, Customer Support, App Errors, Analytics & Revenue, Host Withdrawals, Notifications, Offers, and Commerce.
+- Audit gaps confirmed in current code/schema:
+  - Staff role records exist, but the Admin UI itself states these roles do not yet grant scoped tool permissions.
+  - Push campaigns can be saved/queued, but real delivery depends on device token registration, FCM sender configuration, and scheduled worker health.
+  - Analytics reads verified payment transaction records; manual UPI revenue still requires bank reconciliation.
+  - Existing admin call/commission logs are historical; there was no unified live operations view for active calls, chats, and rooms.
+  - Live-room admin termination needs separate provider-side LiveKit cleanup verification; updating the database room status alone must not be described as proof that the provider room was destroyed.
+- **Step 1 code added:** migration `supabase/migrations/202611260001_admin_live_operations_control.sql` adds admin-only RPCs for active call/chat/live-room monitoring and audited admin end-call/end-room actions. It is additive and does not delete or rewrite historical records.
+- **Step 1 UI added:** `admin/index.html` now has a Live Operations tab showing active calls, active chat billing sessions, live/scheduled rooms, active member counts, and audited end controls.
+- Git commits: SQL migration `c60c2296b09283b5ec368f1c4bc71e42821b2d6c`; Admin UI `19c985da0da6a65635a215dc33ac20be4fa22fe8`.
+- **Not yet live/verified:** user must run the new migration in Supabase SQL Editor, then test the Admin Live Operations tab. Do not claim its RPCs are active until SQL execution succeeds.
+- **Important limitation:** admin end-call changes `call_sessions.status`; clients poll status and should exit. Admin end-room updates `live_rooms` and member `left_at`; LiveKit provider-side teardown still needs verification.
+- Next implementation after Step 1 verification: Step 2 Financial Control Center with read-only reconciliation first, then guarded adjustments/exports; do not change existing wallet, host ledger, or withdrawal history.
