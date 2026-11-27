@@ -312,6 +312,12 @@ p{color:#77747e}
 </style><style>
 #chatView .chat-media{display:block;max-width:min(260px,65vw);max-height:260px;border-radius:13px;object-fit:cover}
 #chatView .chat-audio{display:block;width:min(260px,65vw);height:42px}
+#chatView .ht-voice-note{display:flex;align-items:center;gap:10px;min-width:220px;max-width:min(310px,68vw);padding:9px 11px;border-radius:16px;background:#fff0f6;border:1px solid #f6cadd;margin:3px 0}
+#chatView .bubble.mine .ht-voice-note{background:#ffe0ed;border-color:#f5b8d0}
+#chatView .ht-voice-icon{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border-radius:50%;background:#f65c98;color:#fff;font-size:18px}
+#chatView .ht-voice-player{min-width:0;flex:1}
+#chatView .ht-voice-player .chat-audio{display:block;width:100%;max-width:250px;height:38px}
+#chatView .ht-voice-caption{display:block;font-size:10px;color:#986b80;margin:2px 3px 0}
 </style>
 <style>
 .home-feature-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin:32px 0 16px}.home-feature-heading h2{margin:5px 0;color:#211724}.home-feature-heading p{margin:0;font-size:14px;color:#807486}
@@ -1480,7 +1486,7 @@ async function renderChatMessageContent(raw){
   if(error||!data||!data.signedUrl)return '<span class="muted">Attachment unavailable</span>';
   const url=escapeHtml(data.signedUrl);
   if(bits[0]==="image")return '<a href="'+url+'" target="_blank" rel="noopener"><img class="chat-media" src="'+url+'" alt="Shared photo"></a>';
-  if(bits[0]==="audio")return '<audio class="chat-audio" controls preload="none" src="'+url+'"></audio>';
+  if(bits[0]==="audio")return '<div class="ht-voice-note"><span class="ht-voice-icon">🎙️</span><div class="ht-voice-player"><audio class="chat-audio" controls preload="metadata" playsinline src="'+url+'"></audio><span class="ht-voice-caption">Voice message</span></div></div>';
   return "Attachment";
  }
  if(value==="[[SAFETY_BLOCKED_PHONE]]")return '<span class="muted">🛡️ Phone number sharing blocked by HeartTalk safety.</span>';
