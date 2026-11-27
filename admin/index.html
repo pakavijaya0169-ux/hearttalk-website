@@ -148,6 +148,7 @@
 </main>
 <div class="modal" id="userModal"><div class="dialog"><div class="section-head"><h2>User details</h2><button class="btn" onclick="closeUser()">✕</button></div><div id="userDetails"></div></div></div>
 <div id="toast" class="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">document.addEventListener("DOMContentLoaded",()=>{const s=document.getElementById("adminMenuSearch");if(s)s.addEventListener("input",filterAdminMenu)});</script>
 <script>
 async function loadCommerce(){const {data,error}=await db.rpc("admin_get_commerce_settings");if(error){["coinPackageList","giftCatalogList","offerList","announcementList"].forEach(id=>$(id).innerHTML='<div class="notice">Run admin commerce migration: '+esc(error.message)+'</div>');return;}
@@ -568,9 +569,9 @@ async function initiateCashfreePayout(id){
  toast(data?.message||"Sandbox transfer submitted. Final status will arrive through the signed payout webhook.");
  await loadCashfreePayouts();
 }
-function adminHostPayoutQrUrl(r){
+function adminHostPayoutQrPayload(r){
  const p=new URLSearchParams({pa:r.upi_id,pn:r.account_holder_name||r.host_name||"HeartTalk Host",am:(Number(r.amount_paise||0)/100).toFixed(2),cu:"INR",tn:"HeartTalk withdrawal",tr:"HT"+String(r.id).replace(/-/g,"").slice(0,24)});
- return "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data="+encodeURIComponent("upi://pay?"+p.toString());
+ return "upi://pay?"+p.toString();
 }
 async function loadManualPayouts(){
  const status=$("manualPayoutStatus"),box=$("manualPayoutList");if(!status||!box)return;
@@ -582,9 +583,17 @@ async function loadManualPayouts(){
  status.textContent=rows.length+" request(s)";
  if(!rows.length){box.innerHTML='<div class="empty">No requests in this status.</div>';return;}
  box.innerHTML=rows.map(r=>{
-  const qr=String(r.status).toLowerCase()==="approved"&&r.upi_id?'<div style="margin:12px 0;padding:12px;background:#fff;border-radius:14px;display:inline-block;text-align:center"><img alt="Fixed amount UPI QR" width="190" height="190" loading="lazy" src="'+adminHostPayoutQrUrl(r)+'"><div style="color:#211b25;font-weight:800">Scan and pay exactly ₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</div><div style="color:#555;font-size:11px">Unique request: '+esc(String(r.id).slice(0,8))+'</div></div>':'';
+  const qrId="adminManualUpiQr_"+String(r.id);
+  const qr=String(r.status).toLowerCase()==="approved"&&r.upi_id?'<div style="margin:12px 0;padding:12px;background:#fff;border-radius:14px;display:inline-block;text-align:center"><div id="'+esc(qrId)+'" aria-label="Request-specific UPI QR code"></div><div style="color:#211b25;font-weight:800">Scan and pay exactly ₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</div><div style="color:#555;font-size:11px">Unique request: '+esc(String(r.id).slice(0,8))+'</div></div>':'';
   return '<div class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+esc(r.host_name||r.host_id)+'</b><div class="muted small">'+new Date(r.created_at).toLocaleString()+'</div><div class="muted small">Host ID: '+esc(r.host_id)+'</div></div><div><b>₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</b><div class="muted small">'+esc(r.status)+'</div></div></div><div class="muted small" style="margin:8px 0">UPI ID: <b>'+esc(r.upi_id)+'</b> · Account holder: '+esc(r.account_holder_name)+'</div><div class="muted small">Request ID: '+esc(r.id)+'</div>'+qr+(r.utr?'<div class="muted small">UTR: '+esc(r.utr)+'</div>':'')+(r.admin_note?'<div class="muted small">Note: '+esc(r.admin_note)+'</div>':'')+(r.status==="pending"?'<div class="toolbar"><button class="btn" onclick="approveHostPayout(\''+esc(r.id)+'\')">Approve</button><button class="btn danger" onclick="rejectHostPayout(\''+esc(r.id)+'\')">Reject & release balance</button></div>':'')+(r.status==="approved"?'<div class="toolbar"><input id="payoutUtr_'+esc(r.id)+'" class="control" placeholder="Enter UTR after UPI transfer"><button class="btn primary" onclick="markHostPayoutPaid(\''+esc(r.id)+'\')">Mark Paid</button></div>':'')+'</div>';
  }).join("");
+ rows.forEach(r=>{
+  if(String(r.status).toLowerCase()!=="approved"||!r.upi_id)return;
+  const target=document.getElementById("adminManualUpiQr_"+String(r.id));
+  if(target&&typeof QRCode!=="undefined"){
+   new QRCode(target,{text:adminHostPayoutQrPayload(r),width:190,height:190,colorDark:"#111111",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+  }
+ });
 }
 async function approveHostPayout(id){const {error}=await db.rpc("admin_approve_host_payout",{p_request_id:id,p_admin_note:"Approved for manual UPI transfer"});if(error){toast(error.message);return;}toast("Request approved. Transfer manually, then record UTR.");await loadManualPayouts();}
 async function rejectHostPayout(id){const note=prompt("Reason for rejection (required):");if(!note||!note.trim())return;const {error}=await db.rpc("admin_reject_host_payout",{p_request_id:id,p_admin_note:note.trim()});if(error){toast(error.message);return;}toast("Request rejected; reserved balance released.");await loadManualPayouts();}
