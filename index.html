@@ -829,7 +829,6 @@ function openOfferStore(event){if(event){event.preventDefault();event.stopPropag
 function notify(s){const t=document.getElementById("toast");t.textContent=s;t.style.display="block";clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display="none",3200)}
 function showView(name){
  if(name==="admin"){if(!currentUser){notify("Please log in as admin.");openAuth();return;}window.location.href="./admin/index.html";return;}
- if(htChatBillingSessionId&&name!=="chat")endHeartTalkChatBilling();
  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
  const target=document.getElementById(name+"View");if(target)target.classList.add("active");
  document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
@@ -1459,8 +1458,7 @@ async function openConversation(id){
 }
 async function loadMessages(){
  if(!currentUser||!activeChatUser)return;
- document.getElementById("chatHeading").innerHTML="<div style=\"display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%\"><span style=\"display:inline-flex;align-items:center;gap:10px\"><span class=\"avatar\" style=\"width:36px;height:36px;margin:0;border-radius:50%;font-size:17px\">💜</span><span><b>"+escapeHtml(activeChatUser.display_name)+"</b><br><small class=\"muted\">HeartTalk member"+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+"</small></span></span><span class=\"toolbar\" style=\"margin:0\"><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('voice')\">📞</button><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('video')\">🎥</button><button class=\"secondary\" type=\"button\" id=\"htChatBillingStart\" onclick=\"startHeartTalkChatBilling()\">🪙 Start chat</button><button class=\"secondary\" type=\"button\" id=\"htChatBillingEnd\" onclick=\"endHeartTalkChatBilling()\" style=\"display:none\">End billing</button></span></div>";
- updateHeartTalkChatBillingUI();
+ document.getElementById("chatHeading").innerHTML="<div style=\"display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%\"><span style=\"display:inline-flex;align-items:center;gap:10px\"><span class=\"avatar\" style=\"width:36px;height:36px;margin:0;border-radius:50%;font-size:17px\">💜</span><span><b>"+escapeHtml(activeChatUser.display_name)+"</b><br><small class=\"muted\">HeartTalk member"+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+"</small></span></span><span class=\"toolbar\" style=\"margin:0\"><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('voice')\">📞</button><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('video')\">🎥</button></span></div>";
  document.getElementById("messageInput").disabled=false;document.getElementById("sendButton").disabled=false;
  const filter="and(sender_id.eq."+currentUser.id+",receiver_id.eq."+activeChatUser.id+"),and(sender_id.eq."+activeChatUser.id+",receiver_id.eq."+currentUser.id+")";
  const {data,error}=await supabaseClient.from("messages").select("id,sender_id,message,created_at").or(filter).order("created_at",{ascending:true}).limit(300);
@@ -1568,7 +1566,8 @@ function containsIndianMobileNumber(value){
  // Match Indian mobile numbers with optional +91/91/0 prefix and common separators.
  return /(^|[^0-9])(?:\+?91[\s().-]*)?0?[6-9](?:[\s().-]*[0-9]){9}(?![0-9])/.test(text);
 }
-// Chat and chat media are free; chat billing sessions are disabled.\nasync function sendMessage(e){
+// Chat and chat media are free; no chat billing session or coin ledger is started.
+async function sendMessage(e){
  e.preventDefault();
  if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
