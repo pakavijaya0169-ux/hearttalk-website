@@ -1511,11 +1511,8 @@ async function uploadChatMedia(file,kind){
  if(!valid){notify("Unsupported file type.");return}
  if(file.size>(kind==="image"?8388608:12582912)){notify("File is too large.");return}
  if(kind==="audio"){
-  notify("Checking voice message for phone numbers…");
-  try{
-   const check=await moderateVoiceMessage(file);
-   if(check.blocked){notify("🛡️ Phone numbers cannot be shared. This voice message was blocked before sending.");return}
-  }catch(e){console.error("Voice safety check failed",e);notify("Voice message not sent: safety check is unavailable. Please try again.");return}
+  // Free voice delivery: do not call paid OpenAI transcription.
+  // Text messages still retain the existing phone-number safety filter.
  }
  const ext=kind==="image"?(file.type.split("/")[1]||"jpg"):"webm";
  const path=currentUser.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"."+ext;
