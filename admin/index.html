@@ -104,6 +104,7 @@
 <div class="card" style="margin-top:16px">
  <div class="section-head"><div><h2>⚡ Cashfree Host Payouts (Sandbox)</h2><div class="muted small">Review Cashfree withdrawal requests, approve them, then initiate a sandbox transfer.</div></div><button class="btn" onclick="loadCashfreePayouts()">↻ Refresh Cashfree requests</button></div>
  <div class="notice">SANDBOX ONLY. Production payouts are blocked server-side. Approving a request does not send money; use “Initiate Sandbox Transfer” only after reviewing the host and destination details. A final Paid status comes only from a signed Cashfree webhook and verified transfer lookup.</div>
+ <div class="toolbar" style="margin-top:12px"><button class="btn" onclick="checkCashfreePayoutConnection()">Verify Cashfree Sandbox API</button><span class="muted small" id="cashfreePayoutConnectionStatus">Credentials are never displayed. This check does not create a transfer.</span></div>
  <div class="toolbar"><select class="control" id="cashfreePayoutFilter" onchange="loadCashfreePayouts()"><option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="processing">Processing</option><option value="paid">Paid</option><option value="failed">Failed</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select><span class="muted small" id="cashfreePayoutStatus">Loading Cashfree requests…</span></div>
  <div id="cashfreePayoutList" class="empty">No Cashfree payout requests loaded.</div>
  <div class="muted small" style="margin-top:12px">Webhook endpoint to register in Cashfree Payouts Sandbox: <code>https://dognojmymhlaewrjqswz.supabase.co/functions/v1/cashfree-payout-webhook</code></div>
@@ -504,6 +505,15 @@ async function rejectManualUpiRecharge(id){
  const {error}=await db.rpc("admin_reject_manual_upi_recharge",{p_request_id:id,p_admin_note:note.trim()});
  if(error){toast(error.message);return}
  toast("Recharge request rejected.");await loadManualUpiRecharges();
+}
+async function checkCashfreePayoutConnection(){
+ const box=$("cashfreePayoutConnectionStatus");if(box)box.textContent="Checking Cashfree Payouts Sandbox credentials…";
+ const {data,error}=await db.functions.invoke("check-cashfree-payout-config",{body:{}});
+ if(error){if(box)box.textContent="Check failed: "+(error.message||"Edge Function error");toast(error.message||"Cashfree connection check failed.");return;}
+ if(data?.credentials_accepted===true){if(box)box.textContent="✓ "+(data.message||"Sandbox credentials accepted.");toast("Cashfree Payouts Sandbox connection verified.");return;}
+ if(data?.missing?.length){if(box)box.textContent="Missing secrets: "+data.missing.join(", ");toast("Cashfree Payouts Sandbox secrets are missing.");return;}
+ if(data?.credentials_accepted===false){if(box)box.textContent="✕ "+(data.message||"Cashfree rejected the credentials.");toast("Cashfree Payouts Sandbox credentials were rejected.");return;}
+ if(box)box.textContent=data?.message||"Cashfree status could not be confirmed.";
 }
 async function loadCashfreePayouts(){
  const status=$("cashfreePayoutStatus"),box=$("cashfreePayoutList");if(!status||!box)return;
