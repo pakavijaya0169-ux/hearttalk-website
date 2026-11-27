@@ -2594,7 +2594,7 @@ let htStoreGiftRequestId=null;async function heartTalkStoreSendGift(index){
   showView("chat");
   if(!activeChatUser){await loadConversations();notify("Chat opened. Select a member from Connect first, then return to Store to send the gift.");return;}
   await loadMessages();
-  if(!confirm("Send "+item.title+" to "+(activeChatUser.display_name||"this member")+" for "+Number(item.coin_price||0)+" coins?"))return;
+  if(!await heartTalkStoreConfirm("Send gift","Send "+item.title+" to "+(activeChatUser.display_name||"this member")+" for "+Number(item.coin_price||0)+" coins?"))return;
   try{
    if(!htStoreGiftRequestId)htStoreGiftRequestId=crypto.randomUUID();
    const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser.id,selected_gift_code:item.gift_code,p_request_id:htStoreGiftRequestId});
