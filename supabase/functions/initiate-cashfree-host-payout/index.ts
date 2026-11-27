@@ -18,11 +18,11 @@ Deno.serve(async(req)=>{
   if(!jwt)return reply({error:"Authentication required"},401);
   if(!supabaseUrl||!anon||!service||!cfId||!cfSecret)return reply({error:"Cashfree Payouts credentials not configured"},503);
   if(env!=="sandbox")return reply({error:"Production payouts are disabled. Configure Cashfree sandbox to continue testing."},403);
-  const auth=createClient(supabaseUrl,anon,{auth:{persistSession:false,autoRefreshToken:false}});
+  const auth=createClient(supabaseUrl,anon,{global:{headers:{Authorization:`Bearer ${jwt}`}},auth:{persistSession:false,autoRefreshToken:false}});
   const {data:userData,error:userError}=await auth.auth.getUser(jwt);
   if(userError||!userData.user)return reply({error:"Session expired"},401);
-  const {data:isAdmin,error:adminError}=await auth.rpc("is_hearttalk_admin");
-  if(adminError||isAdmin!==true)return reply({error:"Admin access required"},403);
+  const {data:canManageWithdrawals,error:permissionError}=await auth.rpc("has_hearttalk_admin_permission",{p_permission:"withdrawals.manage"});
+  if(permissionError||canManageWithdrawals!==true)return reply({error:"Withdrawal management permission required"},403);
   const body=await req.json().catch(()=>({}));
   const requestId=String(body.request_id||"");
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId))return reply({error:"Invalid payout request id"},400);
