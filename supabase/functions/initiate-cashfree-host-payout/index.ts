@@ -13,9 +13,11 @@ Deno.serve(async(req)=>{
   const jwt=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");
   const supabaseUrl=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const cfId=Deno.env.get("CASHFREE_PAYOUT_CLIENT_ID"),cfSecret=Deno.env.get("CASHFREE_PAYOUT_CLIENT_SECRET");
+  // HeartTalk payout testing is sandbox-only until the user explicitly authorizes production payouts.
   const env=(Deno.env.get("CASHFREE_PAYOUT_ENV")||Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
   if(!jwt)return reply({error:"Authentication required"},401);
-  if(!supabaseUrl||!anon||!service||!cfId||!cfSecret||!["sandbox","production"].includes(env))return reply({error:"Cashfree Payouts credentials/environment not configured"},503);
+  if(!supabaseUrl||!anon||!service||!cfId||!cfSecret)return reply({error:"Cashfree Payouts credentials not configured"},503);
+  if(env!=="sandbox")return reply({error:"Production payouts are disabled. Configure Cashfree sandbox to continue testing."},403);
   const auth=createClient(supabaseUrl,anon,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data:userData,error:userError}=await auth.auth.getUser(jwt);
   if(userError||!userData.user)return reply({error:"Session expired"},401);
@@ -38,7 +40,7 @@ Deno.serve(async(req)=>{
    .eq("id",requestId).eq("status","approved").select("id").maybeSingle();
   if(claimError||!claimed)return reply({error:"Request was already claimed or changed. Check payout status before retry."},409);
 
-  const base=env==="production"?"https://api.cashfree.com/payout":"https://sandbox.cashfree.com/payout";
+  const base="https://sandbox.cashfree.com/payout";
   const payload:any={transfer_id:transferId,transfer_amount:Number(request.amount_paise)/100,transfer_currency:"INR",transfer_mode:request.payout_method==="upi"?"upi":"imps",beneficiary_details:{beneficiary_name:cleanName(request.account_holder_name),beneficiary_instrument_details:request.payout_method==="upi"?{vpa:request.upi_id}:{bank_account_number:request.bank_account_number,bank_ifsc:request.bank_ifsc}}};
   let response:Response;
   try{
