@@ -14,7 +14,7 @@ Deno.serve(async(req)=>{
   const supabaseUrl=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const cfId=Deno.env.get("CASHFREE_PAYOUT_CLIENT_ID"),cfSecret=Deno.env.get("CASHFREE_PAYOUT_CLIENT_SECRET");
   // HeartTalk payout testing is sandbox-only until the user explicitly authorizes production payouts.
-  const env=(Deno.env.get("CASHFREE_PAYOUT_ENV")||Deno.env.get("CASHFREE_ENV")||"sandbox").toLowerCase();
+  const env=(Deno.env.get("CASHFREE_PAYOUT_ENV")||"sandbox").toLowerCase();
   if(!jwt)return reply({error:"Authentication required"},401);
   if(!supabaseUrl||!anon||!service||!cfId||!cfSecret)return reply({error:"Cashfree Payouts credentials not configured"},503);
   if(env!=="sandbox")return reply({error:"Production payouts are disabled. Configure Cashfree sandbox to continue testing."},403);
