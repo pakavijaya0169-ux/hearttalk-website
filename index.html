@@ -1536,7 +1536,7 @@ async function startVoiceRecording(event){
  btn.classList.add("recording");btn.textContent="🔴 Recording… release to send";voicePermissionPending=true;
  try{
   chatRecordStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  if(!voiceHoldActive){chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;return}
+  if(!voiceHoldActive){chatRecordStream.getTracks().forEach(t=>t.stop());chatRecordStream=null;btn.classList.remove("recording");btn.textContent="🎙️ Hold to record";notify("Microphone is ready. Hold the button again to record.");return}
   chatRecordChunks=[];chatRecorder=new MediaRecorder(chatRecordStream);
   chatRecorder.ondataavailable=e=>{if(e.data&&e.data.size)chatRecordChunks.push(e.data)};
   chatRecorder.onstop=async()=>{
