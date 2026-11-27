@@ -1072,7 +1072,7 @@ async function loadProfile(){
  if(session?.user)currentUser=session.user;
  if(!currentUser){const userResult=await supabaseClient.auth.getUser();currentUser=userResult.data?.user||null}
  if(!currentUser)return;
- const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender,preferred_language").eq("id",currentUser.id).maybeSingle();
+ const {data,error}=await supabaseClient.from("profiles").select("display_name,username,age,country,bio,avatar_url,gender,preferred_language,equipped_frame_code,equipped_wallpaper_code").eq("id",currentUser.id).maybeSingle();
  if(error){console.error("Profile load failed",error);notify("Profile load failed: "+error.message);return}
  const setValue=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value};
  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
@@ -1080,8 +1080,8 @@ async function loadProfile(){
   setValue("profileName",data.display_name||"");setValue("profileUsername",data.username||"");setValue("profileAge",data.age||"");setValue("profileCountry",data.country||"");setValue("profileBio",data.bio||"");setValue("profileGender",data.gender==="male"?"male":"female");
   selectedHeartTalkGender=data.gender==="male"?"male":"female";selectedHeartTalkAvatar=data.avatar_url||"";
   setText("profileDisplayName",data.display_name||"Your name");setText("profileHandle",data.username||"hearttalk_member");setText("profileDisplayAge",data.age?data.age+" years":"18+");setText("profileDisplayCountry",data.country||"Add your country");setText("profileDisplayBio",data.bio||"Add a little about yourself so people can get to know you.");
-  renderProfileAvatar(data.avatar_url);
- }else{renderProfileAvatar(null)}
+  renderProfileAvatar(data.avatar_url,data.equipped_frame_code,data.equipped_wallpaper_code);
+ }else{renderProfileAvatar(null,null,null)}
  const getFollowCounts=()=>Promise.all([
   supabaseClient.from("follows").select("follower_id",{count:"exact",head:true}).eq("followed_id",currentUser.id),
   supabaseClient.from("follows").select("followed_id",{count:"exact",head:true}).eq("follower_id",currentUser.id)
@@ -1238,9 +1238,13 @@ function renderHeartTalkAvatarChoices(){
 }
 function openProfileEditor(){showView("editProfile");renderHeartTalkAvatarChoices();document.getElementById("profileName")?.focus({preventScroll:true})}
 function openLanguageSettings(){document.getElementById("languageModal")?.classList.add("show")}
-function renderProfileAvatar(url){
+function renderProfileAvatar(url,frameCode=null,wallpaperCode=null){
  const av=document.getElementById("profileAvatar");if(!av)return;
  av.replaceChildren();
+ av.style.border=frameCode?"4px solid #f4a4d0":"";
+ av.style.boxShadow=frameCode?"0 0 0 4px rgba(255,105,180,.25),0 0 22px rgba(255,105,180,.55)":"";
+ av.title=frameCode?("Equipped: "+frameCode.replace("frame_","").replaceAll("_"," ")):"";
+ const profileView=document.getElementById("profileView");if(profileView){const themes={wallpaper_pink_hearts:"linear-gradient(135deg,#4b183d,#8d315f)",wallpaper_purple_galaxy:"radial-gradient(circle at 70% 20%,#6746a5,#1a1039)",wallpaper_golden_dreams:"linear-gradient(135deg,#553b20,#a77a35)",wallpaper_ocean_blue:"linear-gradient(135deg,#123b60,#267c9d)",wallpaper_rose_garden:"linear-gradient(135deg,#55243d,#a94e70)",wallpaper_night_sky:"linear-gradient(135deg,#10152f,#343c70)"};profileView.style.background=themes[wallpaperCode]||"";}
  if(url){const img=document.createElement("img");img.src=url;img.alt="Profile photo";img.loading="lazy";av.appendChild(img);}
  else av.textContent="🙂";
  const edit=document.getElementById("editProfileAvatar");if(edit){edit.replaceChildren();if(url){const img=document.createElement("img");img.src=url;img.alt="Profile photo";edit.appendChild(img);}else edit.textContent="🙂";}
@@ -2512,8 +2516,9 @@ function selectConnectInterest(interest,button){
 
 /* HeartTalk Store catalogue rendering */
 let htStoreTab="gifts",htStoreGifts=[];
-const htStoreFrames=[{title:"Rose Glow",emoji:"🌹",desc:"Soft rose profile frame"},{title:"Royal Crown",emoji:"👑",desc:"Premium golden crown frame"},{title:"Love Hearts",emoji:"💞",desc:"Romantic heart frame"},{title:"Diamond Shine",emoji:"💎",desc:"Sparkling diamond frame"},{title:"Star Trainer",emoji:"🌟",desc:"Star trainer profile frame"},{title:"Rainbow Aura",emoji:"🌈",desc:"Colourful rainbow frame"}];
-const htStoreWallpapers=[{title:"Pink Hearts",emoji:"💗",desc:"Cute pink heart background"},{title:"Purple Galaxy",emoji:"🌌",desc:"Deep purple galaxy background"},{title:"Golden Dreams",emoji:"✨",desc:"Warm golden sparkle background"},{title:"Ocean Blue",emoji:"🌊",desc:"Calm ocean blue background"},{title:"Rose Garden",emoji:"🌷",desc:"Beautiful rose garden background"},{title:"Night Sky",emoji:"🌙",desc:"Moonlit night wallpaper"}];
+const htStoreFrames=[{item_code:"frame_rose_glow",title:"Rose Glow",emoji:"🌹",desc:"Soft rose profile frame",coin_price:49},{item_code:"frame_royal_crown",title:"Royal Crown",emoji:"👑",desc:"Premium golden crown frame",coin_price:99},{item_code:"frame_love_hearts",title:"Love Hearts",emoji:"💞",desc:"Romantic heart frame",coin_price:79},{item_code:"frame_diamond_shine",title:"Diamond Shine",emoji:"💎",desc:"Sparkling diamond frame",coin_price:149},{item_code:"frame_star_trainer",title:"Star Trainer",emoji:"🌟",desc:"Star trainer profile frame",coin_price:199},{item_code:"frame_rainbow_aura",title:"Rainbow Aura",emoji:"🌈",desc:"Colourful rainbow frame",coin_price:99}];
+const htStoreWallpapers=[{item_code:"wallpaper_pink_hearts",title:"Pink Hearts",emoji:"💗",desc:"Cute pink heart background",coin_price:49},{item_code:"wallpaper_purple_galaxy",title:"Purple Galaxy",emoji:"🌌",desc:"Deep purple galaxy background",coin_price:79},{item_code:"wallpaper_golden_dreams",title:"Golden Dreams",emoji:"✨",desc:"Warm golden sparkle background",coin_price:99},{item_code:"wallpaper_ocean_blue",title:"Ocean Blue",emoji:"🌊",desc:"Calm ocean blue wallpaper",coin_price:49},{item_code:"wallpaper_rose_garden",title:"Rose Garden",emoji:"🌷",desc:"Beautiful rose garden background",coin_price:79},{item_code:"wallpaper_night_sky",title:"Night Sky",emoji:"🌙",desc:"Moonlit night wallpaper",coin_price:59}];
+let htOwnedCosmetics=new Set(),htEquippedFrame=null,htEquippedWallpaper=null;
 function setHeartTalkStoreTab(tab){
  htStoreTab=tab;
  document.querySelectorAll("[data-store-tab]").forEach(b=>b.classList.toggle("active",b.dataset.storeTab===tab));
@@ -2528,11 +2533,14 @@ async function loadHeartTalkStore(){
  if(!currentUser){grid.innerHTML='<div class="notice" style="grid-column:1/-1">Log in to view your HeartTalk Store.</div>';return;}
  grid.innerHTML='<div class="muted" style="grid-column:1/-1;text-align:center;padding:22px">Loading store items…</div>';
  try{
-  const [{data:gifts,error},{data:ledger}] = await Promise.all([
+  const [{data:gifts,error},{data:ledger},{data:owned,error:ownedError},{data:profile,error:profileError}] = await Promise.all([
    supabaseClient.from("hearttalk_gift_catalog").select("gift_code,title,emoji,coin_price,active").eq("active",true).order("coin_price",{ascending:true}),
-   supabaseClient.from("wallet_ledger").select("amount").eq("user_id",currentUser.id)
+   supabaseClient.from("wallet_ledger").select("amount").eq("user_id",currentUser.id),
+   supabaseClient.from("hearttalk_user_cosmetics").select("item_code").eq("user_id",currentUser.id),
+   supabaseClient.from("profiles").select("equipped_frame_code,equipped_wallpaper_code").eq("id",currentUser.id).maybeSingle()
   ]);
-  if(error)throw error;htStoreGifts=gifts||[];
+  if(error)throw error;if(ownedError)throw ownedError;if(profileError)throw profileError;htStoreGifts=gifts||[];
+  htOwnedCosmetics=new Set((owned||[]).map(x=>x.item_code));htEquippedFrame=profile?.equipped_frame_code||null;htEquippedWallpaper=profile?.equipped_wallpaper_code||null;
   const balance=(ledger||[]).reduce((sum,row)=>sum+Number(row.amount||0),0);
   const balanceEl=document.getElementById("storeCoinBalance");if(balanceEl)balanceEl.textContent=String(balance);
  }catch(e){
@@ -2546,8 +2554,8 @@ function renderHeartTalkStore(){
  const items=htStoreTab==="gifts"?htStoreGifts:htStoreTab==="frames"?htStoreFrames:htStoreWallpapers;
  if(!items.length){grid.innerHTML='<div class="notice" style="grid-column:1/-1">No active items yet. Please check back soon.</div>';return;}
  grid.innerHTML=items.map((item,index)=>{
-  const emoji=item.emoji||"🎁",price=htStoreTab==="gifts"?'<div class="ht-store-price">🪙 '+Number(item.coin_price||0)+' coins</div>':'<div class="muted" style="font-size:11px">'+escapeHtml(item.desc||"Preview item")+'</div>';
-  const action=htStoreTab==="gifts"?'<button type="button" onclick="heartTalkStoreSendGift('+index+')">Send in chat</button>':'<button type="button" onclick="previewHeartTalkStoreItem('+index+')">Preview</button>';
+  const emoji=item.emoji||"🎁",price='<div class="ht-store-price">🪙 '+Number(item.coin_price||0)+' coins</div>';
+  const action=htStoreTab==="gifts"?'<button type="button" onclick="heartTalkStoreSendGift('+index+')">Send in chat</button>':(htOwnedCosmetics.has(item.item_code)?'<button type="button" onclick="heartTalkEquipCosmetic('+index+')">'+((htStoreTab==="frames"?htEquippedFrame:htEquippedWallpaper)===item.item_code?"Applied ✓":"Apply")+'</button>':'<button type="button" onclick="heartTalkBuyCosmetic('+index+')">Buy for '+Number(item.coin_price)+' coins</button>');
   return '<article class="ht-store-item"><div class="ht-store-art" aria-hidden="true">'+emoji+'</div><h4>'+escapeHtml(item.title||"HeartTalk item")+'</h4>'+price+action+'</article>';
  }).join("");
 }
@@ -2576,7 +2584,28 @@ let htStoreGiftRequestId=null;async function heartTalkStoreSendGift(index){
    await loadMessages();await loadWallet();await loadHostEarnings();await loadHeartTalkStore();
   }catch(e){console.error("HeartTalk gift send failed:",e);notify(e.message||"Gift could not be sent. Check wallet balance and commerce SQL setup.");}
 }
-function previewHeartTalkStoreItem(index){const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(item)notify(item.title+": preview only. Purchase and profile apply feature are not enabled yet.");}
+async function heartTalkBuyCosmetic(index){
+ const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(!item||!currentUser)return;
+ if(!confirm("Buy "+item.title+" for "+item.coin_price+" coins?"))return;
+ try{const {data,error}=await supabaseClient.rpc("hearttalk_purchase_cosmetic",{p_item_code:item.item_code});if(error)throw error;
+ htOwnedCosmetics.add(item.item_code);notify(data?.status==="already_owned"?"You already own this item.":"Purchased successfully! 💗");
+ await loadWallet();await loadHeartTalkStore();
+ }catch(e){console.error("Cosmetic purchase failed",e);notify(e.message||"Purchase failed. Run the cosmetic store SQL in Supabase first.");}
+}
+async function heartTalkEquipCosmetic(index){
+ const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(!item||!currentUser)return;
+ try{const {error}=await supabaseClient.rpc("hearttalk_equip_cosmetic",{p_item_code:item.item_code});if(error)throw error;
+ if(htStoreTab==="frames")htEquippedFrame=item.item_code;else htEquippedWallpaper=item.item_code;
+ notify(item.title+" applied to your profile.");await loadProfile();renderHeartTalkStore();
+ }catch(e){console.error("Cosmetic apply failed",e);notify(e.message||"Could not apply this item.");}
+}
+async function heartTalkRemoveCosmetic(type){
+ try{const {error}=await supabaseClient.rpc("hearttalk_remove_cosmetic",{p_item_type:type});if(error)throw error;
+ if(type==="frame")htEquippedFrame=null;else htEquippedWallpaper=null;
+ notify("Profile "+type+" removed.");await loadProfile();await loadHeartTalkStore();
+ }catch(e){notify(e.message||"Could not remove item.");}
+}
+function previewHeartTalkStoreItem(index){const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(item)notify(item.title+" — "+item.desc+" · "+item.coin_price+" coins");}
 </script>
 <script>
 async function shareHeartTalkInvite() {
