@@ -1432,8 +1432,8 @@ async function callHeartTalkMember(id){
 async function startChat(userId){
  const user=discoverUsers.find(x=>x.id===userId);if(!user)return;
  try{if(await isHeartTalkBlocked(userId)){notify("You cannot message this member because one of you has blocked the other.");return}}catch(e){notify(e.message);return}
- if(htChatBillingSessionId&&htChatBillingHostId!==user.id)await endHeartTalkChatBilling();
- activeChatUser=user;showView("chat");await loadMessages();await startHeartTalkChatBilling();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
+ 
+ activeChatUser=user;showView("chat");await loadMessages();await loadConversations();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadConversations(){
  const list=document.getElementById("conversationList");if(!currentUser){list.textContent="Login to view messages.";return}
@@ -1448,8 +1448,8 @@ async function openConversation(id){
  let p=discoverUsers.find(x=>x.id===id);
  if(!p){const r=await supabaseClient.from("profiles").select("id,display_name,age,country,bio").eq("id",id).maybeSingle();p=r.data}
  if(!p){notify("This profile is unavailable.");return}
- if(htChatBillingSessionId&&htChatBillingHostId!==p.id)await endHeartTalkChatBilling();
- activeChatUser=p;await loadMessages();await startHeartTalkChatBilling();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
+ 
+ activeChatUser=p;await loadMessages();if(pendingChatPhotos.length){const queued=pendingChatPhotos.splice(0,10);notify("Sending selected photos…");for(const file of queued)await uploadChatMedia(file,"image")}
 }
 async function loadMessages(){
  if(!currentUser||!activeChatUser)return;
@@ -1469,7 +1469,7 @@ async function loadMessages(){
 function toggleChatPicker(id){const target=document.getElementById(id);if(!target)return;const opening=target.hidden;document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);target.hidden=!opening}
 function addChatEmoji(emoji){const input=document.getElementById("messageInput");if(!input)return;input.value+=emoji;input.focus()}
 async function sendChatSticker(emoji,label){
- if(!isHeartTalkChatBillingActive()){notify("Start chat billing before sending.");return}if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
+ if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
 function openGifSearch(){window.open("https://tenor.com/search/cute-love-gifs","_blank","noopener");notify("Tenor opened. Copy a direct .gif image link and paste it in chat.")}
 async function renderChatMessageContent(raw){
  const value=String(raw||"");
@@ -1499,7 +1499,7 @@ async function moderateVoiceMessage(file){
  return data;
 }
 async function uploadChatMedia(file,kind){
- if(!isHeartTalkChatBillingActive()){notify("Start chat billing before sending.");return}
+ 
  if(!file||!currentUser||!activeChatUser){notify("Open a conversation first.");return}
  const valid=kind==="image"?file.type.startsWith("image/"):file.type.startsWith("audio/");
  if(!valid){notify("Unsupported file type.");return}
@@ -1574,7 +1574,7 @@ async function startHeartTalkChatBilling(){if(!currentUser||!activeChatUser){not
 async function endHeartTalkChatBilling(){if(!htChatBillingSessionId||htChatBillingBusy)return;htChatBillingBusy=true;stopHeartTalkChatBillingHeartbeat();try{const {data,error}=await supabaseClient.rpc("hearttalk_end_chat_billing",{p_session_id:htChatBillingSessionId});if(error)throw error;htChatBillingSessionId=null;htChatBillingHostId=null;updateHeartTalkChatBillingUI();if(data?.status==="insufficient_coins")notify("Insufficient coins. Billing ended with no charge.");else notify("Billing ended. Charged "+Number(data?.charged_coins||0)+" coins.");if(typeof loadWallet==="function")await loadWallet()}catch(e){console.error("Chat billing end failed",e);notify(e.message||"Could not end billing; retry")}finally{htChatBillingBusy=false}}
 async function sendMessage(e){
  e.preventDefault();
- if(!isHeartTalkChatBillingActive()){notify("Start chat billing before sending.");return}if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
+ if(!currentUser){openAuth();return}if(!activeChatUser){notify("Choose a person from Discover first.");return}
  const input=document.getElementById("messageInput"),content=input.value.trim();if(!content)return;
  // Safety check MUST happen before database insert so the recipient never receives it.
  if(containsIndianMobileNumber(content)){
