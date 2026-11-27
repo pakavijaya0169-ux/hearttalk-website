@@ -11,7 +11,7 @@
 <body>
 <header class="top"><div class="brand"><span class="logo">🛡️</span> HeartTalk <span class="muted">/ Admin</span></div><button id="logoutBtn" class="btn hidden" onclick="logout()">Log out</button></header>
 <main class="wrap">
-<section id="loginView" class="card login"><div class="eyebrow">Private control center</div><h1>Admin sign in</h1><p class="muted">Sign in with an existing HeartTalk admin account. Public registration is disabled here.</p><div><label class="field"><span>Admin email</span><input class="control" id="email" type="email" autocomplete="username" required placeholder="admin@example.com"></label><label class="field"><span>Password</span><input class="control" id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label><button id="loginBtn" class="btn primary" type="button" onclick="window.login()">Sign in securely</button></div><p id="loginError" class="small" role="status" aria-live="polite" style="min-height:20px;color:#ff9ab8;margin-top:12px">Login ready. Enter your account details and click Sign in securely.</p><div class="foot">Access is verified against the HeartTalk admin role in Supabase.</div></section>
+<section id="loginView" class="card login"><div class="eyebrow">Private control center</div><h1>Admin sign in</h1><p class="muted">Sign in with an existing HeartTalk admin account. Public registration is disabled here.</p><div><label class="field"><span>Admin email</span><input class="control" id="email" type="email" autocomplete="username" required placeholder="admin@example.com"></label><label class="field"><span>Password</span><input class="control" id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label><button id="loginBtn" class="btn primary" type="button">Sign in securely</button></div><p id="loginError" class="small" role="status" aria-live="polite" style="min-height:20px;color:#ff9ab8;margin-top:12px">Login ready. Enter your account details and click Sign in securely.</p><div class="foot">Access is verified against the HeartTalk admin role in Supabase.</div></section>
 <section id="appView" class="hidden">
 <div class="heading"><div><div class="eyebrow">HeartTalk control center</div><h1>Admin Dashboard</h1><div class="muted">Platform overview and community safety</div></div><button class="btn" onclick="refreshAll()">↻ Refresh data</button></div>
 <div class="notice">Admin-only workspace. Sensitive actions are checked again by Supabase Row Level Security and secure database functions.</div>
@@ -607,5 +607,22 @@ db.auth.onAuthStateChange((event,session)=>{
  if(session?.user) sessionUser=session.user;
 });
 db.auth.getSession().then(async({data})=>{if(data.session?.user){if(await verifyAdmin(data.session.user)){sessionUser=data.session.user;showApp();refreshAll()}else{await db.auth.signOut()}}});
+</script>
+<script>
+(function(){
+ const btn=document.getElementById("loginBtn");
+ const msg=document.getElementById("loginError");
+ if(!btn||!msg)return;
+ btn.addEventListener("click",function(){
+  if(typeof window.login!=="function"){
+   msg.textContent="Login script did not load correctly. Please refresh once; if this message remains, send this screenshot to support.";
+   return;
+  }
+  window.login();
+ });
+ document.getElementById("password")?.addEventListener("keydown",function(e){
+  if(e.key==="Enter"){e.preventDefault();btn.click();}
+ });
+})();
 </script>
 </body></html>
