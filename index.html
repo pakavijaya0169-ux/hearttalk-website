@@ -2560,27 +2560,29 @@ function renderHeartTalkStore(){
  }).join("");
 }
 let htStoreGiftRequestId=null;async function heartTalkStoreSendGift(index){
- if(!currentUser){openAuth();return;}
- const item=htStoreGifts[index];
- if(!item){notify("This gift is unavailable. Refresh the Store and try again.");return;}
- if(!activeChatUser){
-  notify("Choose a member first. Connect is opening now.");
-  showView("discover");
-  return;
- }
- if(!item.gift_code){notify("Gift code is missing. Please refresh the Store.");return;}
- if(!confirm("Send "+item.title+" to "+(activeChatUser.display_name||"this member")+" for "+Number(item.coin_price||0)+" coins?"))return;
- try{
-  if(!htStoreGiftRequestId)htStoreGiftRequestId=crypto.randomUUID();const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser.id,selected_gift_code:item.gift_code,p_request_id:htStoreGiftRequestId});
-  if(error)throw error;
-  notify("Gift sent successfully.");htStoreGiftRequestId=null;
-  await loadWallet();
-  await loadHostEarnings();
-  await loadHeartTalkStore();
- }catch(e){
-  console.error("HeartTalk gift send failed:",e);
-  notify(e.message||"Gift could not be sent. Check wallet balance and commerce SQL setup.");
- }
+  if(!currentUser){openAuth();return;}
+  const item=htStoreGifts[index];
+  if(!item){notify("This gift is unavailable. Refresh the Store and try again.");return;}
+  if(!item.gift_code){notify("Gift code is missing. Please refresh the Store.");return;}
+  if(!activeChatUser){
+   try{
+    const {data,error}=await supabaseClient.from("messages").select("sender_id,receiver_id,created_at").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(1);
+    if(error)throw error;
+    const last=data&&data[0];
+    if(last){const peerId=last.sender_id===currentUser.id?last.receiver_id:last.sender_id;await openConversation(peerId);}
+   }catch(e){console.warn("Could not find a recent chat for Store gift:",e);}
+  }
+  showView("chat");
+  if(!activeChatUser){await loadConversations();notify("Chat opened. Select a member from Connect first, then return to Store to send the gift.");return;}
+  await loadMessages();
+  if(!confirm("Send "+item.title+" to "+(activeChatUser.display_name||"this member")+" for "+Number(item.coin_price||0)+" coins?"))return;
+  try{
+   if(!htStoreGiftRequestId)htStoreGiftRequestId=crypto.randomUUID();
+   const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser.id,selected_gift_code:item.gift_code,p_request_id:htStoreGiftRequestId});
+   if(error)throw error;
+   notify("Gift sent successfully.");htStoreGiftRequestId=null;
+   await loadMessages();await loadWallet();await loadHostEarnings();await loadHeartTalkStore();
+  }catch(e){console.error("HeartTalk gift send failed:",e);notify(e.message||"Gift could not be sent. Check wallet balance and commerce SQL setup.");}
 }
 function previewHeartTalkStoreItem(index){const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(item)notify(item.title+": preview only. Purchase and profile apply feature are not enabled yet.");}
 </script>
