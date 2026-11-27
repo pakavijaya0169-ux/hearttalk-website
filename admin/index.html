@@ -26,7 +26,7 @@
 <button class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 <span>Reports</span></button>
 <button class="tab" data-tab="support" onclick="switchTab('support')">💬 <span>Customer Support</span></button>
 <button class="tab" data-tab="errors" onclick="switchTab('errors')">🛠️ <span>App Errors</span></button>
-<button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊 <span>Analytics & Revenue</span></button><button class="tab" data-tab="withdrawals" onclick="switchTab('withdrawals')">🏦 <span>Host Withdrawals</span></button><button class="tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 <span>Notifications</span></button><button class="tab" data-tab="offers" onclick="switchTab('offers')">🏷️ <span>Offers</span></button><button class="tab" data-tab="commerce" onclick="switchTab('commerce')">💼 <span>Commerce & Growth</span></button>
+<button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊 <span>Analytics & Revenue</span></button><button class="tab" data-tab="withdrawals" onclick="switchTab('withdrawals')">🏦 <span>Host Withdrawals</span></button><button class="tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 <span>Notifications</span></button><button class="tab" data-tab="offers" onclick="switchTab('offers')">🏷️ <span>Offers</span></button><button class="tab" data-tab="usage" onclick="switchTab('usage')">📈 <span>Usage Monitor</span></button><button class="tab" data-tab="commerce" onclick="switchTab('commerce')">💼 <span>Commerce & Growth</span></button>
 </aside>
 <div class="admin-main">
 <div class="grid">
@@ -59,7 +59,7 @@
  <div id="appErrorsList"><div class="empty">No app errors loaded.</div></div>
 </section>
 
-<section id="commerceTab" class="hidden">
+<section id="usageTab" class="hidden"><div class="card"><div class="section-head"><div><h2>📈 Infrastructure Usage</h2><div class="muted small">Read-only Supabase database and Storage estimate.</div></div><button class="btn" onclick="loadUsageMonitor()">↻ Refresh</button></div><div class="notice">Egress, MAU and LiveKit minutes are not available in this SQL snapshot. Check provider dashboards for actual usage.</div><div id="usageMonitorStatus" class="notice">Run the usage migration, then refresh.</div><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:14px"><article class="card"><div class="muted small">Database used</div><div class="metric" id="usageDbValue">—</div><div class="muted small" id="usageDbPct">500 MB reference limit</div></article><article class="card"><div class="muted small">Storage used</div><div class="metric" id="usageStorageValue">—</div><div class="muted small" id="usageStoragePct">1 GB reference limit</div></article></div><h3 style="margin-top:20px">Storage by bucket</h3><div id="usageBuckets" class="empty">No data loaded.</div><div class="user-row"><div class="user-main"><b>Supabase Egress / MAU</b><div class="user-meta">Open Supabase Project Usage for actual metrics.</div></div><a class="btn" target="_blank" rel="noopener" href="https://supabase.com/dashboard/project/dognojmymhlaewrjqswz/usage">Open Usage</a></div><div class="user-row"><div class="user-main"><b>LiveKit minutes / data transfer</b><div class="user-meta">Check LiveKit Cloud Usage; not connected to this monitor yet.</div></div><a class="btn" target="_blank" rel="noopener" href="https://cloud.livekit.io/">Open LiveKit</a></div></div></section><section id="commerceTab" class="hidden">
 <div class="card"><div class="section-head"><div><h2>🪙 Coin Packages</h2><div class="muted small">Edit packages and displayed prices. Users pay by manual UPI; admins verify bank credits and approve recharge requests.</div></div><button class="btn" onclick="loadCommerce()">↻ Refresh</button></div><div class="notice">Changes update catalogue settings only; they do not charge users or credit wallets.</div><div id="coinPackageList" class="empty">Loading…</div></div>
 <div class="card" style="margin-top:16px"><h2>🎁 Gifts</h2><div id="giftCatalogList" class="empty">Loading…</div></div>
 
@@ -163,7 +163,7 @@ let sessionUser=null,usersCache=[],reportsCache=[],adminNotificationPoll=null;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
-function switchTab(tab){["users","liveOps","manualRecharge","profiles","hostApprovals","security","reports","support","errors","analytics","withdrawals","notifications","offers","commerce"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(adminNotificationPoll){clearInterval(adminNotificationPoll);adminNotificationPoll=null;}if(tab==="liveOps")loadLiveOperations();if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();}if(tab==="manualRecharge")loadManualUpiRecharges();if(tab==="withdrawals")loadManualPayouts();if(tab==="notifications"){loadAdminNotifications();loadPushCampaigns();adminNotificationPoll=setInterval(loadAdminNotifications,15000);}if(tab==="offers")loadOffers();if(tab==="commerce")loadCommerce();if(tab==="profiles")loadProfileQueue();if(tab==="hostApprovals")loadHostApprovals();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
+function switchTab(tab){["users","liveOps","manualRecharge","profiles","hostApprovals","security","reports","support","errors","analytics","withdrawals","notifications","offers","usage","commerce"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(adminNotificationPoll){clearInterval(adminNotificationPoll);adminNotificationPoll=null;}if(tab==="liveOps")loadLiveOperations();if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();}if(tab==="manualRecharge")loadManualUpiRecharges();if(tab==="withdrawals")loadManualPayouts();if(tab==="notifications"){loadAdminNotifications();loadPushCampaigns();adminNotificationPoll=setInterval(loadAdminNotifications,15000);}if(tab==="offers")loadOffers();if(tab==="usage")loadUsageMonitor();if(tab==="commerce")loadCommerce();if(tab==="profiles")loadProfileQueue();if(tab==="hostApprovals")loadHostApprovals();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -314,6 +314,22 @@ async function setSupportStatus(id,status){
  if(!confirm("Close this support conversation?"))return;
  const {error}=await db.rpc("admin_set_support_status",{p_thread_id:id,p_status:status});
  if(error){toast(error.message);return}toast("Support conversation closed.");await loadSupportInbox();
+}
+async function loadUsageMonitor(){
+ const status=$("usageMonitorStatus");if(!status||!sessionUser)return;
+ status.textContent="Loading usage snapshot…";
+ const {data,error}=await db.rpc("hearttalk_admin_usage_snapshot");
+ if(error){status.textContent="Usage migration required or access denied: "+error.message;return;}
+ const dbBytes=Number(data.database_bytes||0),storageBytes=Number(data.storage_bytes||0);
+ const dbLimit=Number(data.limits.database_bytes||524288000),storageLimit=Number(data.limits.storage_bytes||1073741824);
+ const fmt=n=>n>=1073741824?(n/1073741824).toFixed(2)+" GB":n>=1048576?(n/1048576).toFixed(1)+" MB":(n/1024).toFixed(1)+" KB";
+ const pct=(n,l)=>l?n/l*100:0;
+ $("usageDbValue").textContent=fmt(dbBytes);$("usageDbPct").textContent=pct(dbBytes,dbLimit).toFixed(1)+"% of 500 MB reference limit";
+ $("usageStorageValue").textContent=fmt(storageBytes);$("usageStoragePct").textContent=pct(storageBytes,storageLimit).toFixed(1)+"% of 1 GB reference limit";
+ const buckets=data.storage_by_bucket_bytes||{};const rows=Object.entries(buckets).sort((a,b)=>Number(b[1])-Number(a[1]));
+ $("usageBuckets").innerHTML=rows.length?rows.map(([name,bytes])=>'<div class="user-row"><div class="user-main"><b>'+esc(name)+'</b><div class="user-meta">'+fmt(Number(bytes))+' · '+pct(Number(bytes),storageLimit).toFixed(1)+'% of storage limit</div></div></div>').join(""):'<div class="empty">No Storage objects found.</div>';
+ const warnings=[];if(pct(dbBytes,dbLimit)>=80)warnings.push("Database is at least 80% of its reference limit.");if(pct(storageBytes,storageLimit)>=80)warnings.push("Storage is at least 80% of its reference limit.");
+ status.textContent="Measured "+new Date(data.measured_at).toLocaleString()+". "+(warnings.join(" ")||"Database and Storage are below the 80% warning threshold.")+" Egress, MAU and LiveKit usage are excluded.";
 }
 async function loadAppErrors(){
  const box=$("appErrorsList");if(!box||!sessionUser)return;
