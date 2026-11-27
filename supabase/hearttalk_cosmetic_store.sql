@@ -40,6 +40,7 @@ create table if not exists public.hearttalk_user_cosmetics (
 create index if not exists hearttalk_user_cosmetics_user_idx on public.hearttalk_user_cosmetics(user_id,purchased_at desc);
 alter table public.hearttalk_cosmetic_catalog enable row level security;
 alter table public.hearttalk_user_cosmetics enable row level security;
+grant select on public.hearttalk_cosmetic_catalog,public.hearttalk_user_cosmetics to authenticated;
 drop policy if exists "Anyone authenticated can view active cosmetics" on public.hearttalk_cosmetic_catalog;
 create policy "Anyone authenticated can view active cosmetics" on public.hearttalk_cosmetic_catalog for select to authenticated using(active);
 drop policy if exists "Users can view own cosmetics" on public.hearttalk_user_cosmetics;
