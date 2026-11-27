@@ -739,6 +739,32 @@ p{color:#77747e}
  <button class="primary" id="hostPayoutRequestBtn" type="button" onclick="requestHostPayout()" disabled>Request Withdrawal</button>
  <div id="hostPayoutRequests" style="margin-top:14px"></div>
  <h4>Gift earnings history</h4><div id="hostEarningsHistory" class="muted">Loading…</div>
+ <div class="panel" id="cashfreeHostPayoutPanel" style="margin-top:18px;border:1px solid #8b5cf6">
+  <div class="section-kicker">CASHFREE PAYOUTS · SANDBOX</div>
+  <h3>⚡ Cashfree Host Withdrawal</h3>
+  <p class="muted small">Separate Cashfree payout request. Minimum ₹500. Sandbox testing only; no production payout is enabled. Existing Manual UPI withdrawal remains available above.</p>
+  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+   <div class="panel"><small class="muted">Cash available</small><b id="cashfreeHostAvailable" style="display:block;font-size:22px">₹0.00</b></div>
+   <div class="panel"><small class="muted">Minimum withdrawal</small><b style="display:block;font-size:22px">₹500</b></div>
+  </div>
+  <p id="cashfreeHostPayoutStatus" class="muted small">Loading Cashfree withdrawal status…</p>
+  <label>Amount (₹)<input id="cashfreeHostPayoutAmount" type="number" min="500" step="1" placeholder="Minimum ₹500"></label>
+  <label>Payout method
+   <select id="cashfreeHostPayoutMethod" onchange="toggleCashfreeHostPayoutMethod()">
+    <option value="upi">UPI</option><option value="bank">Bank account (IMPS)</option>
+   </select>
+  </label>
+  <div id="cashfreeHostUpiFields">
+   <label>UPI ID<input id="cashfreeHostUpi" type="text" maxlength="120" placeholder="name@bank"></label>
+  </div>
+  <div id="cashfreeHostBankFields" style="display:none">
+   <label>Bank account number<input id="cashfreeHostBankAccount" type="text" maxlength="34" inputmode="numeric" autocomplete="off" placeholder="Sandbox beneficiary account number"></label>
+   <label>Bank IFSC<input id="cashfreeHostBankIfsc" type="text" maxlength="11" autocapitalize="characters" placeholder="ABCD0123456"></label>
+  </div>
+  <label>Account holder name<input id="cashfreeHostHolder" type="text" maxlength="100" autocomplete="name" placeholder="Name on bank / UPI account"></label>
+  <button class="primary" id="cashfreeHostPayoutRequestBtn" type="button" onclick="requestCashfreeHostPayout()" disabled>Request Cashfree Withdrawal</button>
+  <div id="cashfreeHostPayoutRequests" style="margin-top:14px"></div>
+ </div>
 </div></section>
 <section class="view" id="storeView">
 <div class="ht-store-head"><div><span class="section-kicker">HEARTTALK PREMIUM</span><h2>💎 HeartTalk Store</h2><p>Gifts, profile frames and wallpapers.</p></div><div class="ht-store-balance">🪙 <b id="storeCoinBalance">0</b></div></div>
@@ -2395,6 +2421,90 @@ async function requestHostPayout(){
  notify("Withdrawal request submitted. Your fixed-amount UPI QR is ready below. Amount is reserved until admin marks it paid or rejects it.");await loadHostEarnings();
  }catch(e){if(status)status.textContent=e.message||"Withdrawal request could not be submitted.";notify(e.message||"Withdrawal request failed.");if(button)button.disabled=false;}
 }
+function toggleCashfreeHostPayoutMethod(){
+ const method=document.getElementById("cashfreeHostPayoutMethod")?.value||"upi";
+ const upi=document.getElementById("cashfreeHostUpiFields"),bank=document.getElementById("cashfreeHostBankFields");
+ if(upi)upi.style.display=method==="upi"?"block":"none";
+ if(bank)bank.style.display=method==="bank"?"block":"none";
+}
+async function requestCashfreeHostPayout(){
+ const amount=Number(document.getElementById("cashfreeHostPayoutAmount")?.value||0);
+ const method=document.getElementById("cashfreeHostPayoutMethod")?.value||"upi";
+ const upi=document.getElementById("cashfreeHostUpi")?.value.trim()||"";
+ const holder=document.getElementById("cashfreeHostHolder")?.value.trim()||"";
+ const account=document.getElementById("cashfreeHostBankAccount")?.value.trim()||"";
+ const ifsc=document.getElementById("cashfreeHostBankIfsc")?.value.trim().toUpperCase()||"";
+ const status=document.getElementById("cashfreeHostPayoutStatus");
+ const button=document.getElementById("cashfreeHostPayoutRequestBtn");
+ if(!currentUser){notify("Please log in first.");return}
+ if(!Number.isInteger(amount)||amount<500){notify("Minimum Cashfree withdrawal is ₹500.");return}
+ if(!holder){notify("Enter account holder name.");return}
+ if(method==="upi"&&!/^[a-z0-9._-]{2,256}@[a-z][a-z0-9]{1,20}$/i.test(upi)){notify("Enter a valid UPI ID.");return}
+ if(method==="bank"&&(!/^[0-9]{6,34}$/.test(account)||!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))){notify("Enter valid bank account number and IFSC.");return}
+ if(button)button.disabled=true;
+ if(status)status.textContent="Submitting Cashfree Sandbox withdrawal request…";
+ try{
+  const {data,error}=await supabaseClient.rpc("hearttalk_request_cashfree_payout",{
+   p_amount_paise:Math.round(amount*100),
+   p_payout_method:method,
+   p_upi_id:method==="upi"?upi:null,
+   p_account_holder_name:holder,
+   p_bank_account_number:method==="bank"?account:null,
+   p_bank_ifsc:method==="bank"?ifsc:null,
+   p_idempotency_key:crypto.randomUUID()
+  });
+  if(error)throw error;
+  document.getElementById("cashfreeHostPayoutAmount").value="";
+  document.getElementById("cashfreeHostUpi").value="";
+  document.getElementById("cashfreeHostBankAccount").value="";
+  document.getElementById("cashfreeHostBankIfsc").value="";
+  document.getElementById("cashfreeHostHolder").value="";
+  notify("Cashfree withdrawal request submitted. Admin approval is required before a Sandbox transfer can be initiated.");
+  await loadCashfreeHostPayouts();
+  await loadHostEarnings();
+ }catch(e){
+  if(status)status.textContent=e.message||"Cashfree withdrawal request failed.";
+  notify(e.message||"Cashfree withdrawal request failed.");
+  await loadCashfreeHostPayouts();
+ }finally{
+  if(button)button.disabled=false;
+ }
+}
+async function loadCashfreeHostPayouts(){
+ const box=document.getElementById("cashfreeHostPayoutRequests");
+ const button=document.getElementById("cashfreeHostPayoutRequestBtn");
+ const status=document.getElementById("cashfreeHostPayoutStatus");
+ if(!box||!status)return;
+ if(!currentUser){box.textContent="Log in to view Cashfree withdrawal requests.";if(button)button.disabled=true;return}
+ status.textContent="Loading Cashfree withdrawal requests…";
+ const {data,error}=await supabaseClient.rpc("hearttalk_get_cashfree_payouts");
+ if(error){
+  status.textContent="Cashfree payout setup unavailable: "+(error.message||"Please try again.");
+  box.textContent="Cashfree withdrawal history could not be loaded.";
+  if(button)button.disabled=true;
+  return;
+ }
+ const available=Number(data?.available_amount_paise||0);
+ const availableEl=document.getElementById("cashfreeHostAvailable");
+ if(availableEl)availableEl.textContent="₹"+(available/100).toFixed(2);
+ const rows=Array.isArray(data?.requests)?data.requests:[];
+ const active=rows.some(x=>["pending","approved","processing"].includes(String(x.status||"").toLowerCase()));
+ if(button)button.disabled=available<Number(data?.minimum_amount_paise||50000)||active;
+ status.textContent=active
+  ?"You have an open Cashfree payout request. Wait for admin review and verified provider status."
+  :available>=Number(data?.minimum_amount_paise||50000)
+   ?"Eligible Cashfree balance is available. Admin approval is required before payout."
+   :"Minimum ₹500 eligible cash earnings required. Existing reservations reduce the available balance.";
+ box.innerHTML=rows.length?'<b>Cashfree withdrawal history</b>'+rows.map(x=>{
+  const state=String(x.status||"").toUpperCase();
+  const method=String(x.payout_method||"").toUpperCase();
+  const provider=x.cashfree_status?'<small class="muted" style="display:block">Cashfree: '+escapeHtml(x.cashfree_status)+'</small>':"";
+  const utr=x.cashfree_utr?'<small class="muted" style="display:block">UTR: '+escapeHtml(x.cashfree_utr)+'</small>':"";
+  const reason=x.failure_reason?'<small class="muted" style="display:block">'+escapeHtml(x.failure_reason)+'</small>':"";
+  const note=x.admin_note?'<small class="muted" style="display:block">'+escapeHtml(x.admin_note)+'</small>':"";
+  return '<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>₹'+(Number(x.amount_paise||0)/100).toFixed(2)+' · '+escapeHtml(state)+' · '+escapeHtml(method)+'</b><small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+'</small>'+provider+utr+reason+note+'</div>';
+ }).join(""):'No Cashfree withdrawal requests yet.';
+}
 function heartTalkUpiQrUrl(upiId,holder,amountPaise,requestId){
  const params=new URLSearchParams({pa:upiId,pn:holder||"HeartTalk Host",am:(Number(amountPaise)/100).toFixed(2),cu:"INR",tn:"HeartTalk withdrawal",tr:"HT"+String(requestId).replace(/-/g,"").slice(0,24)});
  const payload="upi://pay?"+params.toString();
@@ -2434,6 +2544,7 @@ async function loadHostEarnings(){
  if(requestBtn)requestBtn.disabled=true;
  if(payoutStatus)payoutStatus.textContent="Checking verified cash earnings and withdrawal eligibility…";
  await loadManualUpiWithdrawals();
+ await loadCashfreeHostPayouts();
  const rows=data.history||[];
  history.innerHTML=rows.length?rows.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)"><span>'+escapeHtml(x.emoji||"🎁")+' '+escapeHtml(x.gift_title||"Gift")+'<small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+'</small></span><b>+'+Number(x.earned_coins||0)+' coins</b></div>').join(""):'<p class="muted">No gifts received yet.</p>';
 }
