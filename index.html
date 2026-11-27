@@ -2505,10 +2505,9 @@ async function loadCashfreeHostPayouts(){
   return '<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>₹'+(Number(x.amount_paise||0)/100).toFixed(2)+' · '+escapeHtml(state)+' · '+escapeHtml(method)+'</b><small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+'</small>'+provider+utr+reason+note+'</div>';
  }).join(""):'No Cashfree withdrawal requests yet.';
 }
-function heartTalkUpiQrUrl(upiId,holder,amountPaise,requestId){
+function heartTalkUpiQrPayload(upiId,holder,amountPaise,requestId){
  const params=new URLSearchParams({pa:upiId,pn:holder||"HeartTalk Host",am:(Number(amountPaise)/100).toFixed(2),cu:"INR",tn:"HeartTalk withdrawal",tr:"HT"+String(requestId).replace(/-/g,"").slice(0,24)});
- const payload="upi://pay?"+params.toString();
- return "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data="+encodeURIComponent(payload);
+ return "upi://pay?"+params.toString();
 }
 async function loadManualUpiWithdrawals(){
  const box=document.getElementById("hostPayoutRequests"),button=document.getElementById("hostPayoutRequestBtn"),status=document.getElementById("hostPayoutStatus");if(!box)return;
@@ -2517,14 +2516,23 @@ async function loadManualUpiWithdrawals(){
  if(error){box.textContent="Withdrawal setup pending. Apply the latest manual UPI QR withdrawal migration.";if(button)button.disabled=true;return}
  const available=Number(data.available_amount_paise||0),availableEl=document.getElementById("hostAvailableINR");
  if(availableEl)availableEl.textContent="₹"+(available/100).toFixed(2);
- if(button)button.disabled=available<50000;
- if(status)status.textContent=available>=50000?"You can request ₹500 or more. Request amount is reserved until paid or rejected.":"Minimum ₹500 available earnings required. Pending requests reserve their amount.";
- const rows=data.requests||[];
+ const rows=Array.isArray(data.requests)?data.requests:[];
+ const hasOpenRequest=rows.some(x=>["pending","approved"].includes(String(x.status||"").toLowerCase()));
+ if(button)button.disabled=available<50000||hasOpenRequest;
+ if(status)status.textContent=hasOpenRequest?"You already have a pending withdrawal. Wait until it is paid or rejected.":available>=50000?"You can request ₹500 or more. The request amount is reserved until paid or rejected.":"Minimum ₹500 available earnings required.";
  box.innerHTML=rows.length?'<b>Withdrawal history</b>'+rows.map(x=>{
-  const active=["pending","approved"].includes(String(x.status).toLowerCase());
-  const qr=active&&x.upi_id?'<div style="margin-top:10px;padding:12px;background:#fff;border-radius:12px;display:inline-block;text-align:center"><img alt="Fixed amount UPI withdrawal QR" width="190" height="190" loading="lazy" src="'+heartTalkUpiQrUrl(x.upi_id,x.account_holder_name,x.amount_paise,x.id)+'"><div style="color:#222;font-size:12px;font-weight:700">Scan to pay ₹'+(Number(x.amount_paise)/100).toFixed(2)+'</div><div style="color:#555;font-size:10px">Request '+escapeHtml(String(x.id).slice(0,8))+'</div></div>':'';
+  const active=["pending","approved"].includes(String(x.status||"").toLowerCase());
+  const qrId="hostManualUpiQr_"+String(x.id);
+  const qr=active&&x.upi_id?'<div style="margin-top:10px;padding:12px;background:#fff;border-radius:12px;display:inline-block;text-align:center"><div id="'+escapeHtml(qrId)+'" aria-label="Request-specific UPI QR code"></div><div style="color:#222;font-size:12px;font-weight:700">Scan to pay ₹'+(Number(x.amount_paise)/100).toFixed(2)+'</div><div style="color:#555;font-size:10px">Request '+escapeHtml(String(x.id).slice(0,8))+'</div></div>':'';
   return '<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>₹'+(Number(x.amount_paise)/100).toFixed(2)+' · '+escapeHtml(x.status)+'</b><small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+(x.utr?' · UTR '+escapeHtml(x.utr):'')+(x.admin_note?' · '+escapeHtml(x.admin_note):'')+'</small>'+qr+'</div>';
  }).join(""):'No withdrawal requests yet.';
+ rows.forEach(x=>{
+  if(!["pending","approved"].includes(String(x.status||"").toLowerCase())||!x.upi_id)return;
+  const target=document.getElementById("hostManualUpiQr_"+String(x.id));
+  if(target&&typeof QRCode!=="undefined"){
+   new QRCode(target,{text:heartTalkUpiQrPayload(x.upi_id,x.account_holder_name,x.amount_paise,x.id),width:190,height:190,colorDark:"#111111",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+  }
+ });
 }
 async function loadHostEarnings(){
  const panel=document.getElementById("hostWithdrawalPanel");
