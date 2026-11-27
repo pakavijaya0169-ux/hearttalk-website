@@ -1500,8 +1500,8 @@ async function uploadChatPhotos(files){const input=document.getElementById("chat
 async function moderateVoiceMessage(file){
  const form=new FormData();form.append("audio",file,file.name||"voice-message.webm");
  const {data,error}=await supabaseClient.functions.invoke("moderate-voice-message",{body:form});
- if(error)throw new Error(error.message||"Voice safety check failed");
- if(!data||data.ok!==true)throw new Error(data?.error||"Voice safety check unavailable");
+ if(error){console.error("HeartTalk voice safety function invoke error",error);const details=[error.message,error.context?.status,error.context?.statusText].filter(Boolean).join(" | ");throw new Error(details||"Voice safety function could not be reached. Check Supabase Edge Function deployment and OPENAI_API_KEY secret.")}
+ if(!data||data.ok!==true)throw new Error(data?.error||"Voice safety check returned an invalid response. Check Edge Function logs.");
  return data;
 }
 async function uploadChatMedia(file,kind){
