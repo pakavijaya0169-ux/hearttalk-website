@@ -100,7 +100,14 @@
  </div>
  
 </section>
-<section id="withdrawalsTab" class="hidden"><div class="card"><h2>Host Withdrawals</h2><p class="muted small">Manage UPI withdrawal requests and verified host earnings.</p><div class="card" style="margin-top:16px"><div class="section-head"><div><h2>🏦 Manual UPI Host Withdrawals</h2><div class="muted small">Review verified earnings, transfer manually, record UTR.</div></div><button class="btn" onclick="loadManualPayouts()">↻ Refresh requests</button></div><div class="notice">Manual transfer is not automatic. Credit host cash earnings only after checking eligible paid-coin gifts, refunds and accounting records. Promotional bonus coins must never be credited as cash earnings.</div><div class="toolbar"><select class="control" id="manualPayoutFilter" onchange="loadManualPayouts()"><option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div><div id="manualPayoutStatus" class="muted small" style="margin:10px 0">Loading payout requests…</div><div id="manualPayoutList" class="empty">No payout requests loaded.</div><div class="card" style="margin-top:14px"><h3>➕ Credit verified host earnings</h3><p class="muted small">Only add INR after reconciliation. Source reference must be unique to prevent duplicate credits.</p><div class="toolbar"><input class="control" id="hostCreditUser" placeholder="Host Supabase User UUID"><input class="control" id="hostCreditAmount" type="number" min="1" step="0.01" placeholder="Amount ₹"><input class="control" id="hostCreditSource" placeholder="Unique source / reconciliation ID"><input class="control" id="hostCreditNote" placeholder="Admin note"><button class="btn primary" onclick="creditHostEarnings()">Credit verified earnings</button></div></div></div></div></section>
+<section id="withdrawalsTab" class="hidden"><div class="card"><h2>Host Withdrawals</h2><p class="muted small">Manage UPI withdrawal requests and verified host earnings.</p>
+<div class="card" style="margin-top:16px">
+ <div class="section-head"><div><h2>⚡ Cashfree Host Payouts (Sandbox)</h2><div class="muted small">Review Cashfree withdrawal requests, approve them, then initiate a sandbox transfer.</div></div><button class="btn" onclick="loadCashfreePayouts()">↻ Refresh Cashfree requests</button></div>
+ <div class="notice">SANDBOX ONLY. Production payouts are blocked server-side. Approving a request does not send money; use “Initiate Sandbox Transfer” only after reviewing the host and destination details. A final Paid status comes only from a signed Cashfree webhook and verified transfer lookup.</div>
+ <div class="toolbar"><select class="control" id="cashfreePayoutFilter" onchange="loadCashfreePayouts()"><option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="processing">Processing</option><option value="paid">Paid</option><option value="failed">Failed</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select><span class="muted small" id="cashfreePayoutStatus">Loading Cashfree requests…</span></div>
+ <div id="cashfreePayoutList" class="empty">No Cashfree payout requests loaded.</div>
+ <div class="muted small" style="margin-top:12px">Webhook endpoint to register in Cashfree Payouts Sandbox: <code>https://dognojmymhlaewrjqswz.supabase.co/functions/v1/cashfree-payout-webhook</code></div>
+</div><div class="card" style="margin-top:16px"><div class="section-head"><div><h2>🏦 Manual UPI Host Withdrawals</h2><div class="muted small">Review verified earnings, transfer manually, record UTR.</div></div><button class="btn" onclick="loadManualPayouts()">↻ Refresh requests</button></div><div class="notice">Manual transfer is not automatic. Credit host cash earnings only after checking eligible paid-coin gifts, refunds and accounting records. Promotional bonus coins must never be credited as cash earnings.</div><div class="toolbar"><select class="control" id="manualPayoutFilter" onchange="loadManualPayouts()"><option value="all">All requests</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div><div id="manualPayoutStatus" class="muted small" style="margin:10px 0">Loading payout requests…</div><div id="manualPayoutList" class="empty">No payout requests loaded.</div><div class="card" style="margin-top:14px"><h3>➕ Credit verified host earnings</h3><p class="muted small">Only add INR after reconciliation. Source reference must be unique to prevent duplicate credits.</p><div class="toolbar"><input class="control" id="hostCreditUser" placeholder="Host Supabase User UUID"><input class="control" id="hostCreditAmount" type="number" min="1" step="0.01" placeholder="Amount ₹"><input class="control" id="hostCreditSource" placeholder="Unique source / reconciliation ID"><input class="control" id="hostCreditNote" placeholder="Admin note"><button class="btn primary" onclick="creditHostEarnings()">Credit verified earnings</button></div></div></div></div></section>
 <section id="notificationsTab" class="hidden">
 <div class="card">
  <div class="section-head"><div><h2>🔔 Rich Push Notifications</h2><p class="muted small">Create image notifications, save drafts, schedule campaigns and review delivery history.</p></div><button class="btn" onclick="loadPushCampaigns()">↻ Refresh campaigns</button></div>
@@ -164,7 +171,7 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
 function filterAdminMenu(){const q=($("adminMenuSearch")?.value||"").trim().toLowerCase();let shown=0;document.querySelectorAll(".admin-sidebar .tab[data-tab]").forEach(b=>{const match=!q||b.textContent.toLowerCase().includes(q);b.hidden=!match;if(match)shown++});$("adminMenuEmpty")?.classList.toggle("show",shown===0)}
- function switchTab(tab){["users","liveOps","manualRecharge","profiles","hostApprovals","security","reports","support","errors","analytics","withdrawals","notifications","offers","usage","commerce"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(adminNotificationPoll){clearInterval(adminNotificationPoll);adminNotificationPoll=null;}if(tab==="liveOps")loadLiveOperations();if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();}if(tab==="manualRecharge")loadManualUpiRecharges();if(tab==="withdrawals")loadManualPayouts();if(tab==="notifications"){loadAdminNotifications();loadPushCampaigns();adminNotificationPoll=setInterval(loadAdminNotifications,15000);}if(tab==="offers")loadOffers();if(tab==="usage")loadUsageMonitor();if(tab==="commerce")loadCommerce();if(tab==="profiles")loadProfileQueue();if(tab==="hostApprovals")loadHostApprovals();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
+ function switchTab(tab){["users","liveOps","manualRecharge","profiles","hostApprovals","security","reports","support","errors","analytics","withdrawals","notifications","offers","usage","commerce"].forEach(name=>$(name+"Tab").classList.toggle("hidden",tab!==name));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(adminNotificationPoll){clearInterval(adminNotificationPoll);adminNotificationPoll=null;}if(tab==="liveOps")loadLiveOperations();if(tab==="analytics"){loadAnalytics();loadPaymentDashboard();}if(tab==="manualRecharge")loadManualUpiRecharges();if(tab==="withdrawals"){loadManualPayouts();loadCashfreePayouts();}if(tab==="notifications"){loadAdminNotifications();loadPushCampaigns();adminNotificationPoll=setInterval(loadAdminNotifications,15000);}if(tab==="offers")loadOffers();if(tab==="usage")loadUsageMonitor();if(tab==="commerce")loadCommerce();if(tab==="profiles")loadProfileQueue();if(tab==="hostApprovals")loadHostApprovals();if(tab==="security"){loadIdentityBlacklist();loadStaffRoles()}if(tab==="support")loadSupportInbox();if(tab==="errors")loadAppErrors()}
 async function verifyAdmin(user){if(!user)return false;const {data,error}=await db.from("hearttalk_user_roles").select("role").eq("user_id",user.id).maybeSingle();return !error&&data?.role==="admin"}
 async function login(){
  const email=$("email").value.trim(),password=$("password").value,b=$("loginBtn"),message=$("loginError");
@@ -194,7 +201,7 @@ async function login(){
 window.login=login;
 async function showApp(){ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden")}
 async function logout(){await db.auth.signOut();sessionUser=null;usersCache=[];reportsCache=[];$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
-async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics(),loadSupportInbox(),loadAppErrors(),loadPaymentDashboard(),loadManualPayouts()])}
+async function refreshAll(){if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}await Promise.all([loadUsers(),loadReports(),loadAnalytics(),loadSupportInbox(),loadAppErrors(),loadPaymentDashboard(),loadManualPayouts(),loadCashfreePayouts()])}
 async function loadLiveOperations(){const boxes=[$('liveOpsCallList'),$('liveOpsChatList'),$('liveOpsRoomList')];if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}boxes.forEach(x=>x.innerHTML='<div class="empty">Loading…</div>');const {data,error}=await db.rpc('admin_get_live_operations');if(error){const m='<div class="notice">Run migration 202611260001_admin_live_operations_control.sql. '+esc(error.message)+'</div>';boxes.forEach(x=>x.innerHTML=m);return}const calls=data?.calls||[],chats=data?.chats||[],rooms=data?.rooms||[];$('liveOpsCalls').textContent=calls.length;$('liveOpsChats').textContent=chats.length;$('liveOpsRooms').textContent=rooms.filter(x=>x.status==='live').length;$('liveOpsMembers').textContent=rooms.reduce((n,x)=>n+Number(x.active_members||0),0);boxes[0].innerHTML=calls.length?calls.map(x=>'<article class="report-row"><div class="user-main"><b>'+esc(x.caller_name||'Caller')+' → '+esc(x.callee_name||'Member')+'</b><div class="user-meta">'+esc(x.call_type)+' · '+esc(x.status)+' · '+new Date(x.created_at).toLocaleString()+'</div></div><button class="btn danger" onclick="adminEndLiveCall(\''+x.id+'\')">End call</button></article>').join(''):'<div class="empty">No active calls.</div>';boxes[1].innerHTML=chats.length?chats.map(x=>'<article class="report-row"><b>'+esc(x.user_name||'User')+' ↔ '+esc(x.host_name||'Host')+'</b><span class="state">Billing active</span></article>').join(''):'<div class="empty">No active chat billing sessions.</div>';boxes[2].innerHTML=rooms.length?rooms.map(x=>'<article class="report-row"><div class="user-main"><b>'+esc(x.title)+'</b><div class="user-meta">Host: '+esc(x.host_name||x.host_id)+' · '+esc(x.status)+' · '+Number(x.active_members||0)+' members</div></div>'+(x.status==='live'?'<button class="btn danger" onclick="adminEndLiveRoom(\''+x.id+'\')">End room</button>':'<span class="muted small">Scheduled</span>')+'</article>').join(''):'<div class="empty">No live or scheduled rooms.</div>'}async function adminEndLiveCall(id){const reason=prompt('Reason for ending this call:','Safety/support intervention');if(reason===null||!confirm('End this call? Action will be audited.'))return;const {error}=await db.rpc('admin_end_live_call',{p_call_id:id,p_reason:reason});if(error){toast(error.message);return}toast('Call ended.');await loadLiveOperations()}async function adminEndLiveRoom(id){const reason=prompt('Reason for ending this room:','Safety/support intervention');if(reason===null||!confirm('End this room? Action will be audited.'))return;const {error}=await db.rpc('admin_end_live_room',{p_room_id:id,p_reason:reason});if(error){toast(error.message);return}toast('Room ended.');await loadLiveOperations()}
 async function loadHostApprovals(){
  if(!sessionUser||!await verifyAdmin(sessionUser)){await logout();return}
@@ -497,6 +504,59 @@ async function rejectManualUpiRecharge(id){
  const {error}=await db.rpc("admin_reject_manual_upi_recharge",{p_request_id:id,p_admin_note:note.trim()});
  if(error){toast(error.message);return}
  toast("Recharge request rejected.");await loadManualUpiRecharges();
+}
+async function loadCashfreePayouts(){
+ const status=$("cashfreePayoutStatus"),box=$("cashfreePayoutList");if(!status||!box)return;
+ status.textContent="Loading Cashfree payout requests…";box.innerHTML='<div class="empty">Loading…</div>';
+ const filter=$("cashfreePayoutFilter")?.value||"all";
+ const {data,error}=await db.rpc("admin_list_cashfree_payout_requests",{p_status:filter});
+ if(error){status.textContent="Unable to load Cashfree requests";box.innerHTML='<div class="notice">Cashfree payout database setup required: '+esc(error.message)+'</div>';return;}
+ const rows=Array.isArray(data)?data:[];
+ status.textContent=rows.length+" request(s)";
+ if(!rows.length){box.innerHTML='<div class="empty">No Cashfree payout requests in this filter.</div>';return;}
+ box.innerHTML=rows.map(r=>{
+  const bank=String(r.bank_account_number||"");
+  const destination=r.payout_method==="upi"
+    ? "UPI: "+esc(r.upi_id||"—")
+    : "Bank: ••••"+esc(bank.slice(-4))+" · IFSC: "+esc(r.bank_ifsc||"—");
+  const statusText=String(r.status||"").toUpperCase();
+  const transfer=r.cashfree_reference_id||r.cashfree_transfer_id||"Not initiated";
+  const utr=r.cashfree_utr?'<div class="muted small">UTR: <b>'+esc(r.cashfree_utr)+'</b></div>':"";
+  const cfStatus=r.cashfree_status?'<div class="muted small">Cashfree status: '+esc(r.cashfree_status)+(r.cashfree_status_code?' · '+esc(r.cashfree_status_code):"")+'</div>':"";
+  const fail=r.failure_reason?'<div class="notice small" style="margin-top:8px">'+esc(r.failure_reason)+'</div>':"";
+  const note=r.admin_note?'<div class="muted small">Admin note: '+esc(r.admin_note)+'</div>':"";
+  let actions="";
+  if(r.status==="pending"){
+    actions='<div class="toolbar"><button class="btn primary" onclick="approveCashfreePayout(\''+esc(r.id)+'\')">Approve request</button><button class="btn danger" onclick="rejectCashfreePayout(\''+esc(r.id)+'\')">Reject & release balance</button></div>';
+  }else if(r.status==="approved"){
+    actions='<div class="toolbar"><button class="btn primary" onclick="initiateCashfreePayout(\''+esc(r.id)+'\')">Initiate Sandbox Transfer</button><button class="btn danger" onclick="rejectCashfreePayout(\''+esc(r.id)+'\')">Reject & release balance</button></div>';
+  }else if(r.status==="processing"){
+    actions='<div class="muted small">Waiting for verified Cashfree transfer status. Do not retry or create another transfer.</div>';
+  }
+  return '<article class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+esc(r.host_name||r.host_id)+'</b><div class="muted small">Host ID: '+esc(r.host_id)+'</div><div class="muted small">'+new Date(r.created_at).toLocaleString()+'</div></div><div><b>₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</b><div class="muted small">'+esc(statusText)+' · '+esc(r.payout_method||"")+'</div></div></div><div class="muted small" style="margin:8px 0">'+destination+' · Account holder: '+esc(r.account_holder_name||"—")+'</div><div class="muted small">Transfer ID: '+esc(transfer)+'</div>'+cfStatus+utr+fail+note+actions+'</article>';
+ }).join("");
+}
+async function approveCashfreePayout(id){
+ if(!confirm("Approve this Cashfree host payout request? This only approves the request; it does not initiate a transfer."))return;
+ const {error}=await db.rpc("admin_approve_cashfree_payout_request",{p_request_id:id,p_admin_note:"Approved for Cashfree sandbox payout testing"});
+ if(error){toast(error.message);return;}
+ toast("Cashfree payout request approved. Review again, then initiate Sandbox transfer.");
+ await loadCashfreePayouts();
+}
+async function rejectCashfreePayout(id){
+ const note=prompt("Reason for rejecting this Cashfree payout request:");
+ if(note===null||note.trim().length<3)return;
+ const {error}=await db.rpc("admin_reject_cashfree_payout_request",{p_request_id:id,p_admin_note:note.trim()});
+ if(error){toast(error.message);return;}
+ toast("Cashfree payout request rejected; reserved balance released.");
+ await loadCashfreePayouts();
+}
+async function initiateCashfreePayout(id){
+ if(!confirm("Initiate this payout in CASHFREE SANDBOX only? This requires separate Cashfree Payouts Sandbox credentials. No production transfer is allowed."))return;
+ const {data,error}=await db.functions.invoke("initiate-cashfree-host-payout",{body:{request_id:id}});
+ if(error){toast(error.message||"Cashfree sandbox initiation failed. Check Edge Function secrets and logs.");await loadCashfreePayouts();return;}
+ toast(data?.message||"Sandbox transfer submitted. Final status will arrive through the signed payout webhook.");
+ await loadCashfreePayouts();
 }
 function adminHostPayoutQrUrl(r){
  const p=new URLSearchParams({pa:r.upi_id,pn:r.account_holder_name||r.host_name||"HeartTalk Host",am:(Number(r.amount_paise||0)/100).toFixed(2),cu:"INR",tn:"HeartTalk withdrawal",tr:"HT"+String(r.id).replace(/-/g,"").slice(0,24)});
