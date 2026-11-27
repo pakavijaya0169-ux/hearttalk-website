@@ -827,7 +827,7 @@ async function syncHeartTalkNativePushToken(){if(currentUser&&window.__heartTalk
 async function loadOfferBanners(){const ids=['homeOfferBanners','walletOfferBanners'];const nodes=ids.map(id=>document.getElementById(id)).filter(Boolean);if(!nodes.length)return;const {data,error}=await supabaseClient.rpc('get_active_hearttalk_offers');if(error){console.error('HeartTalk offers:',error);nodes.forEach(n=>{n.style.display='none';n.innerHTML='';});return;}const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html=(Array.isArray(data)?data:[]).map(o=>{const type=String(o.offer_type||'special offer').replace(/_/g,' ');const value=o.value==null?'':Number(o.value).toLocaleString();const reward=type==='bonus coins'&&value?value+' bonus coins':value?value+' '+type:type;return '<div class="ht-offer-content"><strong>🎁 '+esc(o.title)+'</strong><p>'+esc(o.description||'A special HeartTalk offer is waiting for you.')+'</p>'+(reward?'<span class="ht-offer-reward">✨ '+esc(reward)+'</span>':'')+'<button type="button" class="ht-offer-open" onclick="openOfferStore(event)">View offer in Store →</button></div>';}).join('');nodes.forEach(n=>{n.innerHTML=html;n.style.display=html?'block':'none';});}
 function openOfferStore(event){if(event){event.preventDefault();event.stopPropagation();}document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));const target=document.getElementById("walletView");if(target)target.classList.add("active");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.view==="home"));try{loadWallet();loadHostEarnings();loadOfferBanners();}catch(e){console.error("Could not load wallet:",e);}window.scrollTo({top:0,behavior:"smooth"});requestAnimationFrame(()=>{const packages=document.getElementById("hearttalkCoinPackages");if(packages)packages.scrollIntoView({behavior:"smooth",block:"start"});else notify("Wallet opened, but coin packages are not available.");});}
 function notify(s){const t=document.getElementById("toast");t.textContent=s;t.style.display="block";clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display="none",3200)}
-function heartTalkConfirm(title,message){
+function heartTalkStoreConfirm(title,message){
  return new Promise(resolve=>{
   const old=document.getElementById("heartTalkConfirmDialog");if(old)old.remove();
   const wrap=document.createElement("div");wrap.id="heartTalkConfirmDialog";
@@ -2605,7 +2605,7 @@ let htStoreGiftRequestId=null;async function heartTalkStoreSendGift(index){
 }
 async function heartTalkBuyCosmetic(index){
  const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(!item||!currentUser)return;
- if(!await heartTalkConfirm("HeartTalk Store","Buy "+item.title+" for "+item.coin_price+" coins?"))return;
+ if(!await heartTalkStoreConfirm("Buy item","Buy "+item.title+" for "+item.coin_price+" coins?"))return;
  try{const {data,error}=await supabaseClient.rpc("hearttalk_purchase_cosmetic",{p_item_code:item.item_code});if(error)throw error;
  htOwnedCosmetics.add(item.item_code);notify(data?.status==="already_owned"?"You already own this item.":"Purchased successfully! 💗");
  await loadWallet();await loadHeartTalkStore();
