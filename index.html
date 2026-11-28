@@ -1567,10 +1567,10 @@ async function loadMessages(){
  document.getElementById("chatHeading").innerHTML=
   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%">'+
    '<span style="display:inline-flex;align-items:center;gap:10px"><span class="avatar" style="width:36px;height:36px;margin:0;border-radius:50%;font-size:17px">💜</span><span><b>'+escapeHtml(activeChatUser.display_name)+'</b><br><small class="muted">HeartTalk member'+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+'</small></span></span>'+
-   '<span class="toolbar" style="margin:0;align-items:center">'+
+   '<span class="chat-head-actions" style="display:flex;flex-wrap:nowrap;flex-shrink:0;align-items:center;gap:7px;margin:0">'+
     '<button class="secondary" type="button" '+(blocked?'disabled':'')+' onclick="startOutgoingCall(\'voice\')">📞</button>'+
     '<button class="secondary" type="button" '+(blocked?'disabled':'')+' onclick="startOutgoingCall(\'video\')">🎥</button>'+
-    '<button class="secondary" type="button" onclick="toggleActiveChatBlock()" style="border-color:#d94c70;color:#c12655;background:#fff0f4">'+actionLabel+'</button>'+
+    '<button class="secondary" type="button" onclick="toggleActiveChatBlock()" style="border:1px solid #d94c70;color:#c12655;background:#fff0f4;min-height:40px;padding:9px 13px;font-size:13px;font-weight:750;white-space:nowrap;flex:0 0 auto">'+actionLabel+'</button>'+
    '</span>'+
   '</div>'+note;
  document.getElementById("messageInput").disabled=blocked;
