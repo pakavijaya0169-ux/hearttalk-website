@@ -1754,7 +1754,7 @@ async function getMeteredIceServers(){
  return cachedIceServers;
 }
 
-let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[],callStarting=false,callRingDeadline=null;
+let activeCallId=null, activeCallRole=null, peerConnection=null, localCallStream=null, callPollTimer=null, incomingCallPollTimer=null, signalPollTimer=null, lastSignalId=0, pendingIce=[],callStarting=false,callRingDeadline=null,lastCallReservationCheckAt=0;
 let cachedIceServers=null, callMuted=false, cameraDisabled=false, ringTimer=null, ringAudioContext=null, callAlertsEnabled=false,callStartedAt=null,callDurationTimer=null,audioSpeakerOn=false;
 function callStatus(s){const el=document.getElementById("callStatus");if(el)el.textContent=s}
 function selectedCallUser(){return activeChatUser||null}
@@ -1848,7 +1848,7 @@ async function startOutgoingCall(type){
   callStatus("Preparing "+type+" call...");
   const {data,error}=await supabaseClient.rpc("hearttalk_start_call",{target_user_id:target.id,requested_call_type:type});
   if(error)throw error;
-  activeCallId=data.call_id;callRingDeadline=Date.now()+60000;activeCallRole="caller";lastSignalId=0;pendingIce=[];
+  activeCallId=data.call_id;callRingDeadline=Date.now()+60000;activeCallRole="caller";lastSignalId=0;pendingIce=[];lastCallReservationCheckAt=0;
   // Best-effort background push to the callee; call signaling remains realtime/poll based.
   supabaseClient.functions.invoke("send-hearttalk-call-push",{body:{call_id:data.call_id}}).then(({error})=>{if(error)console.warn("Incoming call push delivery:",error)});
   await createPeer();await getLocalMedia(type);
@@ -1863,10 +1863,36 @@ async function startOutgoingCall(type){
 async function checkCallStatus(){
  if(!activeCallId)return;
  if(activeCallRole==="caller"&&callRingDeadline&&Date.now()>=callRingDeadline){await supabaseClient.rpc("hearttalk_expire_call",{target_call_id:activeCallId});callStatus("No answer after 60 seconds.");notify("No answer. Call disconnected.");await cleanupCall(false);return}
- const {data,error}=await supabaseClient.from("call_sessions").select("status,created_at").eq("id",activeCallId).maybeSingle();
+ const {data,error}=await supabaseClient.from("call_sessions").select("status,created_at,billing_status,reserved_coins").eq("id",activeCallId).maybeSingle();
  if(error||!data)return;
- if(data.status==="accepted"){callRingDeadline=null;callStatus("Connected. You can talk now.");setActiveCallConnected();}
- if(["rejected","ended","missed","cancelled","busy"].includes(data.status)){callStatus(data.status==="busy"?"The other member is already on another call.":data.status==="rejected"?"Call declined.":data.status==="missed"?"No answer. Call disconnected.":"Call ended.");if(data.status==="busy")notify("User is on another call.");await cleanupCall(false)}
+ if(data.status==="accepted"){
+  callRingDeadline=null;
+  if(Date.now()-lastCallReservationCheckAt>=5000){
+   lastCallReservationCheckAt=Date.now();
+   const {data:guard,error:guardError}=await supabaseClient.rpc("hearttalk_enforce_call_reservation",{target_call_id:activeCallId});
+   if(!guardError&&guard?.ended_due_to_reservation){
+    callStatus("Your reserved call coins have been used. The call has ended.");
+    notify("Call ended because the reserved coin balance was used. Unused coins are returned automatically.");
+    await cleanupCall(false);return;
+   }
+   if(guardError)console.warn("HeartTalk call reservation check:",guardError);
+  }
+  callStatus(data.reserved_coins>0?"Connected. "+data.reserved_coins+" coins reserved; unused coins return after the call.":"Connected. You can talk now.");
+  setActiveCallConnected();
+ }
+ if(["rejected","ended","missed","cancelled","busy"].includes(data.status)){
+  const message=data.billing_status==="insufficient_coins"
+   ?"Call could not connect because the paying User needs more coins."
+   :data.billing_status==="reserved_limit_reached"
+    ?"Call ended because the reserved coin balance was used."
+    :data.status==="busy"?"The other member is already on another call."
+     :data.status==="rejected"?"Call declined."
+      :data.status==="missed"?"No answer. Call disconnected."
+       :"Call ended.";
+  callStatus(message);
+  if(data.status==="busy"||data.billing_status==="insufficient_coins"||data.billing_status==="reserved_limit_reached")notify(message);
+  await cleanupCall(false);
+ }
 }
 async function pollIncomingCalls(){
  if(!currentUser||window.pendingIncomingCallId)return;
@@ -1899,15 +1925,15 @@ async function acceptIncomingCall(){
  const id=window.pendingIncomingCallId;if(!id||!currentUser)return;
  try{
   const {data:call,error}=await supabaseClient.from("call_sessions").select("id,caller_id,call_type,status").eq("id",id).maybeSingle();if(error||!call||call.status!=="ringing")throw new Error("This call is no longer available.");
-  activeCallId=id;activeCallRole="callee";lastSignalId=0;pendingIce=[];const {data:callerProfile}=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent=callerProfile?.display_name||"HeartTalk member";
+  activeCallId=id;activeCallRole="callee";lastSignalId=0;pendingIce=[];lastCallReservationCheckAt=0;const {data:callerProfile}=await supabaseClient.from("profiles").select("display_name").eq("id",call.caller_id).maybeSingle();const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent=callerProfile?.display_name||"HeartTalk member";
   await createPeer();await getLocalMedia(call.call_type);
-  const {data:accepted,error:uerr}=await supabaseClient.rpc("hearttalk_accept_call",{target_call_id:id});if(uerr)throw uerr;if(!accepted?.accepted)throw new Error("Call is no longer available or you are already on another call.");
+  const {data:accepted,error:uerr}=await supabaseClient.rpc("hearttalk_accept_call",{target_call_id:id});if(uerr)throw uerr;if(!accepted?.accepted){if(accepted?.status==="insufficient_coins")throw new Error("Not enough coins for this call. The paying User needs at least "+Number(accepted.required_coins||1)+" coins.");throw new Error("Call is no longer available or you are already on another call.");}
   document.getElementById("incomingCallPanel").classList.remove("show");
   const {data:sigs,error:serr}=await supabaseClient.from("call_signals").select("id,sender_id,signal_type,payload").eq("call_id",id).eq("signal_type","offer").order("id",{ascending:true}).limit(1);if(serr)throw serr;
   if(sigs?.[0]){lastSignalId=sigs[0].id;await handleCallSignal(sigs[0])}
   showActiveCallUI(call.call_type,callerProfile?.display_name||"HeartTalk member",true);callStatus("Call accepted. Connecting…");signalPollTimer=setInterval(pollCallSignals,1200);callPollTimer=setInterval(checkCallStatus,700);
   window.pendingIncomingCallId=null;
- }catch(e){notify("Could not accept call: "+e.message);await cleanupCall(false)}
+ }catch(e){window.pendingIncomingCallId=null;notify("Could not accept call: "+e.message);await cleanupCall(false)}
 }
 async function rejectIncomingCall(){
  stopRingtone();document.getElementById("incomingCallPanel").classList.remove("show");document.title="HeartTalk — Meet. Connect. Belong.";
@@ -1931,7 +1957,7 @@ async function cleanupCall(updateStatus){
  if(peerConnection){peerConnection.ontrack=null;peerConnection.close();peerConnection=null}
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
  const a=document.getElementById("localCallVideo"),b=document.getElementById("remoteCallVideo"),c=document.getElementById("localCallVideoFull"),d=document.getElementById("remoteCallVideoFull");[a,b,c,d].forEach(v=>{if(v)v.srcObject=null});hideActiveCallUI();
- activeCallId=null;activeCallRole=null;pendingIce=[];updateCallButtons(false);
+ activeCallId=null;activeCallRole=null;pendingIce=[];lastCallReservationCheckAt=0;updateCallButtons(false);
  const remoteName=document.getElementById("remoteCallName");if(remoteName)remoteName.textContent="Other member";
  if(updateStatus)callStatus("No active call.");
 }
