@@ -158,3 +158,41 @@ Read this file first, then inspect the live GitHub repository and latest GitHub 
 - **Migration review correction:** `public.hearttalk_gift_requests` is already created by earlier migration `202611190006_gift_duplicate_charge_protection.sql`, and `hearttalk_chat_sessions.status` explicitly allows `no_charge` in `202611190007_chat_billing_sessions.sql`. For safety, the 2026-11-26 billing migration was amended to create the idempotency table with `IF NOT EXISTS` as well. The call table status constraint does not include `busy`; the migration now maps a requested `busy` end state to the valid database status `missed`.
 - **Live database limitation:** repository files confirm these definitions exist in the migration history, but do not prove the corresponding migrations were applied to the user's Supabase project. Verify live table/function state in Supabase before testing calls or gifts.
 - Cashfree Payment Gateway remains the coin-recharge provider already integrated through `create-cashfree-order`, `verify-cashfree-payment`, and `cashfree-webhook`. Production readiness still depends on provider live approval, live credentials, actual webhook signing secret, and production environment. Cashfree Payouts remains restricted; do not represent payout transfers as enabled.
+
+## 2026-11-28 — Full audit, native background calls, push path and startup race fixes
+
+### Android background call support (code merged; Gradle build verified)
+- Added native HeartTalkCallService in android-app/app/src/main/java/com/hearttalk/app/HeartTalkCallService.java.
+- Native foreground service posts an ongoing HeartTalk call notification and holds a partial CPU wake lock while the call is active; it releases the lock when the call ends.
+- MainActivity exposes a trusted-origin-only JavaScript bridge (HeartTalkNative.startCall/stopCall).
+- Video calls enable Android Picture-in-Picture (auto-enter on Android 12+, onUserLeaveHint fallback on Android 8–11); PiP WebView layout keeps remote video and self-preview visible.
+- Manifest declares foreground microphone/camera service types, WAKE_LOCK and PiP activity configuration.
+- App version 1.2.0 / versionCode 3. WebRTC local media calls native bridge in APK; cleanup stops the native service. Ordinary web behavior remains unchanged.
+- Verified: Android Gradle build run 46109514778 completed success; artifact 15249172204 (debug APK), extracted to /mnt/data/HeartTalk-debug.apk.
+- Not yet verified: physical-device continuity switching to WhatsApp/Gallery, screen off, battery optimization, incoming calls while app closed, or PiP across Android/OEM versions. Gradle build alone does not prove device-level media continuity. APK is debug, not signed release.
+
+### Web frontend/PWA
+- Updated frontend version to hearttalk-web-2026.11.28 and Service Worker cache to hearttalk-v11.
+- Added heartTalkInvokeWhenAvailable guard for races where auth callbacks/view selection call promptHostSelfieAfterLogin, loadHostVerificationStatus, or loadForumFeed before later script definitions load. All 17 inline script blocks pass syntax checks.
+- Old app_error_reports for hearttalk-web-2026.11.12 included 39 web + 7 Android promise reports for promptHostSelfieAfterLogin undefined; 2 web + 4 Android runtime reports for loadHostVerificationStatus undefined; 4 web runtime reports for loadForumFeed undefined. Latest source guards the early call sites.
+- Pages workflow for commit b4d8200609242aaad0b6ea69be715eda19c2d97a was pending at handoff; verify final outcome and live smoke test. Unauthenticated home and Forums previously rendered without visible errors; authenticated flows remain untested.
+
+### Incoming call push
+- The frontend invokes send-hearttalk-call-push, but this function was missing from deployed Supabase functions.
+- Deployed GitHub source to Supabase as send-hearttalk-call-push ACTIVE v1, verify_jwt=true.
+- Function authenticates caller, confirms caller owns a currently ringing call (maximum 60 seconds), loads enabled recipient FCM tokens, and sends an FCM HTTP v1 high-priority notification.
+- Critical remaining configuration: the Firebase service-account key in the uploaded JSON was revoked in Google Cloud because it was exposed. Verify and rotate Supabase Edge secret FIREBASE_SERVICE_ACCOUNT_JSON using a new key securely (never request JSON/key in chat). Until updated, FCM delivery is not verified and push may fail.
+
+### Supabase security audit
+- Applied and verified ALTER FUNCTION public.set_profile_updated_at() SET search_path = '' in production. Matching migration added as supabase/migrations/202611280005_set_profile_updated_at_fixed_search_path.sql.
+- Security Advisor no longer reports this mutable search_path warning.
+- Advisor still reports 16 RLS-enabled tables without client policies (ACL checks show no anon/authenticated table grants except authenticated SELECT on hearttalk_manual_upi_recharges, still blocked by RLS with no policy); 7 anon-executable SECURITY DEFINER trigger/internal functions; 89 authenticated-executable SECURITY DEFINER RPCs; leaked-password protection disabled. Do not blanket revoke access or create broad RLS policies. Audit each function/role and enable leaked-password protection with owner approval.
+- Performance Advisor reports 54 missing foreign-key indexes, 76 auth RLS initplan warnings, 15 unused indexes, and 8 multiple permissive policy warnings. Review individually before changes.
+- Cashfree Payment Gateway functions/credentials were left untouched. Legacy Razorpay functions remain in place but are not used by the current frontend; do not delete without dependency confirmation.
+
+### Next verification order
+1. Confirm GitHub Pages workflow 46109652222 completed successfully and smoke-test the new release.
+2. Securely rotate Supabase Edge secret FIREBASE_SERVICE_ACCOUNT_JSON with a new Firebase service-account key.
+3. Install debug APK 1.2.0 and test voice call -> Home -> WhatsApp/Gallery -> return; video call -> Home -> PiP; end call from both sides; screen-off and permission behavior.
+4. Test logged-in paths: Host selfie onboarding/status, chat media, voice/video calls and completed-minute billing, gift delivery and 50/50 earnings, manual UPI withdrawal flow, Cashfree sandbox purchase/webhook credit, admin moderation and notifications.
+5. Continue per-function SECURITY DEFINER and RLS audit; never apply blanket changes.
