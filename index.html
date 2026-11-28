@@ -739,7 +739,7 @@ p{color:#77747e}
  <button class="primary" id="hostPayoutRequestBtn" type="button" onclick="requestHostPayout()" disabled>Request Withdrawal</button>
  <div id="hostPayoutRequests" style="margin-top:14px"></div>
  <h4>Gift earnings history</h4><div id="hostEarningsHistory" class="muted">Loading…</div>
- <div class="panel" id="cashfreeHostPayoutPanel" style="margin-top:18px;border:1px solid #8b5cf6">
+ <div class="panel" id="cashfreeHostPayoutPanel" hidden style="display:none;margin-top:18px;border:1px solid #8b5cf6">
   <div class="section-kicker">CASHFREE PAYOUTS · SANDBOX</div>
   <h3>⚡ Cashfree Host Withdrawal</h3>
   <p class="muted small">Separate Cashfree payout request. Minimum ₹500. Sandbox testing only; no production payout is enabled. Existing Manual UPI withdrawal remains available above.</p>
@@ -2552,7 +2552,6 @@ async function loadHostEarnings(){
  if(requestBtn)requestBtn.disabled=true;
  if(payoutStatus)payoutStatus.textContent="Checking verified cash earnings and withdrawal eligibility…";
  await loadManualUpiWithdrawals();
- await loadCashfreeHostPayouts();
  const rows=data.history||[];
  history.innerHTML=rows.length?rows.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)"><span>'+escapeHtml(x.emoji||"🎁")+' '+escapeHtml(x.gift_title||"Gift")+'<small class="muted" style="display:block">'+new Date(x.created_at).toLocaleString()+'</small></span><b>+'+Number(x.earned_coins||0)+' coins</b></div>').join(""):'<p class="muted">No gifts received yet.</p>';
 }
