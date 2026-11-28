@@ -1634,6 +1634,7 @@ async function moderateVoiceMessage(file){
 async function uploadChatMedia(file,kind){
  
  if(!file||!currentUser||!activeChatUser){notify("Open a conversation first.");return}
+ try{if(await isHeartTalkBlocked(activeChatUser.id)){notify("This conversation is blocked. Unblock the member to send media.");return}}catch(e){notify(e.message);return}
  const valid=kind==="image"?file.type.startsWith("image/"):file.type.startsWith("audio/");
  if(!valid){notify("Unsupported file type.");return}
  if(file.size>(kind==="image"?8388608:12582912)){notify("File is too large.");return}
