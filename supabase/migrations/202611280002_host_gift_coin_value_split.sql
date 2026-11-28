@@ -10,6 +10,17 @@ set host_share_paise=coalesce(host_share_paise,host_share_coins::bigint*50),
     platform_share_paise=coalesce(platform_share_paise,platform_share_coins::bigint*50)
 where host_share_paise is null or platform_share_paise is null;
 
+-- Use separate ₹0.50 value-units for the Host and HeartTalk halves.
+alter table public.hearttalk_gift_events drop constraint if exists hearttalk_gift_events_check1;
+update public.hearttalk_gift_events
+set host_share_coins=coin_price,
+    platform_share_coins=coin_price,
+    host_share_paise=coin_price::bigint*50,
+    platform_share_paise=coin_price::bigint*50;
+alter table public.hearttalk_gift_events
+ add constraint hearttalk_gift_events_check1
+ check (host_share_coins=coin_price and platform_share_coins=coin_price);
+
 create or replace function public.hearttalk_send_gift(
  target_host_id uuid,
  selected_gift_code text,
@@ -52,7 +63,7 @@ begin
  if v_balance<v_price then raise exception 'Not enough coins'; end if;
 
  v_host_share:=v_price;
- v_platform_share:=0;
+ v_platform_share:=v_price;
  v_host_share_paise:=v_price::bigint*50;
  v_platform_share_paise:=v_price::bigint*50;
 
@@ -81,7 +92,7 @@ revoke all on function public.hearttalk_send_gift(uuid,text,uuid) from public,an
 grant execute on function public.hearttalk_send_gift(uuid,text,uuid) to authenticated;
 
 update public.hearttalk_gift_events
-set host_share_coins=coin_price,platform_share_coins=0,
+set host_share_coins=coin_price,platform_share_coins=coin_price,
     host_share_paise=coin_price::bigint*50,platform_share_paise=coin_price::bigint*50
 where id in ('1c9bf2da-f3bf-480a-b7f5-c0507216104b'::uuid,'f0b17f67-dd97-4a1c-9dd4-6319e6a859d0'::uuid);
 update public.hearttalk_host_earnings he set earned_coins=e.coin_price
@@ -94,18 +105,18 @@ where e.id in ('1c9bf2da-f3bf-480a-b7f5-c0507216104b'::uuid,'f0b17f67-dd97-4a1c-
 on conflict(host_id,source_reference) do nothing;
 
 update public.hearttalk_gift_requests gr
-set result=gr.result||jsonb_build_object('host_earned_coins',e.coin_price,'host_earned_value_paise',e.coin_price::bigint*50,'platform_share_coins',0,'platform_share_value_paise',e.coin_price::bigint*50)
+set result=gr.result||jsonb_build_object('host_earned_coins',e.coin_price,'host_earned_value_paise',e.coin_price::bigint*50,'platform_share_coins',e.coin_price,'platform_share_value_paise',e.coin_price::bigint*50)
 from public.hearttalk_gift_events e
 where e.id in ('1c9bf2da-f3bf-480a-b7f5-c0507216104b'::uuid,'f0b17f67-dd97-4a1c-9dd4-6319e6a859d0'::uuid)
 and gr.result->>'gift_event_id'=e.id::text;
 
 update public.messages m
-set message='[[GIFT]]'||(substring(m.message from 9)::jsonb||jsonb_build_object('host_earned_coins',e.coin_price,'host_earned_value_paise',e.coin_price::bigint*50,'platform_share_value_paise',e.coin_price::bigint*50))::text
+set message='[[GIFT]]'||(substring(m.message from 9)::jsonb||jsonb_build_object('host_earned_coins',e.coin_price,'host_earned_value_paise',e.coin_price::bigint*50,'platform_share_coins',e.coin_price,'platform_share_value_paise',e.coin_price::bigint*50))::text
 from public.hearttalk_gift_events e
 where e.id in ('1c9bf2da-f3bf-480a-b7f5-c0507216104b'::uuid,'f0b17f67-dd97-4a1c-9dd4-6319e6a859d0'::uuid)
 and left(m.message,8)='[[GIFT]]' and position(e.id::text in m.message)>0;
 update public.notifications n
-set data=n.data||jsonb_build_object('host_earned_coins',e.coin_price,'host_earned_value_paise',e.coin_price::bigint*50,'platform_share_value_paise',e.coin_price::bigint*50)
+set data=n.data||jsonb_build_object('host_earned_coins',e.coin_price,'host_earned_value_paise',e.coin_price::bigint*50,'platform_share_coins',e.coin_price,'platform_share_value_paise',e.coin_price::bigint*50)
 from public.hearttalk_gift_events e
 where e.id in ('1c9bf2da-f3bf-480a-b7f5-c0507216104b'::uuid,'f0b17f67-dd97-4a1c-9dd4-6319e6a859d0'::uuid)
 and n.kind='gift_received' and n.data->>'gift_event_id'=e.id::text;
