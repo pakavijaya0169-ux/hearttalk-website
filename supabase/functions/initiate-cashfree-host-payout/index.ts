@@ -55,7 +55,7 @@ Deno.serve(async(req)=>{
   if(!response.ok){
    // A definitive API rejection; Step 3 will handle verified failure/release semantics.
    console.error("Cashfree payout API rejected request",response.status,provider);
-   await db.from("hearttalk_cashfree_payout_requests").update({cashfree_status:String(provider.status||provider.message||"API_REJECTED").slice(0,100),failure_reason:"Cashfree API rejected payout initiation.",updated_at:new Date().toISOString()}).eq("id",requestId);
+   await db.from("hearttalk_cashfree_payout_requests").update({cashfree_status:String(provider.status||provider.message||"API_REJECTED").slice(0,100),cashfree_initiation_http_status:response.status,failure_reason:"Cashfree API rejected payout initiation; status must be reconciled before release or retry.",updated_at:new Date().toISOString()}).eq("id",requestId);
    return reply({status:"processing",message:"Cashfree rejected/needs review. Reserved funds remain locked until verified status handling.",transfer_id:transferId},502);
   }
   const cfTransferId=provider.cf_transfer_id?String(provider.cf_transfer_id):null;
