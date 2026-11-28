@@ -41,3 +41,10 @@ Store catalogue refresh: 2026-11-13 — rebuild the Android WebView APK with the
 
 
 Store blank-grid fix: 2026-11-13 — rebuild Android APK with static fallback gift cards and auth-state refresh.
+
+
+## Ongoing call support (2026-11-28)
+- The Android wrapper starts a native foreground service while a HeartTalk voice/video call is active. An ongoing notification lets users return after switching apps.
+- Video calls enable Android Picture-in-Picture when users leave HeartTalk, where supported.
+- Android 14+ requires microphone/camera permission grants before calls start; the service is started while HeartTalk is visible.
+- Validate voice background continuity and video PiP on physical Android devices (Android 13, 14, and 15+) before public release. A successful Gradle build alone does not prove device-level call continuity.
