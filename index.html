@@ -1606,6 +1606,12 @@ async function sendChatSticker(emoji,label){
 function openGifSearch(){window.open("https://tenor.com/search/cute-love-gifs","_blank","noopener");notify("Tenor opened. Copy a direct .gif image link and paste it in chat.")}
 async function renderChatMessageContent(raw){
  const value=String(raw||"");
+ if(value.startsWith("[[GIFT]]")){
+  try{
+   const gift=JSON.parse(value.slice(8));
+   return '<div role="group" aria-label="HeartTalk gift" style="display:flex;align-items:center;gap:12px;min-width:185px;padding:10px 12px;border:1px solid #f4b8d2;border-radius:14px;background:linear-gradient(120deg,#fff0f7,#fff8fc)"><span style="font-size:34px;line-height:1">'+escapeHtml(gift.emoji||"🎁")+'</span><span><b style="display:block;color:#a52c65">🎁 Gift</b><span style="display:block;font-weight:700">'+escapeHtml(gift.title||"HeartTalk gift")+'</span><small style="color:#986b80">'+Number(gift.coin_price||0)+' coins</small></span></div>';
+  }catch(e){return '<span class="muted">🎁 HeartTalk gift</span>';}
+ }
  if(value.startsWith("[[MEDIA]]")){
   const bits=value.slice(9).split("|");let path;
   try{path=decodeURIComponent(bits.slice(1).join("|"))}catch(e){return "Attachment unavailable"}
@@ -2044,8 +2050,13 @@ let hostSelfieStream=null;
 function ensureHostSelfiePrompt(){
  if(document.getElementById("hostVerificationApplyPanel"))return;
  const panel=document.createElement("div");panel.id="hostVerificationApplyPanel";panel.style.cssText="display:none;position:fixed;inset:0;z-index:9999;background:#000b;align-items:center;justify-content:center;padding:16px";
- panel.innerHTML='<div style="background:#30183f;border:1px solid #71356e;border-radius:18px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow:auto;color:#fff"><h2>Selfie verification</h2><p>To activate Host features, record a live 3-second selfie video. Your normal User account remains available while verification is pending.</p><p id="hostVerificationStatus">Preparing secure verification…</p><label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input id="hostVerificationConsent" type="checkbox" onchange="document.getElementById(&quot;hostSelfieRecordBtn&quot;).disabled=!this.checked"><span>I agree to record and securely submit this 3-second video selfie for Host identity verification.</span></label><button id="hostSelfieRecordBtn" class="primary" onclick="startHeartTalkHostVerification()" style="width:100%;margin-top:10px" disabled>Continue to camera</button><video id="hostSelfiePreview" playsinline muted style="display:none;width:100%;margin-top:12px;border-radius:12px"></video><p id="hostSelfieProgress"></p></div>';
+ panel.innerHTML='<div style="background:#30183f;border:1px solid #71356e;border-radius:18px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow:auto;color:#fff"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h2 style="margin:0">Selfie verification</h2><button type="button" onclick="closeHostSelfiePrompt()" aria-label="Close selfie verification" style="border:0;background:#ffffff18;color:#fff;border-radius:50%;width:34px;height:34px;font-size:23px;line-height:1;flex:0 0 34px">×</button></div><p>To activate Host features, record a live 3-second selfie video. Your normal User account remains available while verification is pending.</p><p id="hostVerificationStatus">Preparing secure verification…</p><label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input id="hostVerificationConsent" type="checkbox" onchange="document.getElementById(&quot;hostSelfieRecordBtn&quot;).disabled=!this.checked"><span>I agree to record and securely submit this 3-second video selfie for Host identity verification.</span></label><button id="hostSelfieRecordBtn" class="primary" onclick="startHeartTalkHostVerification()" style="width:100%;margin-top:10px" disabled>Continue to camera</button><video id="hostSelfiePreview" playsinline muted style="display:none;width:100%;margin-top:12px;border-radius:12px"></video><p id="hostSelfieProgress"></p></div>';
  document.body.appendChild(panel);
+}
+function closeHostSelfiePrompt(){
+ const panel=document.getElementById("hostVerificationApplyPanel");if(panel)panel.style.display="none";
+ if(hostSelfieStream){hostSelfieStream.getTracks().forEach(t=>t.stop());hostSelfieStream=null;}
+ const video=document.getElementById("hostSelfiePreview");if(video){video.pause?.();video.srcObject=null;video.style.display="none";}
 }
 async function promptHostSelfieAfterLogin(){
  ensureHostSelfiePrompt();const panel=document.getElementById("hostVerificationApplyPanel");if(!currentUser||!panel)return;
@@ -2064,10 +2075,9 @@ async function loadHostVerificationStatus(){
  const {data:eligibility,error:eligibilityError}=await supabaseClient.from("profiles").select("gender,age").eq("id",currentUser.id).maybeSingle();
  if(eligibilityError||!eligibility){box.textContent="Could not verify host eligibility. Please refresh and try again.";if(record)record.disabled=true;return}
  if(String(eligibility.gender||"").toLowerCase()!=="female"||Number(eligibility.age)<18){if(panel)panel.style.display="none";return}
- if(panel)panel.style.display="";
  const [a,d,h]=await Promise.all([supabaseClient.from("host_applications").select("id,status,review_note").eq("user_id",currentUser.id).maybeSingle(),supabaseClient.from("host_kyc_documents").select("id,status").eq("user_id",currentUser.id).eq("document_type","video_selfie").order("submitted_at",{ascending:false}).limit(1),supabaseClient.from("hosts").select("host_status").eq("user_id",currentUser.id).maybeSingle()]);
  if(a.error){box.textContent="Setup pending. Run supabase/host_live_selfie_verification.sql in Supabase SQL Editor.";if(record)record.disabled=true;return}
- const doc=d.data&&d.data[0];if(h.data&&h.data.host_status==="active"&&a.data&&a.data.status==="approved"&&doc&&doc.status==="approved"){box.textContent="✓ Host verified and active.";if(apply)apply.style.display="none";if(record)record.disabled=true;return}
+ const doc=d.data&&d.data[0];if(h.data&&h.data.host_status==="active"&&a.data&&a.data.status==="approved"&&doc&&doc.status==="approved"){box.textContent="✓ Host verified and active.";if(apply)apply.style.display="none";if(record)record.disabled=true;if(panel)panel.style.display="none";return}
  if(a.data&&(a.data.status==="pending"||a.data.status==="under_review")){box.textContent=doc&&doc.status==="pending"?"Application and selfie submitted. Admin review pending.":"Application received. Record your 3-second live selfie.";if(apply)apply.style.display="none";if(record)record.disabled=!!doc&&doc.status==="pending";return}
  if(a.data&&a.data.status==="rejected"){box.textContent="Application rejected. "+(a.data.review_note||"Contact support.");if(apply)apply.disabled=true;if(record)record.disabled=true;return}
  box.textContent="Female account detected. Give consent and continue to the live selfie camera.";if(apply)apply.style.display="none";if(record){record.style.display="";record.disabled=!document.getElementById("hostVerificationConsent")?.checked;}
@@ -2798,7 +2808,7 @@ let htStoreGiftRequestId=null;async function heartTalkStoreSendGift(index){
    if(!htStoreGiftRequestId)htStoreGiftRequestId=crypto.randomUUID();
    const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser.id,selected_gift_code:item.gift_code,p_request_id:htStoreGiftRequestId});
    if(error)throw error;
-   notify("Gift sent successfully.");htStoreGiftRequestId=null;
+   notify("Gift sent to "+(activeChatUser.display_name||"member")+". The gift is now visible in this chat.");htStoreGiftRequestId=null;
    await loadMessages();await loadWallet();await loadHostEarnings();await loadHeartTalkStore();
   }catch(e){console.error("HeartTalk gift send failed:",e);notify(e.message||"Gift could not be sent. Check wallet balance and commerce SQL setup.");}
 }
