@@ -1399,14 +1399,18 @@ function renderDiscover(){
  grid.innerHTML=rows.map(u=>'<article class="connect-member"><div class="connect-avatar">'+(u.avatar_url?'<img src="'+escapeHtml(u.avatar_url)+'" alt="Profile photo">':(u.gender==="female"?"👩":u.gender==="male"?"👨":u.gender==="other"?"🧑":"💗"))+(u.gender?'<span class="gender-avatar-badge">'+(u.gender==="female"?"♀":u.gender==="male"?"♂":"✦")+'</span>':'')+'</div><h3>'+escapeHtml(u.display_name)+', '+u.age+'</h3><div class="member-meta">🌍 '+escapeHtml(u.country||"HeartTalk member")+(u.is_host?' · <span style="color:#b34b83;font-weight:700">⭐ HOST</span>':'')+(u.is_online?' · <span style="color:#16ad83;font-weight:700">● ONLINE</span>':'')+'</div><p class="member-bio">'+escapeHtml(u.bio||"Here to make new friends.")+'</p><div class="connect-actions"><button class="connect-message" onclick="startChat(\''+u.id+'\')">💬 Message</button><button class="connect-call" onclick="callHeartTalkMember(\''+u.id+'\')">📞 Call</button><button class="secondary" onclick="reportMember(' + "'" + u.id + "'" + ')">Report</button><button class="secondary" onclick="blockMember(' + "'" + u.id + "'" + ')">Block</button></div></article>').join("")
 }
 
-async function isHeartTalkBlocked(userId){
- if(!currentUser||!userId)return false;
- const [a,b]=await Promise.all([
+async function getHeartTalkBlockStatus(userId){
+ if(!currentUser||!userId)return {iBlocked:false,blockedMe:false};
+ const [mine,theirs]=await Promise.all([
   supabaseClient.from("blocked_users").select("blocker_id").eq("blocker_id",currentUser.id).eq("blocked_user_id",userId).maybeSingle(),
   supabaseClient.from("blocked_users").select("blocker_id").eq("blocker_id",userId).eq("blocked_user_id",currentUser.id).maybeSingle()
  ]);
- if(a.error||b.error)throw new Error("Safety database setup is required.");
- return !!(a.data||b.data);
+ if(mine.error||theirs.error)throw new Error("Could not verify member safety status. Please refresh and try again.");
+ return {iBlocked:!!mine.data,blockedMe:!!theirs.data};
+}
+async function isHeartTalkBlocked(userId){
+ const state=await getHeartTalkBlockStatus(userId);
+ return state.iBlocked||state.blockedMe;
 }
 async function reportMember(userId){
  if(!currentUser){openAuth();return}
@@ -1441,16 +1445,54 @@ async function loadBlockedUsers(){
  panel.innerHTML='<h3>Blocked members</h3>'+(people||[]).map(p=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #eee;border-radius:14px;margin:8px 0"><strong>'+escapeHtml(p.display_name||'HeartTalk member')+'</strong><button class="secondary" onclick="unblockMember(\''+p.id+'\')">Unblock</button></div>').join('');
 }
 async function unblockMember(userId){
- if(!currentUser)return;if(!await heartTalkConfirm('Unblock this member? They may appear in Discover again.'))return;
- const {error}=await supabaseClient.from('blocked_users').delete().eq('blocker_id',currentUser.id).eq('blocked_user_id',userId);
- if(error){notify('Unblock failed: '+error.message);return}notify('Member unblocked.');await loadBlockedUsers();await loadDiscover();
+ if(!currentUser)return;
+ if(!await heartTalkConfirm("Unblock this member? They may appear in Discover and contact you again."))return;
+ const {error}=await supabaseClient.rpc("hearttalk_unblock_member",{p_blocked_user_id:userId});
+ if(error){notify("Unblock failed: "+(error.message||error.code));return}
+ notify("Member unblocked.");
+ await loadBlockedUsers();
+ await loadDiscover();
+ if(activeChatUser?.id===userId)await loadMessages();
+ await loadConversations();
 }
 async function blockMember(userId){
  if(!currentUser){openAuth();return}
- if(!await heartTalkConfirm("Block this member? They will no longer appear in Discover."))return;
- const {error}=await supabaseClient.from("blocked_users").insert({blocker_id:currentUser.id,blocked_user_id:userId});
- if(error && error.code!=="23505"){console.error("HeartTalk block error:",error);notify("Block failed: "+(error.message||error.code));return}
- discoverUsers=discoverUsers.filter(u=>u.id!==userId);renderDiscover();notify("Member blocked.");
+ if(!userId||userId===currentUser.id)return;
+ if(!await heartTalkConfirm("Block this member? They cannot send you messages or call you, and you cannot contact them either."))return;
+ const {error}=await supabaseClient.rpc("hearttalk_block_member",{p_blocked_user_id:userId});
+ if(error){console.error("HeartTalk block error:",error);notify("Block failed: "+(error.message||error.code));return}
+ discoverUsers=discoverUsers.filter(u=>u.id!==userId);
+ homeHostUsers=homeHostUsers.filter(u=>u.id!==userId);
+ renderDiscover();
+ renderHomeHosts();
+ if(activeChatUser?.id===userId)await loadMessages();
+ await loadConversations();
+ notify("Member blocked. Messages and calls are disabled both ways.");
+}
+async function toggleActiveChatBlock(){
+ if(!currentUser||!activeChatUser){notify("Open a conversation first.");return}
+ let state;
+ try{state=await getHeartTalkBlockStatus(activeChatUser.id)}catch(e){notify(e.message);return}
+ const id=activeChatUser.id;
+ if(state.iBlocked){
+  if(!await heartTalkConfirm("Unblock "+(activeChatUser.display_name||"this member")+"? They may contact you again."))return;
+  const {error}=await supabaseClient.rpc("hearttalk_unblock_member",{p_blocked_user_id:id});
+  if(error){notify("Unblock failed: "+error.message);return}
+  notify(state.blockedMe?"You unblocked this member, but they still have you blocked.":"Member unblocked.");
+ }else{
+  if(!await heartTalkConfirm("Block "+(activeChatUser.display_name||"this member")+"? Messages and calls will be disabled both ways."))return;
+  const {error}=await supabaseClient.rpc("hearttalk_block_member",{p_blocked_user_id:id});
+  if(error){notify("Block failed: "+error.message);return}
+  discoverUsers=discoverUsers.filter(u=>u.id!==id);
+  homeHostUsers=homeHostUsers.filter(u=>u.id!==id);
+  renderDiscover();
+  renderHomeHosts();
+  notify("Member blocked. Messages and calls are disabled both ways.");
+ }
+ await loadMessages();
+ await loadConversations();
+ const panel=document.getElementById("blockedUsersPanel");
+ if(panel&&panel.style.display!=="none")await loadBlockedUsers();
 }
 function setConnectTab(tab){
  const chats=tab==="chats";
@@ -1507,22 +1549,60 @@ async function openConversation(id){
 }
 async function loadMessages(){
  if(!currentUser||!activeChatUser)return;
- document.getElementById("chatHeading").innerHTML="<div style=\"display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%\"><span style=\"display:inline-flex;align-items:center;gap:10px\"><span class=\"avatar\" style=\"width:36px;height:36px;margin:0;border-radius:50%;font-size:17px\">💜</span><span><b>"+escapeHtml(activeChatUser.display_name)+"</b><br><small class=\"muted\">HeartTalk member"+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+"</small></span></span><span class=\"toolbar\" style=\"margin:0\"><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('voice')\">📞</button><button class=\"secondary\" type=\"button\" onclick=\"startOutgoingCall('video')\">🎥</button></span></div>";
- document.getElementById("messageInput").disabled=false;document.getElementById("sendButton").disabled=false;
+ const box=document.getElementById("messageList");
+ let blockState;
+ try{blockState=await getHeartTalkBlockStatus(activeChatUser.id)}
+ catch(e){
+  document.getElementById("chatHeading").innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+  document.getElementById("messageInput").disabled=true;
+  document.getElementById("sendButton").disabled=true;
+  const tools=document.getElementById("chatTools");if(tools)tools.style.display="none";
+  return;
+ }
+ const blocked=blockState.iBlocked||blockState.blockedMe;
+ const actionLabel=blockState.iBlocked?"↩ Unblock":"🚫 Block";
+ const note=blocked
+  ?'<div class="notice" style="margin:8px 0 0;padding:8px 10px;font-size:12px">'+(blockState.iBlocked?"You blocked this member. Unblock to send messages or make calls.":"This member has blocked you. You cannot send messages or make calls.")+'</div>'
+  :"";
+ document.getElementById("chatHeading").innerHTML=
+  '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%">'+
+   '<span style="display:inline-flex;align-items:center;gap:10px"><span class="avatar" style="width:36px;height:36px;margin:0;border-radius:50%;font-size:17px">💜</span><span><b>'+escapeHtml(activeChatUser.display_name)+'</b><br><small class="muted">HeartTalk member'+(activeChatUser.country?" · "+escapeHtml(activeChatUser.country):"")+'</small></span></span>'+
+   '<span class="toolbar" style="margin:0;align-items:center">'+
+    '<button class="secondary" type="button" '+(blocked?'disabled':'')+' onclick="startOutgoingCall(\'voice\')">📞</button>'+
+    '<button class="secondary" type="button" '+(blocked?'disabled':'')+' onclick="startOutgoingCall(\'video\')">🎥</button>'+
+    '<button class="secondary" type="button" onclick="toggleActiveChatBlock()" style="border-color:#d94c70;color:#c12655;background:#fff0f4">'+actionLabel+'</button>'+
+   '</span>'+
+  '</div>'+note;
+ document.getElementById("messageInput").disabled=blocked;
+ document.getElementById("sendButton").disabled=blocked;
+ const tools=document.getElementById("chatTools");if(tools)tools.style.display=blocked?"none":"";
  const filter="and(sender_id.eq."+currentUser.id+",receiver_id.eq."+activeChatUser.id+"),and(sender_id.eq."+activeChatUser.id+",receiver_id.eq."+currentUser.id+")";
  const {data,error}=await supabaseClient.from("messages").select("id,sender_id,message,created_at").or(filter).order("created_at",{ascending:true}).limit(300);
- const box=document.getElementById("messageList");
  if(error){box.innerHTML='<div class="notice">Chat database setup is not complete: '+escapeHtml(error.message)+'</div>';return}
- box.innerHTML=(await Promise.all((data||[]).map(async m=>{const mine=m.sender_id===currentUser.id;const label=mine?"You":escapeHtml(activeChatUser.display_name);const time=m.created_at?new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";return '<div class="bubble '+(mine?"mine":"theirs")+'"><span class="sender-label">'+label+'</span>'+await renderChatMessageContent(m.message)+'<span class="message-time">'+time+'</span></div>'}))).join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
+ box.innerHTML=(await Promise.all((data||[]).map(async m=>{
+  const mine=m.sender_id===currentUser.id;
+  const label=mine?"You":escapeHtml(activeChatUser.display_name);
+  const time=m.created_at?new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";
+  return '<div class="bubble '+(mine?"mine":"theirs")+'"><span class="sender-label">'+label+'</span>'+await renderChatMessageContent(m.message)+'<span class="message-time">'+time+'</span></div>';
+ }))).join("")||'<div class="muted">Say hello and start your conversation. 💗</div>';
  box.scrollTop=box.scrollHeight;
- if(messageChannel)supabaseClient.removeChannel(messageChannel);
- messageChannel=supabaseClient.channel("hearttalk-chat-"+currentUser.id+"-"+activeChatUser.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{const m=payload.new;if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id))loadMessages()}).subscribe()
+ if(messageChannel)await supabaseClient.removeChannel(messageChannel);
+ messageChannel=supabaseClient.channel("hearttalk-chat-"+currentUser.id+"-"+activeChatUser.id)
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
+   const m=payload.new;
+   if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id))loadMessages();
+  }).subscribe();
 }
-
 function toggleChatPicker(id){const target=document.getElementById(id);if(!target)return;const opening=target.hidden;document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);target.hidden=!opening}
 function addChatEmoji(emoji){const input=document.getElementById("messageInput");if(!input)return;input.value+=emoji;input.focus()}
 async function sendChatSticker(emoji,label){
- if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});if(error){notify(error.message);return}document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);await loadMessages();await loadConversations()}
+ if(!currentUser||!activeChatUser){notify("Choose a conversation first.");return}
+ try{if(await isHeartTalkBlocked(activeChatUser.id)){notify("This conversation is blocked. Unblock the member to send messages.");return}}catch(e){notify(e.message);return}
+ const {error}=await supabaseClient.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatUser.id,message:"[[STICKER]]"+emoji+"|"+label});
+ if(error){notify(error.message);return}
+ document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);
+ await loadMessages();await loadConversations()
+}
 function openGifSearch(){window.open("https://tenor.com/search/cute-love-gifs","_blank","noopener");notify("Tenor opened. Copy a direct .gif image link and paste it in chat.")}
 async function renderChatMessageContent(raw){
  const value=String(raw||"");
