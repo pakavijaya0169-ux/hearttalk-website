@@ -2,14 +2,18 @@ package com.hearttalk.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.ActivityNotFoundException;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.util.Rational;
 import android.os.Build;
 import android.net.Uri;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
@@ -21,6 +25,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private WebView webView;
+    private volatile boolean videoCallActive = false;
     private PermissionRequest pendingPermissionRequest;
     private ValueCallback<Uri[]> fileChooserCallback;
     private static final int FILE_CHOOSER_REQUEST = 73;
@@ -32,6 +37,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         webView = new WebView(this);
         setContentView(webView);
+        webView.addJavascriptInterface(new HeartTalkNativeBridge(), "HeartTalkNative");
         requestNotificationPermissionIfNeeded();
 
         CookieManager.getInstance().setAcceptCookie(true);
@@ -99,6 +105,79 @@ public class MainActivity extends Activity {
         });
         webView.loadUrl(appUrl);
         webView.postDelayed(securityCheck, 500);
+    }
+
+
+    private boolean isTrustedHeartTalkPage() {
+        if (webView == null || webView.getUrl() == null) return false;
+        Uri uri = Uri.parse(webView.getUrl());
+        String path = uri.getPath() == null ? "" : uri.getPath();
+        return "https".equalsIgnoreCase(uri.getScheme())
+                && "pakavijaya0169-ux.github.io".equalsIgnoreCase(uri.getHost())
+                && path.startsWith("/hearttalk-website/");
+    }
+
+    private void updateVideoPipParams(boolean enabled) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        try {
+            PictureInPictureParams.Builder builder =
+                    new PictureInPictureParams.Builder().setAspectRatio(new Rational(16, 9));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) builder.setAutoEnterEnabled(enabled);
+            setPictureInPictureParams(builder.build());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            android.util.Log.w("HeartTalk", "Could not update PiP parameters", e);
+        }
+    }
+
+    private void updatePipWebLayout(boolean pip) {
+        if (webView == null) return;
+        String js = pip
+                ? "(function(){document.documentElement.classList.add('hearttalk-native-pip');"
+                  + "var s=document.getElementById('hearttalk-native-pip-style');if(!s){s=document.createElement('style');s.id='hearttalk-native-pip-style';"
+                  + "s.textContent='html,body{width:100vw!important;height:100vh!important;margin:0!important;overflow:hidden!important;background:#000!important;}"
+                  + "body.hearttalk-native-pip>:not(#activeVideoCall){display:none!important;}"
+                  + "#activeVideoCall{display:flex!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;margin:0!important;padding:0!important;border-radius:0!important;overflow:hidden!important;background:#000!important;z-index:2147483647!important;}"
+                  + "#activeVideoCall .active-call-top,#activeVideoCall .active-video-controls{display:none!important;}"
+                  + "#activeVideoCall .active-video-stage{display:flex!important;position:relative!important;flex:1!important;width:100%!important;height:100%!important;min-height:0!important;aspect-ratio:auto!important;overflow:hidden!important;}"
+                  + "#activeVideoCall #remoteCallVideoFull{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;background:#000!important;}"
+                  + "#activeVideoCall #localCallVideoFull{display:block!important;position:absolute!important;right:7px!important;bottom:7px!important;width:28%!important;height:28%!important;object-fit:cover!important;border:1px solid #fff!important;border-radius:8px!important;z-index:2!important;}';"
+                  + "document.head.appendChild(s);}})()"
+                : "(function(){document.documentElement.classList.remove('hearttalk-native-pip');"
+                  + "var s=document.getElementById('hearttalk-native-pip-style');if(s)s.remove();})()";
+        webView.evaluateJavascript(js, null);
+    }
+
+    public final class HeartTalkNativeBridge {
+        @JavascriptInterface
+        public void startCall(String callType) {
+            final boolean video = "video".equalsIgnoreCase(callType);
+            runOnUiThread(() -> {
+                if (!isTrustedHeartTalkPage()) return;
+                boolean micGranted = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+                boolean cameraGranted = !video || checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+                if (!micGranted || !cameraGranted) {
+                    android.util.Log.w("HeartTalk", "Call foreground service not started: media permission missing");
+                    return;
+                }
+                videoCallActive = video;
+                if (video) updateVideoPipParams(true);
+                try {
+                    HeartTalkCallService.start(MainActivity.this, video);
+                } catch (RuntimeException e) {
+                    android.util.Log.e("HeartTalk", "Could not start call foreground service", e);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void stopCall() {
+            runOnUiThread(() -> {
+                if (!isTrustedHeartTalkPage()) return;
+                videoCallActive = false;
+                updateVideoPipParams(false);
+                stopService(new Intent(MainActivity.this, HeartTalkCallService.class));
+            });
+        }
     }
 
     // Allow Razorpay/UPI payment apps to open from the hosted checkout page.
@@ -228,6 +307,26 @@ public class MainActivity extends Activity {
                 fileChooserCallback = null;
             }
         }
+    }
+
+
+    @Override public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (videoCallActive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            try {
+                enterPictureInPictureMode(new PictureInPictureParams.Builder()
+                        .setAspectRatio(new Rational(16, 9)).build());
+            } catch (IllegalStateException | IllegalArgumentException e) {
+                android.util.Log.w("HeartTalk", "Could not enter video PiP", e);
+            }
+        }
+    }
+
+    @Override public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+                                                         Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        updatePipWebLayout(isInPictureInPictureMode);
     }
 
     @Override public void onBackPressed() {
