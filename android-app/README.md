@@ -48,3 +48,5 @@ Store blank-grid fix: 2026-11-13 — rebuild Android APK with static fallback gi
 - Video calls enable Android Picture-in-Picture when users leave HeartTalk, where supported.
 - Android 14+ requires microphone/camera permission grants before calls start; the service is started while HeartTalk is visible.
 - Validate voice background continuity and video PiP on physical Android devices (Android 13, 14, and 15+) before public release. A successful Gradle build alone does not prove device-level call continuity.
+
+- The native call foreground service also holds a partial CPU wake lock for the duration of a call so screen-off/background transitions do not immediately suspend the WebView media process; it releases the lock when the call ends.
