@@ -542,7 +542,7 @@ async function loadCashfreePayouts(){
   }else if(r.status==="approved"){
     actions='<div class="toolbar"><button class="btn primary" onclick="initiateCashfreePayout(\''+esc(r.id)+'\')">Initiate Sandbox Transfer</button><button class="btn danger" onclick="rejectCashfreePayout(\''+esc(r.id)+'\')">Reject & release balance</button></div>';
   }else if(r.status==="processing"){
-    actions='<div class="muted small">Waiting for verified Cashfree transfer status. Do not retry or create another transfer.</div>';
+    actions='<div class="toolbar"><button class="btn" onclick="reconcileCashfreePayout(\\''+esc(r.id)+'\\')">Verify Sandbox Status</button><span class="muted small">Checks the existing transfer only. Never creates a retry.</span></div>';
   }
   return '<article class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+esc(r.host_name||r.host_id)+'</b><div class="muted small">Host ID: '+esc(r.host_id)+'</div><div class="muted small">'+new Date(r.created_at).toLocaleString()+'</div></div><div><b>₹'+(Number(r.amount_paise||0)/100).toFixed(2)+'</b><div class="muted small">'+esc(statusText)+' · '+esc(r.payout_method||"")+'</div></div></div><div class="muted small" style="margin:8px 0">'+destination+' · Account holder: '+esc(r.account_holder_name||"—")+'</div><div class="muted small">Transfer ID: '+esc(transfer)+'</div>'+cfStatus+utr+fail+note+actions+'</article>';
  }).join("");
@@ -567,6 +567,13 @@ async function initiateCashfreePayout(id){
  const {data,error}=await db.functions.invoke("initiate-cashfree-host-payout",{body:{request_id:id}});
  if(error){toast(error.message||"Cashfree sandbox initiation failed. Check Edge Function secrets and logs.");await loadCashfreePayouts();return;}
  toast(data?.message||"Sandbox transfer submitted. Final status will arrive through the signed payout webhook.");
+ await loadCashfreePayouts();
+}
+async function reconcileCashfreePayout(id){
+ if(!confirm("Verify the existing Cashfree SANDBOX transfer only? This does not create another transfer. Reserved earnings are released only when Cashfree rejected the original request and confirms the same transfer ID was not created."))return;
+ const {data,error}=await db.functions.invoke("reconcile-cashfree-host-payout",{body:{request_id:id}});
+ if(error){toast(error.message||"Cashfree status verification failed. Reserved earnings remain unchanged.");await loadCashfreePayouts();return;}
+ toast(data?.message||"Cashfree status verification completed. No new transfer was initiated.");
  await loadCashfreePayouts();
 }
 function adminHostPayoutQrPayload(r){
