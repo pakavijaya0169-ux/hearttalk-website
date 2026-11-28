@@ -2737,7 +2737,7 @@ async function heartTalkReportClientError(type,message,stack){
   user_id:currentUser.id,source:/Android|wv/i.test(navigator.userAgent)?"android":"web",
   error_type:type,message:String(message||"Unknown app error").slice(0,2000),
   stack:String(stack||"").slice(0,8000),page:location.pathname,
-  app_version:"hearttalk-web-2026.11.12"
+  app_version:"hearttalk-web-2026.11.28"
  });}catch(_){}
 }
 window.addEventListener("error",e=>{heartTalkReportClientError("runtime",e.message||"JavaScript error",e.error?.stack||"");});
