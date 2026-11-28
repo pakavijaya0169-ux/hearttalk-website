@@ -2652,7 +2652,7 @@ async function loadHostEarnings(){
  const summary=document.getElementById("walletHostCoinSummary");
  if(summary&&hostEarnedCoins>0){
   summary.style.display="block";
-  summary.textContent="Total coins: "+totalCoinCount+" ("+spendableWalletCoins+" spendable wallet + "+hostEarnedCoins+" Host reward coins) · Nominal value ₹"+(totalCoinCount*0.5).toFixed(2)+". Host rewards: ₹"+(hostEarnedCoins*0.5).toFixed(2)+" at ₹0.50/coin. Login/bonus coins are not cash-withdrawable.";
+  summary.textContent="Total coin units: "+totalCoinCount+" ("+spendableWalletCoins+" User Wallet Coins + "+hostEarnedCoins+" Host Reward Coins). Host Reward Wallet: ₹"+(hostEarnedCoins*0.5).toFixed(2)+" ("+hostEarnedCoins+" × ₹0.50). User Wallet Coins are usage credits (1 coin = ₹1 nominal call/gift value), not cash balance. Login bonus coins are not cash-withdrawable.";
  }else if(summary){summary.style.display="none";summary.textContent="";}
  const earnedINR=document.getElementById("hostEarnedINR"),availableINR=document.getElementById("hostAvailableINR"),requestBtn=document.getElementById("hostPayoutRequestBtn"),payoutStatus=document.getElementById("hostPayoutStatus");
  if(earnedINR)earnedINR.textContent="₹"+(hostEarnedCoins*0.5).toFixed(2)+" cash value at ₹0.50 per Host coin";
