@@ -10,12 +10,14 @@ import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 
 import androidx.core.app.NotificationCompat;
 
 public class HeartTalkCallService extends Service {
     private static final String CHANNEL_ID = "hearttalk_active_calls";
     private static final int NOTIFICATION_ID = 7401;
+    private PowerManager.WakeLock callWakeLock;
 
     public static void start(Context context, boolean video) {
         Intent intent = new Intent(context, HeartTalkCallService.class);
@@ -31,13 +33,19 @@ public class HeartTalkCallService extends Service {
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
+        PowerManager powerManager = getSystemService(PowerManager.class);
+        if (powerManager != null) {
+            callWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "HeartTalk:ActiveCall");
+            callWakeLock.setReferenceCounted(false);
+        }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         boolean video = intent != null && intent.getBooleanExtra("video", false);
         Notification notification = buildNotification(video);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (callWakeLock != null && !callWakeLock.isHeld()) callWakeLock.acquire();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             int type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
             if (video) type |= ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA;
             startForeground(NOTIFICATION_ID, notification, type);
@@ -84,6 +92,7 @@ public class HeartTalkCallService extends Service {
 
     @Override
     public void onDestroy() {
+        if (callWakeLock != null && callWakeLock.isHeld()) callWakeLock.release();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE);
         else stopForeground(true);
         super.onDestroy();
