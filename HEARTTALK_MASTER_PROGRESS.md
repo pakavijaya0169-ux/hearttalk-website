@@ -196,3 +196,31 @@ Read this file first, then inspect the live GitHub repository and latest GitHub 
 3. Install debug APK 1.2.0 and test voice call -> Home -> WhatsApp/Gallery -> return; video call -> Home -> PiP; end call from both sides; screen-off and permission behavior.
 4. Test logged-in paths: Host selfie onboarding/status, chat media, voice/video calls and completed-minute billing, gift delivery and 50/50 earnings, manual UPI withdrawal flow, Cashfree sandbox purchase/webhook credit, admin moderation and notifications.
 5. Continue per-function SECURITY DEFINER and RLS audit; never apply blanket changes.
+
+
+## 2026-11-28 — Follow-up production audit and fixes
+
+### Verified production fixes
+- Read-only production log review identified repeated HTTP 403 responses for `GET /rest/v1/hearttalk_gift_catalog`. Root cause: RLS was enabled, but authenticated users had no SELECT grant and no active-gift read policy.
+- Applied additive Supabase migration `gift_catalog_authenticated_read_access` (version `20261128053053`): grants SELECT only to `authenticated`, adds an RLS policy for `active = true`, keeps anonymous SELECT disabled, and leaves purchase RPC validation unchanged.
+- Verified with SQL: authenticated SELECT is granted, anon SELECT is false, RLS is enabled, and authenticated role sees 12 active rows only.
+- Production Admin UI called `admin_get_live_gift_metrics`, but that RPC was absent from the live database. Restored the original aggregate admin-only function from repository migration `202611210001_admin_live_gift_metrics.sql` as additive migration `admin_live_gift_metrics` (version `20261128053058`).
+- Verified RPC permissions: SECURITY DEFINER, anon EXECUTE false, authenticated EXECUTE true, with internal `is_hearttalk_admin()` check. Simulated admin-context call returned the existing aggregate of 18 Host reward coins and 2 gifts.
+- Live gift ledger/constraint audit: current constraint requires `host_share_coins = coin_price` and `platform_share_coins = coin_price`, while each side's cash value is `coin_price * 50 paise`. Both existing rows satisfy the intended ₹0.50 + ₹0.50 accounting. Two historical constraint failures were observed during the transition; no additional constraint change was made.
+
+### Admin User Registry ID/date mapping fix
+- Production function `admin_list_user_registry` returns `user_id` and `registered_at`; Admin UI expected `id` and `created_at`. Live Postgres logs showed two RPC failures caused by `target_user_id = "undefined"`.
+- Updated only the normalization line in `admin/index.html`: maps `user_id` to `id` and `registered_at` to `created_at`, retaining existing properties and UI behavior.
+- Commit: `235d8cd8fd264a24833940a82cb1f00803e9d3c4`.
+- GitHub Pages run `46112691833` completed successfully: build, deploy, and report-build-status all succeeded.
+- Read-only website smoke test completed after deployment: public homepage loaded, Home → Forums → Home navigation worked, Forums sub-tabs rendered, legal links were present, and no visible uncaught JavaScript errors were encountered in the unauthenticated test. Authenticated user/host/call/purchase flows were not tested by this smoke test.
+
+### Current audit limits / remaining verification
+- The latest Supabase migration API reports 14 tracked migrations after these two additions; this is not equivalent to proving every older SQL Editor migration is absent. Verify each important production object directly rather than relying on the migration count.
+- The frontend currently invokes 9 Edge Function endpoints; all 9 were found ACTIVE in Supabase at this audit.
+- Security Advisor still reports 7 anon-executable SECURITY DEFINER functions, 90 authenticated-executable SECURITY DEFINER functions, and leaked-password protection disabled. Review each function's intended caller and auth check individually; do not blanket revoke.
+- Performance Advisor still reports 54 unindexed foreign keys, 76 RLS initplan warnings, 14 unused indexes, and 8 multiple permissive-policy warnings. No bulk index or policy changes were made.
+- Cashfree Payouts remains sandbox-only. No payout transfer was initiated; the read-only connectivity check has not yet been confirmed through the Admin UI. The initiation handler keeps requests in `processing` after ambiguous/non-OK provider responses, so implement/verify a safe reconcile-and-recovery flow before any sandbox transfer tests.
+- Firebase Google Cloud service-account key list was read-only verified: two active keys remain; the two old exposed IDs are absent. Supabase secret `FIREBASE_SERVICE_ACCOUNT_JSON` still needs secure rotation with a new credential through the Dashboard. Do not put its JSON value into chat or GitHub.
+- Physical Android tests remain outstanding (background call continuity, screen off, PiP, notification permission, battery optimization, incoming call when app closed). The current APK artifact is debug, not a signed release.
+- No claim that the entire app is bug-free or production-ready is warranted until authenticated end-to-end tests are completed.
