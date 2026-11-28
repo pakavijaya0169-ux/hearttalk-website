@@ -135,7 +135,7 @@ public class MainActivity extends Activity {
                 ? "(function(){document.documentElement.classList.add('hearttalk-native-pip');"
                   + "var s=document.getElementById('hearttalk-native-pip-style');if(!s){s=document.createElement('style');s.id='hearttalk-native-pip-style';"
                   + "s.textContent='html,body{width:100vw!important;height:100vh!important;margin:0!important;overflow:hidden!important;background:#000!important;}"
-                  + "body.hearttalk-native-pip>:not(#activeVideoCall){display:none!important;}"
+                  + "html.hearttalk-native-pip body>:not(#activeVideoCall){display:none!important;}"
                   + "#activeVideoCall{display:flex!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;margin:0!important;padding:0!important;border-radius:0!important;overflow:hidden!important;background:#000!important;z-index:2147483647!important;}"
                   + "#activeVideoCall .active-call-top,#activeVideoCall .active-video-controls{display:none!important;}"
                   + "#activeVideoCall .active-video-stage{display:flex!important;position:relative!important;flex:1!important;width:100%!important;height:100%!important;min-height:0!important;aspect-ratio:auto!important;overflow:hidden!important;}"
