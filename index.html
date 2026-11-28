@@ -586,7 +586,7 @@ p{color:#77747e}
 <div class="call-layout">
  <div class="call-start-card">
   <div class="call-start-icon">☎️</div>
-<h3>Start a conversation</h3><p id="callTargetLabel">Choose someone from Connect to start a call.</p>
+<h3>Start a conversation</h3><p id="callTargetLabel">Choose someone from Connect to start a call.</p><p class="muted small" style="margin:8px 0 12px;line-height:1.5">Voice: 1 coin/min (₹0.50 Host + ₹0.50 HeartTalk) · Video: 2 coins/min (₹1 Host + ₹1 HeartTalk) · Chat: Free. Each started call minute is billed.</p>
   <div class="call-start-actions"><button class="primary" onclick="startOutgoingCall('voice')">📞 Voice call</button><button class="video-call-btn" onclick="startOutgoingCall('video')">🎥 Video call</button><button class="secondary" onclick="showView('discover')">Find people</button></div>
   <div class="call-alert-row"><span>🔔 Get notified when someone calls</span><button class="secondary" onclick="enableCallAlerts()">Enable notifications</button></div>
   <p id="callStatus" class="call-status">No active call</p>
@@ -727,7 +727,7 @@ p{color:#77747e}
  <div class="section-kicker">HOST CREATOR EARNINGS</div>
  <h3>💸 Host Earnings & Withdraw</h3><span id="hostGiftCount" hidden>0</span>
  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
-  <div class="panel"><small class="muted">Gift earnings</small><b id="hostEarnedCoins" style="display:block;font-size:22px">0</b><span id="hostEarnedINR" class="muted">0 coins</span></div>
+  <div class="panel"><small class="muted">Host reward coins · Gifts + Calls</small><b id="hostEarnedCoins" style="display:block;font-size:22px">0</b><span id="hostEarnedINR" class="muted">0 coins</span></div>
   <div class="panel"><small class="muted">Available to withdraw</small><b id="hostAvailableINR" style="display:block;font-size:22px">₹0.00</b></div>
  </div>
  <p id="hostPayoutStatus" class="muted">Loading withdrawal eligibility…</p>
@@ -738,7 +738,7 @@ p{color:#77747e}
  <label>UPI account holder name<input id="hostPayoutHolder" type="text" maxlength="100" placeholder="Name on UPI account"></label>
  <button class="primary" id="hostPayoutRequestBtn" type="button" onclick="requestHostPayout()" disabled>Request Withdrawal</button>
  <div id="hostPayoutRequests" style="margin-top:14px"></div>
- <h4>Gift earnings history</h4><div id="hostEarningsHistory" class="muted">Loading…</div>
+ <h4>Host earnings history</h4><div id="hostEarningsHistory" class="muted">Loading…</div>
  <div class="panel" id="cashfreeHostPayoutPanel" hidden style="display:none;margin-top:18px;border:1px solid #8b5cf6">
   <div class="section-kicker">CASHFREE PAYOUTS · SANDBOX</div>
   <h3>⚡ Cashfree Host Withdrawal</h3>
