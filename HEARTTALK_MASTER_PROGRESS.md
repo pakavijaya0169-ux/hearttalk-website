@@ -228,3 +228,31 @@ Read this file first, then inspect the live GitHub repository and latest GitHub 
 - Firebase Google Cloud service-account key list was read-only verified: two active keys remain; the two old exposed IDs are absent. Supabase secret `FIREBASE_SERVICE_ACCOUNT_JSON` still needs secure rotation with a new credential through the Dashboard. Do not put its JSON value into chat or GitHub.
 - Physical Android tests remain outstanding (background call continuity, screen off, PiP, notification permission, battery optimization, incoming call when app closed). The current APK artifact is debug, not a signed release.
 - No claim that the entire app is bug-free or production-ready is warranted until authenticated end-to-end tests are completed.
+
+
+## 2026-11-28 — Cashfree payout reconciliation and call-balance authorization
+
+### Cashfree payout reconciliation and failure recovery
+- Live payout request table was empty at audit time; no payout rows or Host cash-ledger balances were changed.
+- Added migration `20261128054932_cashfree_payout_safe_reconciliation_recovery`: stores original initiation HTTP status and last-check timestamp; adds service-role-only recovery RPC. Reserved earnings are released only when Cashfree definitively rejected initiation with a non-ambiguous 4xx and GET of the exact same stable transfer ID returns 404. Network errors, timeouts, 5xx, 408/409/425/429 and ambiguous 404 responses remain reserved for manual review. Recovery writes an auditable ledger release and admin audit event.
+- Added migration `20261128055020_cashfree_payout_admin_reconciliation_visibility`: finance-protected Admin RPC returns the reconciliation fields.
+- Added Edge Function `reconcile-cashfree-host-payout` ACTIVE v1, verify_jwt=true. It only GETs the existing transfer ID, validates ID/amount/INR/status, and applies the existing idempotent status RPC. It never posts a new transfer.
+- Updated `initiate-cashfree-host-payout` ACTIVE v4 to persist the original Cashfree HTTP status for guarded recovery.
+- Added Admin Dashboard action “Verify Sandbox Status” for processing payout requests. It invokes reconciliation only; it does not retry.
+- Verification: migration columns exist; recovery RPC is SECURITY DEFINER but callable only by service_role (anon/authenticated EXECUTE false); admin list RPC includes the new metadata; simulated admin list returned an empty request list. No Cashfree transfer was initiated.
+- GitHub commits: reconciliation source `d46a64f1be7dd100bb29a796e3464be6677e1926`; initiation source update `eafed00bc8a893177d1897dd8953d737044f3f86`; Admin UI final quoting fix `d1b8781a477c7cd9918ca9948568a95a8e79bf70`; migration sources `c47e7301601216587feebb7163f8b37deaca5e62` and `bd56c22e5913f335381ca368075a04b59bd00728`.
+
+### Call balance reservation and unused coin refunds
+- Added and applied production migration `20261128055434_call_minute_reservation_and_unused_coin_refunds`.
+- New eligible male User ↔ approved active Host calls reserve the payer’s currently available coins when the callee accepts. Voice reserves in full one-coin-per-minute units; video reserves in full two-coin-per-minute units. In either call direction, the male User pays; the Host wallet is never charged.
+- At call end, only fully completed minutes are charged. Unused reserved coins are returned through a unique refund ledger reference. Host earnings/cash credits are recorded only for charged completed minutes using the existing 50/50 accounting trigger. Calls created before the migration (reserved_coins=0) retain the legacy end-of-call billing path; historical rows were not rewritten.
+- Added participant-only `hearttalk_enforce_call_reservation` to end a new call when its prepaid whole-minute window is exhausted. Frontend checks this periodically during an accepted call and displays insufficient-balance / reserved-limit messages.
+- Test results, each run in a transaction and rolled back:
+  - Voice call, 90 seconds: charged 1 completed minute; remaining reservation refunded.
+  - Video call, 120 seconds: charged 4 coins; remaining reservation refunded.
+  - Video with only 1 available coin: acceptance blocked as insufficient_coins.
+  - Voice with 1 reserved coin after the next completed-minute boundary: auto-ended and settled one coin.
+- Post-test production check: active calls 0; reservation/refund test ledger rows 0; existing call history remains 163 rows.
+- Migration source saved to GitHub: `supabase/migrations/20261128055434_call_minute_reservation_and_unused_coin_refunds.sql`, commit `922d07fda096bed6fbed8b831dbfdff7ff524adf`.
+- Frontend reservation integration commit: `4660bb7a9c47d5013981967fa7837418f5febcbd`. Pages run `46114242567` completed successfully on that frontend commit.
+- Pending real-device verification: test actual logged-in User↔Host voice/video calls on web and Android, network changes, app background/PiP, notification behavior and end-call settlement. Rollback SQL simulation is not a substitute for live media tests.
