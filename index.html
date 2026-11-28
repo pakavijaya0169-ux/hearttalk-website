@@ -771,7 +771,7 @@ p{color:#77747e}
 <div class="ht-store-tabs"><button class="active" data-store-tab="gifts" onclick="setHeartTalkStoreTab('gifts')">🎁 GIFTS</button><button data-store-tab="frames" onclick="setHeartTalkStoreTab('frames')">🖼️ FRAMES</button><button data-store-tab="wallpapers" onclick="setHeartTalkStoreTab('wallpapers')">🌄 WALLPAPERS</button></div>
 <div class="ht-store-banner"><span>✨ HEARTTALK EXCLUSIVES</span><strong id="storeBannerTitle">Make someone smile today</strong><small id="storeBannerSub">Choose a gift and share happiness.</small></div>
 <div class="ht-store-sectionline"><h3 id="storeSectionTitle">Today's Mood</h3><span>COIN STORE</span></div><div id="heartTalkStoreGrid" class="ht-store-grid"><article class="ht-store-item"><div class="ht-store-art">😎</div><h4>I'm So Cool</h4><div class="ht-store-price">🪙 9 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">😂</div><h4>Party Mode</h4><div class="ht-store-price">🪙 9 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">☕</div><h4>Chai</h4><div class="ht-store-price">🪙 19 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">❤️</div><h4>Heart</h4><div class="ht-store-price">🪙 20 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">🎂</div><h4>Happy Birthday</h4><div class="ht-store-price">🪙 29 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">🌹</div><h4>Rose</h4><div class="ht-store-price">🪙 49 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">🧸</div><h4>Teddy Bear</h4><div class="ht-store-price">🪙 49 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">💎</div><h4>Diamond</h4><div class="ht-store-price">🪙 250 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article><article class="ht-store-item"><div class="ht-store-art">👑</div><h4>Royal Crown</h4><div class="ht-store-price">🪙 500 coins</div><button type="button" onclick="heartTalkStoreSendGift()">Send in chat</button></article></div>
-<p class="ht-store-footnote">Send virtual gifts from an open member chat using your wallet coins after the commerce activation SQL is installed. Profile frames and wallpapers are preview-only in this release.</p>
+<p class="ht-store-footnote">Choose an active Host account as the gift recipient. Gifts appear in that member’s chat and their notification inbox.</p>
 </section></main>
 <nav class="bottom"><button class="active" data-view="home" onclick="showView('home')">🏠<small>Home</small></button><button data-view="discover" onclick="showView('discover')">🫶<small>Connect</small></button><button data-view="wallet" onclick="showView('wallet')">🪙<small>Wallet</small></button><button data-view="store" onclick="showView('store')">🛍️<small>Store</small></button><button data-view="chat" onclick="showView('chat')">💬<small>Chats</small></button><button data-view="forums" onclick="showView('forums')">👥<small>Forums</small></button><button data-view="calls" onclick="showView('calls')">📞<small>Calls</small></button><button data-view="profile" onclick="showView('profile')">👤<small>Profile</small></button></nav>
 <div class="modal" id="authModal"><div class="dialog"><button class="close" id="authCloseBtn" onclick="closeAuth()">×</button><div class="section-kicker">WELCOME TO HEARTTALK</div><h2 id="authTitle">Your email. Your HeartTalk.</h2><p id="authDescription" class="muted">Sign up or log in securely with your email and verification code.</p><button type="button" id="googleLoginBtn" class="secondary" style="width:100%;margin:12px 0;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#29232e;border:1px solid #ddd;padding:13px" onclick="signInWithGoogle()"><span style="font-weight:800;font-size:17px">G</span> Continue with Google</button><div style="display:flex;align-items:center;gap:10px;color:#999;font-size:12px;margin:10px 0"><span style="height:1px;background:#eee;flex:1"></span>OR CONTINUE WITH EMAIL<span style="height:1px;background:#eee;flex:1"></span></div><div class="section-kicker" style="margin:12px 0">EMAIL VERIFICATION</div><div id="emailAuthFields"><label>Email address</label><input id="authEmail" type="email" inputmode="email" placeholder="Enter your email address" autocomplete="email"><button class="primary" id="emailSendOtp" style="width:100%;margin-top:12px" onclick="sendEmailOtp()">Resend / Send Code</button><div id="emailOtpFields" style="display:none;margin-top:12px"><label>Enter email verification code</label><input id="authEmailOtp" type="text" inputmode="numeric" maxlength="8" placeholder="Enter verification code" autocomplete="one-time-code"><button class="primary" id="emailVerifyOtp" style="width:100%;margin-top:12px" onclick="verifyEmailOtp()">Verify & Continue</button></div></div><p class="muted" style="font-size:12px;margin-top:14px">By continuing, you agree to use HeartTalk respectfully. Email verification is required.<br><a href="./legal.html#terms" target="_blank" rel="noopener">Terms</a> · <a href="./legal.html#privacy" target="_blank" rel="noopener">Privacy</a> · <a href="./legal.html#refunds" target="_blank" rel="noopener">Refunds</a></p></div></div>
@@ -2804,31 +2804,120 @@ function renderHeartTalkStore(){
   return '<article class="ht-store-item"><div class="ht-store-art" aria-hidden="true">'+emoji+'</div><h4>'+escapeHtml(item.title||"HeartTalk item")+'</h4>'+price+action+'</article>';
  }).join("");
 }
-let htStoreGiftRequestId=null;async function heartTalkStoreSendGift(index){
-  if(!currentUser){openAuth();return;}
-  const item=htStoreGifts[index];
-  if(!item){notify("This gift is unavailable. Refresh the Store and try again.");return;}
-  if(!item.gift_code){notify("Gift code is missing. Please refresh the Store.");return;}
-  if(!activeChatUser){
-   try{
-    const {data,error}=await supabaseClient.from("messages").select("sender_id,receiver_id,created_at").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(1);
-    if(error)throw error;
-    const last=data&&data[0];
-    if(last){const peerId=last.sender_id===currentUser.id?last.receiver_id:last.sender_id;await openConversation(peerId);}
-   }catch(e){console.warn("Could not find a recent chat for Store gift:",e);}
-  }
-  showView("chat");
-  if(!activeChatUser){await loadConversations();notify("Chat opened. Select a member from Connect first, then return to Store to send the gift.");return;}
-  await loadMessages();
-  if(!await heartTalkStoreConfirm("Send gift","Send "+item.title+" to "+(activeChatUser.display_name||"this member")+" for "+Number(item.coin_price||0)+" coins?"))return;
-  try{
-   if(!htStoreGiftRequestId)htStoreGiftRequestId=crypto.randomUUID();
-   const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{target_host_id:activeChatUser.id,selected_gift_code:item.gift_code,p_request_id:htStoreGiftRequestId});
-   if(error)throw error;
-   notify("Gift sent to "+(activeChatUser.display_name||"member")+". The gift is now visible in this chat.");htStoreGiftRequestId=null;
-   await loadMessages();await loadWallet();await loadHostEarnings();await loadHeartTalkStore();
-  }catch(e){console.error("HeartTalk gift send failed:",e);notify(e.message||"Gift could not be sent. Check wallet balance and commerce SQL setup.");}
+let htStoreGiftRequestId=null;
+let htGiftRecipients=[];
+let htSelectedGiftRecipientId="";
+let htPendingGiftItem=null;
+
+function closeHeartTalkGiftRecipientPicker(){
+ if(htGiftSending)return;
+ document.getElementById("heartTalkGiftRecipientModal")?.remove();
+ htPendingGiftItem=null;
+ htSelectedGiftRecipientId="";
 }
+function renderHeartTalkGiftRecipients(){
+ const modal=document.getElementById("heartTalkGiftRecipientModal");
+ const select=modal?.querySelector("#htGiftRecipientSelect");
+ if(!modal||!select)return;
+ select.innerHTML='<option value="">Choose a Host account</option>'+
+  htGiftRecipients.map(person=>'<option value="'+person.id+'" '+(person.id===htSelectedGiftRecipientId?'selected':'')+'>'+escapeHtml(person.display_name||"HeartTalk Host")+(person.country?' · '+escapeHtml(person.country):'')+'</option>').join("");
+ const selected=htGiftRecipients.find(person=>person.id===htSelectedGiftRecipientId);
+ const summary=modal.querySelector("#htGiftRecipientSelected");
+ if(summary)summary.textContent=selected?"Selected: "+(selected.display_name||"HeartTalk Host"):"Please select a Host before sending.";
+ const send=modal.querySelector("#htGiftRecipientSendBtn");
+ if(send)send.disabled=!selected||htGiftSending;
+}
+function selectHeartTalkGiftRecipient(userId){
+ if(htGiftSending)return;
+ const person=htGiftRecipients.find(p=>p.id===userId);
+ if(!person)return;
+ htSelectedGiftRecipientId=person.id;
+ renderHeartTalkGiftRecipients();
+}
+async function heartTalkStoreSendGift(index){
+ if(!currentUser){openAuth();return;}
+ if(htGiftSending)return;
+ const item=htStoreGifts[index];
+ if(!item||!item.gift_code){notify("This gift is unavailable. Refresh the Store and try again.");return;}
+ htPendingGiftItem=item;
+ htSelectedGiftRecipientId="";
+ document.getElementById("heartTalkGiftRecipientModal")?.remove();
+
+ const modal=document.createElement("div");
+ modal.id="heartTalkGiftRecipientModal";
+ modal.style.cssText="position:fixed;inset:0;z-index:100000;background:rgba(14,5,18,.76);display:grid;place-items:center;padding:14px";
+ modal.innerHTML='<div role="dialog" aria-modal="true" aria-labelledby="htGiftRecipientTitle" style="width:min(500px,100%);max-height:88vh;overflow:auto;background:#fff8fc;color:#352039;border:1px solid #e5a6c8;border-radius:20px;padding:18px;box-shadow:0 22px 70px #0008">'+
+  '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><small style="color:#bd3b83;font-weight:800;letter-spacing:.08em">SEND A HEARTTALK GIFT</small><h2 id="htGiftRecipientTitle" style="margin:5px 0 0;font-size:21px">Choose a recipient</h2></div><button type="button" onclick="closeHeartTalkGiftRecipientPicker()" aria-label="Close" style="border:0;border-radius:50%;width:36px;height:36px;background:#f8e5ef;color:#7f315f;font-size:23px">×</button></div>'+
+  '<div style="display:flex;align-items:center;gap:10px;padding:12px;margin:14px 0;background:#ffedf5;border:1px solid #f5c6dc;border-radius:13px"><span style="font-size:30px">'+escapeHtml(item.emoji||"🎁")+'</span><span style="flex:1"><b>'+escapeHtml(item.title||"Gift")+'</b><small style="display:block;color:#8d6680">'+Number(item.coin_price||0)+' coins</small></span></div>'+
+  '<label for="htGiftRecipientSelect" style="display:block;font-weight:700;margin-bottom:7px">Send this gift to</label><select id="htGiftRecipientSelect" onchange="selectHeartTalkGiftRecipient(this.value)" style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #e7c6d8;border-radius:12px;font:inherit;color:#352039;background:#fff"><option value="">Loading Host accounts…</option></select>'+
+  '<p id="htGiftRecipientSelected" style="font-size:13px;color:#885a78;margin:12px 2px">Please select a Host before sending.</p>'+
+  '<p id="htGiftRecipientStatus" role="status" style="font-size:13px;color:#9c376e;min-height:18px;margin:4px 2px"></p>'+
+  '<div style="display:flex;justify-content:flex-end;gap:9px;margin-top:12px"><button type="button" onclick="closeHeartTalkGiftRecipientPicker()" style="border:1px solid #d9aec5;background:#fff;color:#76445f;border-radius:22px;padding:11px 18px;font-weight:700">Cancel</button><button id="htGiftRecipientSendBtn" type="button" onclick="confirmHeartTalkGiftSend()" disabled style="border:0;background:linear-gradient(90deg,#f34f8a,#b93695);color:#fff;border-radius:22px;padding:11px 20px;font-weight:800">Send Gift</button></div>'+
+  '</div>';
+ modal.addEventListener("click",event=>{if(event.target===modal)closeHeartTalkGiftRecipientPicker();});
+ document.body.appendChild(modal);
+
+ try{
+  await loadDiscover();
+  htGiftRecipients=(discoverUsers||[]).filter(person=>person.is_host&&person.id!==currentUser.id);
+  renderHeartTalkGiftRecipients();
+  if(!htGiftRecipients.length){
+   modal.querySelector("#htGiftRecipientStatus").textContent="No active Hosts are available. Only approved active Host accounts can receive gifts.";
+  }
+ }catch(error){
+  modal.querySelector("#htGiftRecipientStatus").textContent=error.message||"Could not load Host accounts. Please try again.";
+ }
+}
+async function confirmHeartTalkGiftSend(){
+ if(!currentUser||htGiftSending)return;
+ const item=htPendingGiftItem;
+ const recipient=htGiftRecipients.find(person=>person.id===htSelectedGiftRecipientId);
+ const modal=document.getElementById("heartTalkGiftRecipientModal");
+ if(!item||!recipient||!modal)return;
+ if(!await heartTalkStoreConfirm("Confirm gift","Send "+item.title+" to "+(recipient.display_name||"this Host")+" for "+Number(item.coin_price||0)+" coins?"))return;
+
+ htGiftSending=true;
+ const button=modal.querySelector("#htGiftRecipientSendBtn");
+ const status=modal.querySelector("#htGiftRecipientStatus");
+ if(button){button.disabled=true;button.textContent="Sending…";}
+ if(status)status.textContent="Sending gift securely…";
+ renderHeartTalkStore();
+ try{
+  if(!htStoreGiftRequestId){
+   htStoreGiftRequestId=globalThis.crypto?.randomUUID?.()||("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,s=>{const r=Math.random()*16|0;return(s==="x"?r:(r&3|8)).toString(16)}));
+  }
+  const {data,error}=await supabaseClient.rpc("hearttalk_send_gift",{
+   target_host_id:recipient.id,
+   selected_gift_code:item.gift_code,
+   p_request_id:htStoreGiftRequestId
+  });
+  if(error)throw error;
+  htStoreGiftRequestId=null;
+  modal.remove();
+  htPendingGiftItem=null;
+  htSelectedGiftRecipientId="";
+  showView("chat");
+  await openConversation(recipient.id);
+  await loadConversations();
+  await loadWallet();
+  await loadHostEarnings();
+  await loadHeartTalkStore();
+  notify("Gift sent to "+(recipient.display_name||"Host")+". It is now visible in your chat.");
+ }catch(error){
+  console.error("HeartTalk gift send failed:",error);
+  const message=error.message||"Gift could not be sent. Check your wallet and try again.";
+  const currentModal=document.getElementById("heartTalkGiftRecipientModal");
+  const currentStatus=currentModal?.querySelector("#htGiftRecipientStatus");
+  if(currentStatus)currentStatus.textContent=message;
+  notify(message);
+ }finally{
+  htGiftSending=false;
+  renderHeartTalkStore();
+  const currentModal=document.getElementById("heartTalkGiftRecipientModal");
+  if(currentModal){const send=currentModal.querySelector("#htGiftRecipientSendBtn");if(send)send.textContent="Send Gift";renderHeartTalkGiftRecipients();}
+ }
+}
+
 async function heartTalkBuyCosmetic(index){
  const items=htStoreTab==="frames"?htStoreFrames:htStoreWallpapers,item=items[index];if(!item||!currentUser)return;
  if(!await heartTalkStoreConfirm("Buy item","Buy "+item.title+" for "+item.coin_price+" coins?"))return;
