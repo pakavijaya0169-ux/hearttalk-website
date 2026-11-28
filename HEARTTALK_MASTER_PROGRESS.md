@@ -108,7 +108,7 @@ Relevant commits:
 ## Other product decisions / requirements to preserve
 - **Current business rule (2026-11-26):** eligible User↔approved Host call and gift revenue share is Host 50%, HeartTalk 50%. This supersedes older 60/40 and 70/30 notes for new eligible earnings.
 - Chat is completely free: 0 coin deductions and 0 new Host earnings. Preserve all historical chat earnings and cash-ledger rows.
-- Call pricing: audio 2 coins per started minute; video 5 coins per started minute. Male User pays for calls in either direction; Host wallet is never charged.
+- Call pricing (superseded on 2026-11-28): voice 1 coin per completed 60 seconds; video 2 coins per completed 60 seconds; partial minutes are not rounded up. The male User pays for calls in either direction; Host wallet is never charged. The `hearttalk_end_call` function uses floor-based completed-minute billing.
 - New eligible call/gift revenue split: 50% Host / 50% HeartTalk. This supersedes prior 60/40 and 70/30 splits for new earnings.
 - Login bonus: 10 coins for male Users only; female Hosts receive 0 login bonus. Recharge UI/packages are visible only to male Users; Hosts cannot recharge.
 - Product goals include chat, audio/video calls, live streaming, wallet/coins, gifts, admin dashboard, host earnings, withdrawals, moderation and safety.
