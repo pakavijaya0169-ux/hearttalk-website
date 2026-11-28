@@ -5,16 +5,24 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
     <application android:theme="@android:style/Theme.Material.Light.NoActionBar" android:label="HeartTalk" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="hearttalk_messages" />
-        <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="unspecified">
+        <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="unspecified" android:supportsPictureInPicture="true" android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".HeartTalkCallService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="microphone|camera" />
         <service
             android:name=".HeartTalkMessagingService"
             android:exported="false">
