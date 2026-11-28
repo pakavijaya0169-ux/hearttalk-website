@@ -1794,6 +1794,7 @@ async function getLocalMedia(type){
  localCallStream.getTracks().forEach(t=>peerConnection.addTrack(t,localCallStream));
  updateCallButtons(true);
  startCallSpeechMonitor();
+  try{if(window.HeartTalkNative&&typeof window.HeartTalkNative.startCall==="function")window.HeartTalkNative.startCall(type);}catch(nativeError){console.warn("HeartTalk native call service:",nativeError)}
 }
 async function sendCallSignal(type,payload){
  const {error}=await supabaseClient.from("call_signals").insert({call_id:activeCallId,sender_id:currentUser.id,signal_type:type,payload:payload||{}});
@@ -1910,6 +1911,7 @@ async function endCurrentCall(){
  callStatus("You ended the call.");await cleanupCall(false);
 }
 async function cleanupCall(updateStatus){
+ try{if(window.HeartTalkNative&&typeof window.HeartTalkNative.stopCall==="function")window.HeartTalkNative.stopCall();}catch(nativeError){console.warn("HeartTalk native call service stop:",nativeError)}
  stopCallSpeechMonitor();
  if(signalPollTimer)clearInterval(signalPollTimer);if(callPollTimer)clearInterval(callPollTimer);signalPollTimer=null;callPollTimer=null;callRingDeadline=null;document.querySelectorAll('[onclick*="startOutgoingCall"]').forEach(b=>b.disabled=false);
  if(peerConnection){peerConnection.ontrack=null;peerConnection.close();peerConnection=null}
