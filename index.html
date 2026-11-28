@@ -1590,7 +1590,13 @@ async function loadMessages(){
  messageChannel=supabaseClient.channel("hearttalk-chat-"+currentUser.id+"-"+activeChatUser.id)
   .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
    const m=payload.new;
-   if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id))loadMessages();
+   if((m.sender_id===currentUser.id&&m.receiver_id===activeChatUser.id)||(m.sender_id===activeChatUser.id&&m.receiver_id===currentUser.id)){
+    if(m.receiver_id===currentUser.id&&String(m.message||"").startsWith("[[GIFT]]")){
+     try{const gift=JSON.parse(String(m.message).slice(8));notify((activeChatUser.display_name||"A member")+" sent you "+(gift.emoji||"🎁")+" "+(gift.title||"a gift")+"!");}
+     catch(e){notify("You received a HeartTalk gift!");}
+    }
+    loadMessages();
+   }
   }).subscribe();
 }
 function toggleChatPicker(id){const target=document.getElementById(id);if(!target)return;const opening=target.hidden;document.querySelectorAll("#chatView .chat-picker").forEach(p=>p.hidden=true);target.hidden=!opening}
